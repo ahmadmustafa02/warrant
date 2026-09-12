@@ -2,19 +2,19 @@ const rows = [
   {
     who: 'No guard',
     value: '21 / 46',
-    detail: 'hijacks when the model obeyed the document · 5×10 attacks',
+    detail: 'hijacked when the agent obeyed the content · 5×10 attacks',
     tone: 'hijack',
   },
   {
     who: 'PromptGuard',
     value: '2 / 10',
-    detail: 'caught only the loudest injections · threshold 0.5',
+    detail: 'flagged only the loudest injections · threshold 0.5',
     tone: 'blocked',
   },
   {
     who: 'Warrant',
     value: '0 / 50',
-    detail: 'same attack matrix · legitimate email still passes (2/2)',
+    detail: 'same attack matrix · legitimate work still passes (2/2)',
     tone: 'safe',
   },
 ] as const;
@@ -32,7 +32,7 @@ export function EvidencePanel() {
         <div className="border-b border-[var(--line)] px-6 py-5 sm:px-8">
           <p className="text-sm font-bold text-[var(--mark)]">Same sandbox agent</p>
           <h2 className="display mt-2 max-w-2xl text-3xl sm:text-4xl">
-            Prompt filters miss the hijacks that actually fire. Warrant blocks them.
+            Filters miss the hijacks that actually fire. Authorization does not.
           </h2>
         </div>
         <ol className="grid sm:grid-cols-3">

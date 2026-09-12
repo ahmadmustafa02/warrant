@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: '%s · Warrant',
   },
   description:
-    'Guard your AI agent against document hijacking — block unauthorized tools and exfiltration with measured attack-stop and benign-pass rates.',
+    'Guard your AI agent against hijacking by the content it reads — block unauthorized actions, with attack-stop and benign-pass measured together.',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

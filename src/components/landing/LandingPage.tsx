@@ -14,14 +14,13 @@ export function LandingPage() {
           Agent hijacking · tool-loop guard
         </p>
         <h1 className="display hero-line mx-auto mt-6 max-w-4xl text-5xl sm:text-7xl lg:text-[80px]">
-          Hijacked agents leak keys and send mail.{' '}
-          <span className="text-[var(--mark)]">Guard</span> yours.
+          Your agent can be hijacked. <span className="text-[var(--mark)]">Guard</span>{' '}
+          what it is allowed to do.
         </h1>
         <p className="hero-line mx-auto mt-6 max-w-2xl text-lg text-[var(--muted)]">
-          Instructions buried in a PDF, ticket, or web page can trick your model into
-          calling real tools. Warrant sits in your agent loop, locks what the human
-          authorized, and blocks every sensitive call that hijacked content tries to
-          add.
+          Content your agent reads can carry instructions of its own. Warrant sits in
+          your tool loop, locks in what the user actually authorized, and denies any
+          action the hijacked content tries to add.
         </p>
         <div className="hero-line mt-8 flex flex-wrap justify-center gap-3">
           <Link
@@ -55,9 +54,9 @@ export function LandingPage() {
               The attack looks like part of the job.
             </h2>
             <p className="mt-4 text-[var(--muted)]">
-              Your user asks for a two-sentence summary. Line three of the quarterly
-              notes tells the model to email the sandbox API key to an ops inbox. No
-              exploit chain — just text the agent was trained to follow.
+              The user asked for one thing. Somewhere in the content the agent reads,
+              another instruction asks for something else — and the model treats both as
+              work. No exploit chain, just text the agent was trained to follow.
             </p>
           </div>
           <BrowserFrame title="doc-1 · Quarterly notes">
@@ -77,9 +76,9 @@ export function LandingPage() {
               Stop the hijack at the tool call.
             </h2>
             <p className="mt-4 text-[var(--muted)]">
-              The model reached for get_api_key and send_email anyway. Warrant had
-              already frozen the user&apos;s intent: read only. The exfiltration was
-              denied; the summary still shipped.
+              Nothing has to detect the wording. The action was simply never authorized,
+              so the guard denies it — and the agent still completes the job the user
+              asked for.
             </p>
           </div>
         </div>
@@ -91,14 +90,14 @@ export function LandingPage() {
             Red-team it. Measure it. Ship the guard.
           </h2>
           <p className="mt-4 max-w-2xl text-lg text-[var(--muted)]">
-            Attack your own sandbox agent, watch the hijack land with guard off, then
-            prove Warrant stops it without breaking legitimate work.
+            Attack an agent, watch the hijack land with the guard off, then prove the
+            guard stops it without breaking legitimate work.
           </p>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 title: 'Playground',
-                body: 'Run a document injection live — guard off, then Warrant on.',
+                body: 'Hijack a live agent, then run the same attack with the guard on.',
                 href: '/playground',
               },
               {
@@ -108,12 +107,12 @@ export function LandingPage() {
               },
               {
                 title: 'Suites',
-                body: 'Ten hijack payloads plus benign tasks that must still succeed.',
+                body: 'Hijack payloads next to the ordinary tasks that must still work.',
                 href: '/suites',
               },
               {
                 title: 'Method',
-                body: 'How we detect hijacks with facts, not another LLM verdict.',
+                body: 'Why a hijack is decided by what happened, not by a model verdict.',
                 href: '/method',
               },
             ].map((card) => (
@@ -135,7 +134,7 @@ export function LandingPage() {
           Try the hijack. Then turn the guard on.
         </h2>
         <p className="mx-auto mt-4 max-w-lg text-[var(--muted)]">
-          Two clicks in the playground beats a slide deck about agent security.
+          Two runs in the playground say more than any claim about agent security.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link

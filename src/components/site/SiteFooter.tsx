@@ -8,7 +8,7 @@ export function SiteFooter() {
         <div className="flex items-center gap-2">
           <WarrantMark />
           <p className="text-sm text-[var(--muted)]">
-            Guard layer for agents you build — measured hijacks, mock side effects.
+            Guard layer for agents you build — measured, sandboxed, mock side effects.
           </p>
         </div>
         <div className="flex flex-wrap gap-5 text-sm font-semibold">

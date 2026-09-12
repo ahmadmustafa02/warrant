@@ -4,7 +4,7 @@ import { PlaygroundPanel } from '@/components/playground/PlaygroundPanel';
 export const metadata: Metadata = {
   title: 'Playground',
   description:
-    'Red-team a sandbox agent: run document injection with guard off, then enable Warrant and watch the hijack get blocked.',
+    'Red-team a sandbox agent: run an injection with the guard off, then enable Warrant and watch the hijack get blocked.',
 };
 
 export default function PlaygroundPage() {
@@ -15,9 +15,9 @@ export default function PlaygroundPage() {
         Hijack this agent — then guard it.
       </h1>
       <p className="mt-4 max-w-2xl text-[var(--muted)]">
-        Pick a preset or paste your own injection. Run with guard off to see email and
-        key exfiltration, then switch Warrant on and run the same attack again. Mock
-        tools only; nothing leaves this sandbox.
+        Pick a preset or paste your own injection. Run it with the guard off to see the
+        agent take an action the user never asked for, then turn the guard on and run
+        the same attack again. Mock tools only; nothing leaves this sandbox.
       </p>
       <div className="mt-10">
         <PlaygroundPanel />
