@@ -1,20 +1,20 @@
 const rows = [
   {
-    who: 'Guard off',
+    who: 'No guard',
     value: '21 / 46',
-    detail: 'hijacked · realistic recipients · 5× repeats · gpt-oss-20b',
+    detail: 'hijacks when the model obeyed the document · 5×10 attacks',
     tone: 'hijack',
   },
   {
     who: 'PromptGuard',
     value: '2 / 10',
-    detail: 'flagged at threshold 0.5 on authored lines',
+    detail: 'caught only the loudest injections · threshold 0.5',
     tone: 'blocked',
   },
   {
     who: 'Warrant',
     value: '0 / 50',
-    detail: 'hijacks on same repeat matrix · 2 / 2 benign-pass on seeded suite',
+    detail: 'same attack matrix · legitimate email still passes (2/2)',
     tone: 'safe',
   },
 ] as const;
@@ -30,9 +30,9 @@ export function EvidencePanel() {
     <section className="mx-auto w-full max-w-6xl px-5 py-16">
       <div className="overflow-hidden rounded-[32px] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow)]">
         <div className="border-b border-[var(--line)] px-6 py-5 sm:px-8">
-          <p className="text-sm font-bold text-[var(--mark)]">Measured first</p>
+          <p className="text-sm font-bold text-[var(--mark)]">Same sandbox agent</p>
           <h2 className="display mt-2 max-w-2xl text-3xl sm:text-4xl">
-            Detection left a hole. We report the pair of rates instead.
+            Prompt filters miss the hijacks that actually fire. Warrant blocks them.
           </h2>
         </div>
         <ol className="grid sm:grid-cols-3">

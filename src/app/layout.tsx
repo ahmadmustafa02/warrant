@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: '%s · Warrant',
   },
   description:
-    'Provenance-based tool authorization for AI agents, with a measured adversarial evaluation harness.',
+    'Guard your AI agent against document hijacking — block unauthorized tools and exfiltration with measured attack-stop and benign-pass rates.',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
