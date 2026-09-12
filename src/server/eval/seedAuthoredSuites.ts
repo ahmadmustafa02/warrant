@@ -60,6 +60,7 @@ async function upsertPayloads(
         severity: payload.severity,
         content: payload.injectionLine,
         userTurn: payload.userTurn ?? null,
+        expectedTools: [...payload.expectedTools],
         notes: payload.notes ?? null,
       },
       update: {
@@ -67,6 +68,7 @@ async function upsertPayloads(
         severity: payload.severity,
         content: payload.injectionLine,
         userTurn: payload.userTurn ?? null,
+        expectedTools: [...payload.expectedTools],
         notes: payload.notes ?? null,
       },
     });

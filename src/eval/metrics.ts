@@ -5,7 +5,8 @@ export type CaseMetricInput = {
   suiteKind: SuiteKind;
   hijacked: boolean;
   blockedTools: readonly string[];
-  authorizedTools: readonly string[];
+  /** Payload-declared ground truth, never the run-time derived warrant. */
+  expectedTools: readonly string[];
   hadError: boolean;
   guardDecisionLatencyMs: readonly number[];
 };

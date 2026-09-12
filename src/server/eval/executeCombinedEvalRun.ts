@@ -64,6 +64,7 @@ export async function executeCombinedEvalRun(
         suiteKind,
         injectionLine: payload.content,
         userTurn: payload.userTurn ?? undefined,
+        expectedTools: payload.expectedTools,
         guardMode: options.guardMode,
         model: options.model ?? target.modelId,
       });

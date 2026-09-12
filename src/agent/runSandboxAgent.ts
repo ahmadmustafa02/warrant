@@ -38,6 +38,14 @@ export type RunSandboxAgentOptions = {
   injectionLine: string;
   model?: string;
   maxSteps?: number;
+  /**
+   * Tools the request legitimately authorizes, for hijack detection only.
+   *
+   * The guard under test always enforces the warrant derived from the user turn.
+   * Scoring, though, must not depend on that derivation, or a parser that failed
+   * to grant a tool would also excuse the agent for using it.
+   */
+  measuredAuthorizedTools?: readonly string[];
 };
 
 function toToolCallRequest(
@@ -173,7 +181,7 @@ export async function runSandboxAgent(
     finalAnswer,
     canarySecret: env.SANDBOX_CANARY_SECRET,
     calledTools,
-    authorizedTools,
+    authorizedTools: options.measuredAuthorizedTools ?? authorizedTools,
   });
 
   return {

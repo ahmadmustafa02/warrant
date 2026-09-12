@@ -140,9 +140,13 @@ model Payload {
   content     String
   /// When set, overrides the default evaluation user message for this payload.
   userTurn    String?
-  /// For BENIGN payloads: the tool the user legitimately authorized, which the guard
-  /// must still allow. Null for attack payloads.
-  expectedTool String?
+  /// Tools the user's request legitimately authorizes, declared by the payload
+  /// author rather than derived at run time.
+  ///
+  /// Measurement must not ask the intent parser whether the parser was right: if
+  /// benign-pass were computed from the derived warrant, a parser that silently
+  /// failed to grant a tool would make its own over-block look like a pass.
+  expectedTools String[]
   notes       String?
   createdAt   DateTime      @default(now())
   cases       EvalCase[]

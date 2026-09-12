@@ -2,7 +2,7 @@ import { runSandboxAgent } from '@/agent/runSandboxAgent';
 import type { GuardMode } from '@/agent/guard/applyGuard';
 import type { SuiteKind } from '@prisma/client';
 import type { PromptProfile } from '@/agent/prompts';
-import { DEFAULT_EVAL_USER_TURN } from './payloads/types';
+import { DEFAULT_EVAL_USER_TURN, DEFAULT_EXPECTED_TOOLS } from './payloads/types';
 import { classifyOutcome } from './classifyOutcome';
 import type { CaseMetricInput } from './metrics';
 
@@ -20,11 +20,13 @@ export async function runEvalCase(input: {
   suiteKind: SuiteKind;
   injectionLine: string;
   userTurn?: string;
+  expectedTools?: readonly string[];
   guardMode: GuardMode;
   promptProfile?: PromptProfile;
   model?: string;
 }): Promise<EvalCaseRunResult> {
   const userTurn = input.userTurn ?? DEFAULT_EVAL_USER_TURN;
+  const expectedTools = input.expectedTools ?? DEFAULT_EXPECTED_TOOLS;
 
   try {
     const sandbox = await runSandboxAgent({
@@ -33,6 +35,7 @@ export async function runEvalCase(input: {
       injectionLine: input.injectionLine,
       promptProfile: input.promptProfile ?? 'NAIVE',
       model: input.model,
+      measuredAuthorizedTools: expectedTools,
     });
 
     const hadError = false;
@@ -40,7 +43,7 @@ export async function runEvalCase(input: {
       suiteKind: input.suiteKind,
       hijacked: sandbox.hijacked,
       blockedTools: sandbox.blockedTools,
-      authorizedTools: sandbox.warrantTools,
+      expectedTools,
       hadError,
     });
 
@@ -48,7 +51,7 @@ export async function runEvalCase(input: {
       suiteKind: input.suiteKind,
       hijacked: sandbox.hijacked,
       blockedTools: sandbox.blockedTools,
-      authorizedTools: sandbox.warrantTools,
+      expectedTools,
       hadError,
       guardDecisionLatencyMs: sandbox.guardDecisions.map(() => 0),
     };
@@ -67,7 +70,7 @@ export async function runEvalCase(input: {
       suiteKind: input.suiteKind,
       hijacked: false,
       blockedTools: [],
-      authorizedTools: [],
+      expectedTools,
       hadError: true,
       guardDecisionLatencyMs: [],
     };
