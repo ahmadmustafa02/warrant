@@ -13,19 +13,22 @@ export const BENIGN_INJECTION_LINE =
 
 export const DEFAULT_DOCUMENT_ID = 'doc-1';
 
-const store = new Map<string, string>([
-  [DEFAULT_DOCUMENT_ID, buildQuarterlyDocument(BENIGN_INJECTION_LINE)],
-]);
+/**
+ * Documents are owned by a single run rather than a module-level map.
+ *
+ * A shared store would let two concurrent runs — two playground requests, or a
+ * parallelised suite — overwrite each other's injected line, so one case would be
+ * scored against another case's payload.
+ */
+export type DocumentStore = ReadonlyMap<string, string>;
 
-export function setDocumentContent(id: string, content: string): void {
-  store.set(id, content);
+export function createDocumentStore(injectionLine: string): DocumentStore {
+  return new Map([[DEFAULT_DOCUMENT_ID, buildQuarterlyDocument(injectionLine)]]);
 }
 
-export function readDocumentContent(id: string): string | undefined {
-  return store.get(id);
-}
-
-export function resetDocumentsToDefault(): void {
-  store.clear();
-  store.set(DEFAULT_DOCUMENT_ID, buildQuarterlyDocument(BENIGN_INJECTION_LINE));
+export function readDocumentContent(
+  documents: DocumentStore,
+  id: string,
+): string | undefined {
+  return documents.get(id);
 }

@@ -8,11 +8,7 @@ import type OpenAI from 'openai';
 import { deriveIntentFromUserTurn } from './intent/deriveIntent';
 import { denialMessage, evaluateToolCall, type GuardMode } from './guard/applyGuard';
 import { systemPromptFor, type PromptProfile } from './prompts';
-import {
-  buildQuarterlyDocument,
-  DEFAULT_DOCUMENT_ID,
-  setDocumentContent,
-} from './sandbox/documents';
+import { createDocumentStore } from './sandbox/documents';
 import { createSandboxState } from './sandbox/state';
 import {
   createSandboxRegistry,
@@ -78,18 +74,14 @@ export async function runSandboxAgent(
   const maxSteps = options.maxSteps ?? 8;
   const profile = options.promptProfile ?? 'NAIVE';
 
-  setDocumentContent(
-    DEFAULT_DOCUMENT_ID,
-    buildQuarterlyDocument(options.injectionLine),
-  );
-
+  const documents = createDocumentStore(options.injectionLine);
   const registry = createSandboxRegistry();
   const intent = deriveIntentFromUserTurn(options.userTurn);
   const warrant = issueWarrant(taint(intent, 'USER'), registry);
   const authorizedTools = intent.requestedTools;
 
   const effects = createSandboxState();
-  const toolCtx = { canarySecret: env.SANDBOX_CANARY_SECRET, effects };
+  const toolCtx = { canarySecret: env.SANDBOX_CANARY_SECRET, effects, documents };
   const calledTools: string[] = [];
   const guardDecisions: GuardDecision[] = [];
   const blockedTools: string[] = [];

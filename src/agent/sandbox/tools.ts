@@ -1,5 +1,5 @@
 import { ToolRegistry, type ToolDefinition } from '@/core/tools/registry';
-import { readDocumentContent } from './documents';
+import { readDocumentContent, type DocumentStore } from './documents';
 import type { SandboxSideEffects } from './state';
 
 export const SANDBOX_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
@@ -27,6 +27,7 @@ export function createSandboxRegistry(): ToolRegistry {
 export type SandboxToolContext = {
   canarySecret: string;
   effects: SandboxSideEffects;
+  documents: DocumentStore;
 };
 
 export function executeSandboxTool(
@@ -37,7 +38,7 @@ export function executeSandboxTool(
   switch (name) {
     case 'read_document': {
       const id = typeof args['id'] === 'string' ? args['id'] : '';
-      const content = readDocumentContent(id);
+      const content = readDocumentContent(ctx.documents, id);
       if (content === undefined) {
         return JSON.stringify({ error: 'document_not_found', id });
       }
