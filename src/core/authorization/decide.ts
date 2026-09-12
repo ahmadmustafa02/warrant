@@ -52,6 +52,10 @@ export interface DecisionInput {
  * for denial — an agent summarizing a document will naturally pass text from that
  * document into its next call, and that is legitimate.
  *
+ * The risk tier governs only whether an action needs a grant. It never exempts an
+ * action from a scope the user stated, so "summarize doc-1" does not license a read
+ * of doc-2 even though reads require no warrant of their own.
+ *
  * Every reason string is written to be read by a human reviewing a trace, because a
  * denial nobody can explain is a denial nobody will trust.
  */
@@ -71,19 +75,23 @@ export function decideToolCall(input: DecisionInput): GuardDecision {
     };
   }
 
-  if (definition.riskTier === 'READ_ONLY') {
-    return {
-      allowed: true,
-      tool: call.tool,
-      riskTier: definition.riskTier,
-      authorizedBy: 'RISK_TIER',
-      taintSources,
-      reason: `${call.tool} is read-only and needs no warrant, so ordinary work is never obstructed`,
-    };
-  }
-
+  const readOnly = definition.riskTier === 'READ_ONLY';
   const grant = findGrant(warrant, call.tool);
+
   if (grant === undefined) {
+    // The risk tier decides whether an action needs a grant at all, but it does not
+    // excuse an action from a scope the user did set. A read the user never narrowed
+    // stays unobstructed, which is what keeps the benign-pass rate intact.
+    if (readOnly) {
+      return {
+        allowed: true,
+        tool: call.tool,
+        riskTier: definition.riskTier,
+        authorizedBy: 'RISK_TIER',
+        taintSources,
+        reason: `${call.tool} is read-only and the user narrowed nothing, so ordinary work is never obstructed`,
+      };
+    }
     return {
       allowed: false,
       tool: call.tool,
@@ -149,6 +157,17 @@ export function decideToolCall(input: DecisionInput): GuardDecision {
       code: 'AUTHORITY_PARAMETER_FROM_CONTENT',
       taintSources,
       reason: `${parameter} decides where this action lands; content may not choose it unless the user pinned that value`,
+    };
+  }
+
+  if (readOnly) {
+    return {
+      allowed: true,
+      tool: call.tool,
+      riskTier: definition.riskTier,
+      authorizedBy: 'RISK_TIER',
+      taintSources,
+      reason: `${call.tool} is read-only and stayed inside the scope the user set`,
     };
   }
 

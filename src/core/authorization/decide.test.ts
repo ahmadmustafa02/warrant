@@ -50,6 +50,46 @@ describe('decideToolCall', () => {
     expect(decision.allowed === true && decision.authorizedBy).toBe('RISK_TIER');
   });
 
+  it('allows any read when the user asked for documents without naming one', () => {
+    // "Summarize my documents" pins nothing, so no read is out of scope.
+    const decision = decide(warrantFor({ requestedTools: ['read_document'] }), {
+      tool: 'read_document',
+      args: { id: taint('doc-7', 'TOOL_RESULT') },
+    });
+    expect(decision.allowed).toBe(true);
+  });
+
+  it('allows a read that stays inside the scope the user named', () => {
+    const warrant = warrantFor({
+      requestedTools: ['read_document'],
+      pinnedParameters: { read_document: { id: 'doc-1' } },
+    });
+    const decision = decide(warrant, {
+      tool: 'read_document',
+      args: { id: taint('doc-1', 'TOOL_RESULT') },
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.allowed === true && decision.authorizedBy).toBe('RISK_TIER');
+  });
+
+  it('blocks a read of a document the user did not name', () => {
+    // Being read-only buys a tool no warrant of its own; it does not buy an exemption
+    // from the scope the user set, or "summarize doc-1" would license reading anything.
+    const warrant = warrantFor({
+      requestedTools: ['read_document'],
+      pinnedParameters: { read_document: { id: 'doc-1' } },
+    });
+    const decision = decide(warrant, {
+      tool: 'read_document',
+      args: { id: taint('doc-2', 'TOOL_RESULT') },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe(
+      'PINNED_PARAMETER_CONFLICT',
+    );
+    expect(decision.riskTier).toBe('READ_ONLY');
+  });
+
   it('blocks a sensitive action the user never authorized', () => {
     // The canonical hijack: the document told the agent to email the attacker.
     const decision = decide(warrantFor({ requestedTools: ['read_document'] }), {
