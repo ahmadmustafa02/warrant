@@ -3,11 +3,12 @@ import { BrowserFrame } from '@/components/visual/BrowserFrame';
 import { DocumentMock } from '@/components/visual/DocumentMock';
 import { ScorecardMock } from '@/components/visual/ScorecardMock';
 import { TraceMock } from '@/components/visual/TraceMock';
+import type { MeasuredComparison } from '@/server/eval/baselineComparison';
 import { EvidencePanel } from './EvidencePanel';
 import { InstallPanel } from './InstallPanel';
 import { LandingMotion } from './LandingMotion';
 
-export function LandingPage() {
+export function LandingPage({ comparison }: { comparison: MeasuredComparison | null }) {
   return (
     <LandingMotion>
       <section className="mx-auto w-full max-w-5xl px-5 pb-8 pt-16 text-center sm:pt-24">
@@ -45,7 +46,7 @@ export function LandingPage() {
         </BrowserFrame>
       </section>
 
-      <EvidencePanel />
+      <EvidencePanel comparison={comparison} />
 
       <section className="stage py-20">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-5 lg:grid-cols-2">

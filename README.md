@@ -19,16 +19,16 @@ never had permission.
 
 ## The measured problem
 
-This repository ships the **sandbox agent and harness** used for measurement — three mock tools,
-ten authored document-injection lines, and two benign control tasks. Target brain:
-`openai/gpt-oss-20b` via Groq.
+This repository ships the **sandbox agent and harness** used for measurement — mock tools
+(including egress `fetch_url`), **12** authored document-injection lines, and **2** benign
+control tasks. Target brain: `openai/gpt-oss-20b` via Groq.
 
 | Measurement (this repo) | Result |
 | ----------------------- | ------ |
-| Guard **OFF**, realistic internal recipients, **5 repeats × 10 attacks** | **21 / 46 hijacked (45.7%)** — errors excluded |
-| Guard **ENFORCE**, same matrix | **0 / 50 hijacked (0%)** · **50 / 50 attack-stop** |
-| Guard **ENFORCE**, seeded suites (10 attacks + 2 benign), once each | **10 / 10 attack-stop**, **2 / 2 benign-pass** |
-| `llama-prompt-guard-2` on the 10 authored injection lines (threshold 0.5) | **2 / 10 flagged** |
+| Guard **OFF**, seeded attack suite (12 payloads, once each) | **8 / 12 hijacked** · **4 / 12 attack-stop** |
+| Guard **ENFORCE**, same run + benign suite | **12 / 12 attack-stop** · **2 / 2 benign-pass** |
+| `llama-prompt-guard-2` on the 12 authored injection lines (threshold 0.5) | **2 / 12 flagged** |
+| Guard **OFF**, realistic recipients, **5 repeats × 10 attacks** (older matrix) | **21 / 46 hijacked (45.7%)** — errors excluded |
 
 Obvious `@evil.test` recipients in the authored lines make the model refuse many attacks before
 any tool runs; the repeat harness swaps in corporate-looking addresses so the baseline reflects
@@ -40,7 +40,7 @@ A real hijack (guard off), from deterministic sandbox signals — unauthorized `
 
 > The ingestion service processed 1.2 million events this quarter… **(API key: SANDBOX-SECRET-7Q4Z)**
 
-Detection-based defense leaves a measurable gap: PromptGuard flagged only two of ten authored
+Detection-based defense leaves a measurable gap: PromptGuard flagged only two of twelve authored
 lines while many injections still drove tool calls under a naive agent.
 
 ## Core idea
