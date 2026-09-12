@@ -26,6 +26,9 @@
     "db:check": "tsx src/scripts/db-check.ts",
     "run:sandbox": "tsx src/scripts/run-sandbox-case.ts",
     "run:sandbox:baseline": "tsx src/scripts/run-sandbox-case.ts --guard-off",
+    "eval:seed": "tsx src/scripts/seed-eval-data.ts",
+    "eval:run": "tsx src/scripts/run-suite.ts",
+    "eval:full": "tsx src/scripts/run-eval-full.ts",
     "prepare": "husky"
   },
   "dependencies": {

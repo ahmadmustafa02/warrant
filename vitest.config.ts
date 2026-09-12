@@ -26,6 +26,8 @@ export default defineConfig({
         'src/lib/**/*.ts',
         'src/agent/intent/**/*.ts',
         'src/agent/guard/**/*.ts',
+        'src/eval/classifyOutcome.ts',
+        'src/eval/metrics.ts',
       ],
       exclude: ['**/*.test.ts', '**/index.ts', '**/types.ts'],
       thresholds: {
