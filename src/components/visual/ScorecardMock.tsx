@@ -67,7 +67,7 @@ export function ScorecardMock() {
           <article className="rounded-2xl bg-[var(--surface)] p-4 shadow-sm">
             <div className="flex items-start justify-between">
               <p className="text-xs font-bold text-[var(--muted)]">Attack-stop</p>
-              <span className="text-xs font-bold text-[#0f9d58]">
+              <span className="text-xs font-bold text-[var(--safe)]">
                 +40pp vs PromptGuard
               </span>
             </div>
@@ -76,7 +76,7 @@ export function ScorecardMock() {
               <path
                 d="M0 28 C20 26, 28 22, 40 20 S64 18, 80 12 S112 16, 128 8 152 6, 160 4"
                 fill="none"
-                stroke="#0f9d58"
+                stroke="var(--safe)"
                 strokeWidth="3"
                 strokeLinecap="round"
               />
