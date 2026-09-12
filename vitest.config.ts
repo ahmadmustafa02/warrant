@@ -30,7 +30,13 @@ export default defineConfig({
         'src/eval/metrics.ts',
         'src/lib/format.ts',
       ],
-      exclude: ['**/*.test.ts', '**/index.ts', '**/types.ts'],
+      exclude: [
+        '**/*.test.ts',
+        '**/index.ts',
+        '**/types.ts',
+        'src/eval/payloads/documentInjectionAuthored.ts',
+        'src/lib/playgroundPresets.ts',
+      ],
       thresholds: {
         lines: 80,
         functions: 80,

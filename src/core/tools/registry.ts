@@ -5,6 +5,11 @@
  * tool calls are reads, and they are left completely alone, so the benign-pass rate
  * stays high and the guard only intervenes where consequences are real.
  */
+import {
+  compileParameterConstraint,
+  type ParameterConstraints,
+} from './parameterConstraints';
+
 export const RISK_TIERS = ['READ_ONLY', 'SENSITIVE', 'DESTRUCTIVE'] as const;
 
 export type RiskTier = (typeof RISK_TIERS)[number];
@@ -29,6 +34,8 @@ export interface ToolDefinition {
    * these — they must come from the user turn or match a user-pinned value.
    */
   readonly authorityParameters?: readonly string[];
+  /** Declarative limits on argument values (SQL shape, numeric ceilings, …). */
+  readonly parameterConstraints?: ParameterConstraints;
 }
 
 export class DuplicateToolError extends Error {
@@ -81,6 +88,19 @@ export class ToolRegistry {
       );
     }
 
+    const parameterConstraints = definition.parameterConstraints;
+    if (parameterConstraints !== undefined) {
+      for (const constraint of Object.values(parameterConstraints)) {
+        try {
+          compileParameterConstraint(constraint);
+        } catch {
+          throw new ToolDefinitionError(
+            `"${definition.name}" has an invalid parameter constraint`,
+          );
+        }
+      }
+    }
+
     this.tools.set(
       definition.name,
       Object.freeze({
@@ -88,6 +108,9 @@ export class ToolRegistry {
         ...(definition.authorityParameters === undefined
           ? {}
           : { authorityParameters: Object.freeze([...authorityParameters]) }),
+        ...(parameterConstraints === undefined
+          ? {}
+          : { parameterConstraints: Object.freeze({ ...parameterConstraints }) }),
       }),
     );
     return this;

@@ -33,6 +33,9 @@ export const registry = new ToolRegistry([
 `authorityParameters` are fields that decide **where** an action lands. Content must not
 set them unless the user pinned the same value.
 
+Optional `parameterConstraints` cap argument shape (`stringPattern` for SQL, `numberMax`
+for amounts). Violations deny with `PARAMETER_CONSTRAINT_VIOLATION`.
+
 ## Issue a warrant (explicit API)
 
 ```typescript

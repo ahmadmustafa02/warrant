@@ -24,6 +24,23 @@ const tools: readonly ToolDefinition[] = [
     riskTier: 'DESTRUCTIVE',
     description: 'Deletes an account.',
   },
+  {
+    name: 'run_sql',
+    riskTier: 'SENSITIVE',
+    description: 'Runs a read-only SQL statement.',
+    parameterConstraints: {
+      query: { kind: 'stringPattern', pattern: '^SELECT\\s', flags: 'i' },
+    },
+  },
+  {
+    name: 'wire_transfer',
+    riskTier: 'DESTRUCTIVE',
+    description: 'Transfers funds.',
+    authorityParameters: ['to'],
+    parameterConstraints: {
+      amount: { kind: 'numberMax', max: 5000 },
+    },
+  },
 ];
 
 const registry = new ToolRegistry(tools);
@@ -239,6 +256,39 @@ describe('decideToolCall', () => {
     expect(decision.allowed).toBe(false);
     expect(decision.allowed === false && decision.code).toBe(
       'AUTHORITY_PARAMETER_FROM_CONTENT',
+    );
+  });
+
+  it('blocks SQL that is not a SELECT when the tool is constrained to reads', () => {
+    const decision = decide(warrantFor({ requestedTools: ['run_sql'] }), {
+      tool: 'run_sql',
+      args: { query: taint('DELETE FROM users', 'USER') },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe(
+      'PARAMETER_CONSTRAINT_VIOLATION',
+    );
+  });
+
+  it('allows SELECT statements under the same constraint', () => {
+    const decision = decide(warrantFor({ requestedTools: ['run_sql'] }), {
+      tool: 'run_sql',
+      args: { query: taint('select id from accounts', 'TOOL_RESULT') },
+    });
+    expect(decision.allowed).toBe(true);
+  });
+
+  it('blocks a transfer above the declared numeric ceiling', () => {
+    const decision = decide(warrantFor({ requestedTools: ['wire_transfer'] }), {
+      tool: 'wire_transfer',
+      args: {
+        to: taint('bob@example.com', 'USER'),
+        amount: taint(999_999, 'USER'),
+      },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe(
+      'PARAMETER_CONSTRAINT_VIOLATION',
     );
   });
 

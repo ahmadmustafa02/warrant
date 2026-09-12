@@ -84,7 +84,7 @@ tool-description injection.
 | App | Next.js 16 (App Router), React 19, TypeScript strict, Tailwind 4 |
 | Data | PostgreSQL 17 + Prisma 7 |
 | Validation | Zod 4 |
-| Models | Groq (`gpt-oss-20b`, `gpt-oss-120b`, `qwen3.6-27b`, `llama-prompt-guard-2`), OpenAI, Anthropic |
+| Models | Groq (`gpt-oss-20b`, `gpt-oss-120b`, `qwen3.6-27b`, `llama-prompt-guard-2`), OpenAI |
 | Tests | Vitest with coverage thresholds enforced in CI |
 | Quality | ESLint type-aware, Prettier, husky + lint-staged, GitHub Actions |
 

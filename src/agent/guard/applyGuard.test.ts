@@ -2,7 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { issueWarrant } from '@/core/authorization/warrant';
 import { taint } from '@/core/provenance/tainted';
 import { createSandboxRegistry } from '../sandbox/tools';
-import { denialMessage, evaluateToolCall } from './applyGuard';
+import { denialMessage, evaluateToolCall, parseToolArguments } from './applyGuard';
+
+describe('parseToolArguments', () => {
+  it('treats empty raw arguments as an empty object', () => {
+    expect(parseToolArguments('')).toEqual({});
+  });
+
+  it('rejects non-object JSON', () => {
+    expect(() => parseToolArguments('[]')).toThrow(/JSON object/);
+  });
+});
 
 describe('evaluateToolCall', () => {
   const registry = createSandboxRegistry();
@@ -39,6 +49,24 @@ describe('evaluateToolCall', () => {
       expect(denialMessage(decision)).toContain('guard_denied');
     } else {
       expect.fail('expected a denial decision');
+    }
+  });
+
+  it('returns an empty denial message for allowed decisions', () => {
+    const warrant = issueWarrant(
+      taint({ requestedTools: ['read_document'] }, 'USER'),
+      registry,
+    );
+    const decision = evaluateToolCall({
+      mode: 'ENFORCE',
+      warrant,
+      registry,
+      toolName: 'read_document',
+      rawArguments: '{"id":"doc-1"}',
+    });
+    expect(decision?.allowed).toBe(true);
+    if (decision) {
+      expect(denialMessage(decision)).toBe('');
     }
   });
 });

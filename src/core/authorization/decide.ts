@@ -1,6 +1,7 @@
 import { describeValue, isUntrusted, sourcesOfArguments } from '../provenance/tainted';
 import type { ProvenanceKind, TaintedValue } from '../provenance/types';
-import type { RiskTier, ToolRegistry } from '../tools/registry';
+import { findParameterConstraintViolation } from '../tools/parameterConstraints';
+import type { RiskTier, ToolDefinition, ToolRegistry } from '../tools/registry';
 import { findGrant, type Warrant } from './warrant';
 
 export type DenialCode =
@@ -8,7 +9,8 @@ export type DenialCode =
   | 'NO_WARRANT_FOR_TOOL'
   | 'PINNED_PARAMETER_CONFLICT'
   | 'AUTHORITY_PARAMETER_FROM_CONTENT'
-  | 'AUTHORITY_PARAMETER_MISSING';
+  | 'AUTHORITY_PARAMETER_MISSING'
+  | 'PARAMETER_CONSTRAINT_VIOLATION';
 
 export type AuthorizationBasis = 'USER_WARRANT' | 'RISK_TIER';
 
@@ -41,6 +43,28 @@ export interface DecisionInput {
   readonly warrant: Warrant;
   readonly registry: ToolRegistry;
   readonly call: ProposedToolCall;
+}
+
+function denyConstraintViolation(
+  definition: ToolDefinition,
+  call: ProposedToolCall,
+  taintSources: readonly ProvenanceKind[],
+): DeniedDecision | undefined {
+  const violation = findParameterConstraintViolation(
+    definition.parameterConstraints,
+    call.args,
+  );
+  if (violation === undefined) {
+    return undefined;
+  }
+  return {
+    allowed: false,
+    tool: call.tool,
+    riskTier: definition.riskTier,
+    code: 'PARAMETER_CONSTRAINT_VIOLATION',
+    taintSources,
+    reason: violation.reason,
+  };
 }
 
 /**
@@ -86,6 +110,10 @@ export function decideToolCall(input: DecisionInput): GuardDecision {
     // excuse an action from a scope the user did set. A read the user never narrowed
     // stays unobstructed, which is what keeps the benign-pass rate intact.
     if (warrantExempt) {
+      const denied = denyConstraintViolation(definition, call, taintSources);
+      if (denied !== undefined) {
+        return denied;
+      }
       return {
         allowed: true,
         tool: call.tool,
@@ -161,6 +189,11 @@ export function decideToolCall(input: DecisionInput): GuardDecision {
       taintSources,
       reason: `${parameter} decides where this action lands; content may not choose it unless the user pinned that value`,
     };
+  }
+
+  const deniedByConstraint = denyConstraintViolation(definition, call, taintSources);
+  if (deniedByConstraint !== undefined) {
+    return deniedByConstraint;
   }
 
   if (readOnly) {

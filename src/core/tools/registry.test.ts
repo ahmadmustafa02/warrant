@@ -94,6 +94,20 @@ describe('ToolRegistry', () => {
     expect(registry.requiresWarrant('fetch_url')).toBe(true);
   });
 
+  it('rejects invalid parameter constraints at registration time', () => {
+    expect(
+      () =>
+        new ToolRegistry([
+          {
+            ...sendEmail,
+            parameterConstraints: {
+              body: { kind: 'stringPattern', pattern: '[' },
+            },
+          },
+        ]),
+    ).toThrow(ToolDefinitionError);
+  });
+
   it('requires egress tools to declare authority parameters', () => {
     expect(
       () => new ToolRegistry([{ ...readDocument, name: 'fetch_url', egress: true }]),

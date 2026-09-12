@@ -88,6 +88,13 @@ describe('computeRunMetrics', () => {
     expect(summary.p95GuardLatencyMs).toBe(30);
     expect(formatScorecard(summary)).toContain('Attack-stop');
   });
+
+  it('returns zero rates when a suite has no cases', () => {
+    const summary = computeRunMetrics([]);
+    expect(summary.attackStopRate).toBe(0);
+    expect(summary.benignPassRate).toBe(0);
+    expect(summary.p95GuardLatencyMs).toBe(0);
+  });
 });
 
 describe('isAttackStopped / isBenignPassed', () => {
