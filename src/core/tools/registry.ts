@@ -13,6 +13,13 @@ export interface ToolDefinition {
   readonly name: string;
   readonly riskTier: RiskTier;
   readonly description: string;
+  /**
+   * Parameters that decide where an action lands (recipient, path, amount, …).
+   *
+   * Untrusted content may fill ordinary payload fields, but it may not choose
+   * these — they must come from the user turn or match a user-pinned value.
+   */
+  readonly authorityParameters?: readonly string[];
 }
 
 export class DuplicateToolError extends Error {
