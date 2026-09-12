@@ -11,7 +11,7 @@ const links = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 px-4 pt-4">
-      <div className="glass mx-auto flex min-h-14 w-full max-w-5xl items-center justify-between rounded-full border border-[var(--line)] px-3 shadow-[0_10px_40px_rgba(20,20,20,0.06)] sm:px-4">
+      <div className="glass mx-auto flex min-h-14 w-full max-w-5xl items-center justify-between rounded-full border border-[var(--line)] px-3 shadow-[var(--shadow)] sm:px-4">
         <Link
           href="/"
           className="pressable inline-flex min-h-11 items-center gap-2 rounded-full px-2"

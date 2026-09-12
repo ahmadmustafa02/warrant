@@ -20,9 +20,9 @@ const rows = [
 ] as const;
 
 const bar: Record<(typeof rows)[number]['tone'], string> = {
-  hijack: 'bg-[#e23d28]',
-  blocked: 'bg-[#c47a00]',
-  safe: 'bg-[#0f9d58]',
+  hijack: 'bg-[var(--hijack)]',
+  blocked: 'bg-[var(--blocked)]',
+  safe: 'bg-[var(--safe)]',
 };
 
 export function EvidencePanel() {
