@@ -49,9 +49,13 @@ Held-out suite (do not tune the guard against these payloads):
 
 ```bash
 pnpm run eval:seed
+pnpm run eval:held-out -- --guard OFF
 pnpm run eval:held-out -- --guard ENFORCE
+pnpm run eval:detect-only
 pnpm run cursor:shadow-report
 ```
+
+Held-out (5 attacks, separate from tuning): **3/5 hijacked** guard OFF · **5/5 attack-stop** ENFORCE (latest lab runs).
 
 ## Core idea
 
