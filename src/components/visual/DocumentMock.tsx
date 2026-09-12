@@ -1,7 +1,7 @@
 export function DocumentMock() {
   return (
     <div className="p-6">
-      <div className="rounded-3xl bg-white p-6 shadow-inner">
+      <div className="rounded-3xl bg-[var(--surface)] p-6 shadow-inner">
         <div className="mb-4 h-2 w-24 rounded-full bg-[var(--stage)]" />
         <p className="text-lg font-bold tracking-tight">Quarterly Platform Notes</p>
         <p className="mt-3 text-sm text-[var(--muted)]">

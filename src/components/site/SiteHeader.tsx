@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { WarrantMark } from '@/components/brand/WarrantMark';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 const links = [
   { href: '/dashboard', label: 'Lab' },
@@ -29,12 +30,15 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <Link
-          href="/dashboard"
-          className="pressable inline-flex min-h-10 items-center rounded-full bg-[var(--ink)] px-4 text-sm font-semibold text-white"
-        >
-          Open lab
-        </Link>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Link
+            href="/dashboard"
+            className="pressable inline-flex min-h-10 items-center rounded-full bg-[var(--ink)] px-4 text-sm font-semibold text-[var(--on-ink)]"
+          >
+            Open lab
+          </Link>
+        </div>
       </div>
     </header>
   );

@@ -37,11 +37,13 @@ const badge: Record<(typeof cases)[number]['tone'], string> = {
 
 export function ScorecardMock() {
   return (
-    <div className="flex min-h-[420px] bg-[#f7f7f8]">
-      <aside className="hidden w-[200px] shrink-0 border-r border-[var(--line)] bg-white p-4 sm:block">
+    <div className="flex min-h-[420px] bg-[var(--stage)]">
+      <aside className="hidden w-[200px] shrink-0 border-r border-[var(--line)] bg-[var(--surface)] p-4 sm:block">
         <p className="text-xs font-bold text-[var(--muted)]">Warrant Lab</p>
         <ul className="mt-4 space-y-1 text-sm font-semibold">
-          <li className="rounded-xl bg-[var(--ink)] px-3 py-2 text-white">Runs</li>
+          <li className="rounded-xl bg-[var(--ink)] px-3 py-2 text-[var(--on-ink)]">
+            Runs
+          </li>
           <li className="rounded-xl px-3 py-2 text-[var(--muted)]">Suites</li>
           <li className="rounded-xl px-3 py-2 text-[var(--muted)]">Traces</li>
           <li className="rounded-xl px-3 py-2 text-[var(--muted)]">Method</li>
@@ -56,13 +58,13 @@ export function ScorecardMock() {
             </p>
             <p className="text-lg font-extrabold tracking-tight">gpt-oss-20b</p>
           </div>
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-bold shadow-sm">
+          <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-bold shadow-sm">
             Live
           </span>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <article className="rounded-2xl bg-white p-4 shadow-sm">
+          <article className="rounded-2xl bg-[var(--surface)] p-4 shadow-sm">
             <div className="flex items-start justify-between">
               <p className="text-xs font-bold text-[var(--muted)]">Attack-stop</p>
               <span className="text-xs font-bold text-[#0f9d58]">
@@ -81,7 +83,7 @@ export function ScorecardMock() {
             </svg>
             <p className="mt-1 text-xs text-[var(--muted)]">9 of 10 attacks stopped</p>
           </article>
-          <article className="rounded-2xl bg-white p-4 shadow-sm">
+          <article className="rounded-2xl bg-[var(--surface)] p-4 shadow-sm">
             <div className="flex items-start justify-between">
               <p className="text-xs font-bold text-[var(--muted)]">Benign-pass</p>
               <span className="text-xs font-bold text-[var(--ink)]">No over-block</span>
@@ -91,7 +93,7 @@ export function ScorecardMock() {
               <path
                 d="M0 10 C24 10, 40 10, 56 11 S88 10, 104 9 S136 10, 160 10"
                 fill="none"
-                stroke="#141414"
+                stroke="currentColor"
                 strokeWidth="3"
                 strokeLinecap="round"
               />
@@ -102,7 +104,7 @@ export function ScorecardMock() {
           </article>
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="mt-3 overflow-hidden rounded-2xl bg-[var(--surface)] shadow-sm">
           <div className="grid grid-cols-[1.3fr_0.7fr_1fr_1fr] gap-2 border-b border-[var(--line)] px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
             <span>Case</span>
             <span>Outcome</span>

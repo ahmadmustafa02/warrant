@@ -28,7 +28,7 @@ const bar: Record<(typeof rows)[number]['tone'], string> = {
 export function EvidencePanel() {
   return (
     <section className="mx-auto w-full max-w-6xl px-5 py-16">
-      <div className="overflow-hidden rounded-[32px] border border-[var(--line)] bg-white shadow-[0_20px_60px_rgba(20,20,20,0.06)]">
+      <div className="overflow-hidden rounded-[32px] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow)]">
         <div className="border-b border-[var(--line)] px-6 py-5 sm:px-8">
           <p className="text-sm font-bold text-[var(--mark)]">Measured first</p>
           <h2 className="display mt-2 max-w-2xl text-3xl sm:text-4xl">

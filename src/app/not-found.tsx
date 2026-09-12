@@ -7,7 +7,7 @@ export default function NotFound() {
       <h1 className="display mt-3 text-5xl">This page is not on the warrant.</h1>
       <Link
         href="/"
-        className="pressable mt-8 inline-flex min-h-12 w-fit items-center rounded-full bg-[var(--ink)] px-6 text-sm font-semibold text-white"
+        className="pressable mt-8 inline-flex min-h-12 w-fit items-center rounded-full bg-[var(--ink)] px-6 text-sm font-semibold text-[var(--on-ink)]"
       >
         Back to Warrant
       </Link>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, Plus_Jakarta_Sans } from 'next/font/google';
+import Script from 'next/script';
 import { SiteFooter } from '@/components/site/SiteFooter';
 import { SiteHeader } from '@/components/site/SiteHeader';
 import './globals.css';
@@ -29,9 +30,13 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${jakarta.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <Script id="warrant-theme" strategy="beforeInteractive">
+          {`(function(){try{var s=localStorage.getItem('warrant-theme');var d=s==='dark'||(s!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();`}
+        </Script>
         <a className="skip-link" href="#main">
           Skip to content
         </a>

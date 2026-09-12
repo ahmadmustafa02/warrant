@@ -42,7 +42,7 @@ export default function MethodPage() {
       </ol>
       <Link
         href="/dashboard"
-        className="pressable mt-10 inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-6 text-sm font-semibold text-white"
+        className="pressable mt-10 inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-6 text-sm font-semibold text-[var(--on-ink)]"
       >
         See measured runs
       </Link>

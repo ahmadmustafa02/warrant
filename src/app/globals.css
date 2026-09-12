@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --bg: #ffffff;
   --stage: #f4f4f5;
@@ -12,10 +14,25 @@
   --safe: #0f9d58;
   --hijack: #e23d28;
   --blocked: #c47a00;
+  --surface-2: #f4f4f5;
+  --on-ink: #ffffff;
   --shadow: 0 16px 50px rgba(20, 20, 20, 0.08);
   --radius: 24px;
   --header-h: 5.5rem;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html.dark {
+  --bg: #0c0c0d;
+  --stage: #161618;
+  --surface: #1c1c1f;
+  --surface-2: #222226;
+  --ink: #f4f4f5;
+  --muted: #a1a1aa;
+  --line: #2c2c30;
+  --accent: #f4f4f5;
+  --on-ink: #0c0c0d;
+  --shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
 }
 
 @theme inline {
@@ -28,6 +45,11 @@
 html {
   background: var(--bg);
   color: var(--ink);
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
@@ -41,8 +63,8 @@ body {
 }
 
 ::selection {
-  background: #141414;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--on-ink);
 }
 
 :focus-visible {
@@ -71,7 +93,7 @@ body {
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.78);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
   backdrop-filter: blur(20px) saturate(160%);
 }
 
@@ -100,7 +122,7 @@ body {
   padding: 0.65rem 0.9rem;
   border-radius: 999px;
   background: var(--ink);
-  color: #fff;
+  color: var(--on-ink);
 }
 
 .skip-link:focus {

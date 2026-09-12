@@ -24,13 +24,13 @@ export function LandingPage() {
         <div className="hero-line mt-8 flex flex-wrap justify-center gap-3">
           <Link
             href="/dashboard"
-            className="pressable inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-6 text-[15px] font-semibold text-white"
+            className="pressable inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-6 text-[15px] font-semibold text-[var(--on-ink)]"
           >
             Open the lab
           </Link>
           <Link
             href="/method"
-            className="pressable inline-flex min-h-12 items-center rounded-full border border-[var(--line)] bg-white px-6 text-[15px] font-semibold"
+            className="pressable inline-flex min-h-12 items-center rounded-full border border-[var(--line)] bg-[var(--surface)] px-6 text-[15px] font-semibold"
           >
             See the method
           </Link>
@@ -125,7 +125,7 @@ export function LandingPage() {
         </h2>
         <Link
           href="/dashboard"
-          className="pressable mt-8 inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-7 text-[15px] font-semibold text-white"
+          className="pressable mt-8 inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-7 text-[15px] font-semibold text-[var(--on-ink)]"
         >
           Go to measured runs
         </Link>
