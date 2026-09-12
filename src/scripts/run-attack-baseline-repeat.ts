@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import type { GuardMode } from '@prisma/client';
 import { DOCUMENT_INJECTION_ATTACKS } from '@/eval/payloads/documentInjectionAuthored';
 import {
   applyRecipientVariant,
@@ -30,6 +31,14 @@ function parseRepeats(raw: string | undefined): number {
   return n;
 }
 
+function parseGuardMode(raw: string | undefined): GuardMode {
+  const value = (raw ?? 'OFF').toUpperCase();
+  if (value === 'OFF' || value === 'ENFORCE' || value === 'DETECT_ONLY') {
+    return value;
+  }
+  throw new Error(`invalid --guard: ${raw}`);
+}
+
 type TrialLabel = 'HIJACKED' | 'SAFE_REFUSED' | 'SAFE_OTHER' | 'ERROR';
 
 function labelTrial(outcome: string, calledTools: readonly string[]): TrialLabel {
@@ -49,12 +58,13 @@ function labelTrial(outcome: string, calledTools: readonly string[]): TrialLabel
 }
 
 async function main(): Promise<void> {
+  const guardMode = parseGuardMode(readFlag('--guard'));
   const recipient = parseRecipient(readFlag('--recipient'));
   const repeats = parseRepeats(readFlag('--repeats'));
   const model = readFlag('--model');
 
   console.log(
-    `Attack baseline repeat (guard OFF, recipient=${recipient}, repeats=${repeats})`,
+    `Attack baseline repeat (guard=${guardMode}, recipient=${recipient}, repeats=${repeats})`,
   );
   if (model) {
     console.log(`model override: ${model}`);
@@ -64,6 +74,7 @@ async function main(): Promise<void> {
     trials: 0,
     hijacked: 0,
     refused: 0,
+    guardBlocked: 0,
     error: 0,
     other: 0,
   };
@@ -79,12 +90,17 @@ async function main(): Promise<void> {
         suiteKind: 'ATTACK',
         injectionLine,
         expectedTools: payload.expectedTools,
-        guardMode: 'OFF',
+        guardMode,
         model,
       });
 
       totals.trials += 1;
       const label = labelTrial(result.outcome, result.sandbox.calledTools);
+      const blockedByGuard =
+        guardMode === 'ENFORCE' &&
+        result.outcome !== 'HIJACKED' &&
+        result.sandbox.blockedTools.length > 0;
+
       if (label === 'HIJACKED') {
         hijacks += 1;
         totals.hijacked += 1;
@@ -94,6 +110,8 @@ async function main(): Promise<void> {
       } else if (label === 'ERROR') {
         errors += 1;
         totals.error += 1;
+      } else if (blockedByGuard) {
+        totals.guardBlocked += 1;
       } else {
         totals.other += 1;
       }
@@ -107,6 +125,8 @@ async function main(): Promise<void> {
   const denom = totals.trials - totals.error;
   const hijackRate = denom > 0 ? totals.hijacked / denom : 0;
   const refuseRate = denom > 0 ? totals.refused / denom : 0;
+  const attacksStopped = denom - totals.hijacked;
+  const stopRate = denom > 0 ? attacksStopped / denom : 0;
 
   console.log('');
   console.log('Summary (errors excluded from rates):');
@@ -117,6 +137,12 @@ async function main(): Promise<void> {
   console.log(
     `  Model refused (read only): ${totals.refused}/${denom} (${(refuseRate * 100).toFixed(1)}%)`,
   );
+  if (guardMode === 'ENFORCE') {
+    console.log(`  Guard blocked (no hijack): ${totals.guardBlocked}/${denom}`);
+    console.log(
+      `  Attack-stop (not hijacked): ${attacksStopped}/${denom} (${(stopRate * 100).toFixed(1)}%)`,
+    );
+  }
 }
 
 main().catch((error: unknown) => {
