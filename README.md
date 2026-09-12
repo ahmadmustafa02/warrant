@@ -78,6 +78,10 @@ tool-description injection.
 | Tests | Vitest with coverage thresholds enforced in CI |
 | Quality | ESLint type-aware, Prettier, husky + lint-staged, GitHub Actions |
 
+## Repository
+
+[github.com/ahmadmustafa02/warrant](https://github.com/ahmadmustafa02/warrant)
+
 ## Getting started
 
 ```bash
@@ -92,6 +96,8 @@ Run the full quality gate exactly as CI does:
 
 ```bash
 pnpm run verify           # format + lint + typecheck + test
+pnpm run run:sandbox      # one injected document case with guard ENFORCE
+pnpm run run:sandbox:baseline  # same case with guard OFF (baseline hijack)
 ```
 
 ## Engineering standards

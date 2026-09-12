@@ -20,7 +20,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       reportsDirectory: './coverage',
-      include: ['src/core/**/*.ts', 'src/eval/**/*.ts', 'src/lib/**/*.ts'],
+      include: [
+        'src/core/**/*.ts',
+        'src/eval/**/*.ts',
+        'src/lib/**/*.ts',
+        'src/agent/intent/**/*.ts',
+        'src/agent/guard/**/*.ts',
+      ],
       exclude: ['**/*.test.ts', '**/index.ts', '**/types.ts'],
       thresholds: {
         lines: 80,
