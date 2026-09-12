@@ -38,9 +38,9 @@ html.dark {
   --safe: #5dca8e;
   --hijack: #ff7a6e;
   --blocked: #e8b15a;
-  --safe-soft: #163322;
-  --hijack-soft: #3a1715;
-  --blocked-soft: #33240f;
+  --safe-soft: #1a2420;
+  --hijack-soft: #26181a;
+  --blocked-soft: #241e16;
   --shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
 }
 
