@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { MeasuredComparisonPanel } from '@/components/lab/MeasuredComparisonPanel';
+import { getMeasuredComparison } from '@/server/eval/baselineComparison';
+import { prisma } from '@/server/db';
 
 export const metadata: Metadata = {
   title: 'Method',
@@ -24,7 +27,16 @@ const rules = [
   },
 ] as const;
 
-export default function MethodPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function MethodPage() {
+  let comparison: Awaited<ReturnType<typeof getMeasuredComparison>> = null;
+  try {
+    comparison = await getMeasuredComparison(prisma);
+  } catch {
+    comparison = null;
+  }
+
   return (
     <article className="mx-auto w-full max-w-3xl px-5 py-16 sm:py-20">
       <p className="text-sm font-bold text-[var(--mark)]">Method</p>
@@ -40,6 +52,11 @@ export default function MethodPage() {
           </li>
         ))}
       </ol>
+      {comparison ? (
+        <div className="mt-12">
+          <MeasuredComparisonPanel comparison={comparison} compact />
+        </div>
+      ) : null}
       <Link
         href="/dashboard"
         className="pressable mt-10 inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-6 text-sm font-semibold text-[var(--on-ink)]"

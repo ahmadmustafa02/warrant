@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MetricPair } from '@/components/ui/MetricPair';
 import { formatDateTime, guardModeLabel } from '@/lib/format';
+import { MeasuredComparisonPanel } from '@/components/lab/MeasuredComparisonPanel';
+import { getMeasuredComparison } from '@/server/eval/baselineComparison';
 import { countEvalOverview, listEvalRuns } from '@/server/eval/queries';
+import { prisma } from '@/server/db';
 
 export const metadata: Metadata = {
   title: 'Lab',
@@ -13,10 +16,15 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   let runs: Awaited<ReturnType<typeof listEvalRuns>> = [];
   let overview: Awaited<ReturnType<typeof countEvalOverview>> | null = null;
+  let comparison: Awaited<ReturnType<typeof getMeasuredComparison>> = null;
   let loadError: string | null = null;
 
   try {
-    [runs, overview] = await Promise.all([listEvalRuns(), countEvalOverview()]);
+    [runs, overview, comparison] = await Promise.all([
+      listEvalRuns(),
+      countEvalOverview(),
+      getMeasuredComparison(prisma),
+    ]);
   } catch (error) {
     loadError =
       error instanceof Error ? error.message : 'Could not load evaluation data';
@@ -41,6 +49,8 @@ export default async function DashboardPage() {
         </div>
       ) : null}
 
+      {comparison ? <MeasuredComparisonPanel comparison={comparison} /> : null}
+
       {latestMetric ? (
         <div className="mt-10">
           <MetricPair
@@ -64,6 +74,8 @@ export default async function DashboardPage() {
           </p>
           <pre className="mt-5 overflow-x-auto rounded-2xl bg-[var(--surface-2)] p-4 font-mono text-sm">
             {`pnpm run eval:seed
+pnpm run eval:baseline
+pnpm run eval:full -- --guard OFF
 pnpm run eval:full -- --guard ENFORCE`}
           </pre>
         </div>
