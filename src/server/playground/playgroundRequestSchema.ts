@@ -2,23 +2,11 @@ import { z } from 'zod';
 
 const guardModeSchema = z.enum(['OFF', 'ENFORCE']);
 
-export const playgroundReplayRequestSchema = z.object({
-  mode: z.literal('replay'),
+/** Public playground accepts only known presets — no custom prompts or live LLM runs. */
+export const playgroundRequestSchema = z.object({
   presetId: z.string().min(1),
   guardMode: guardModeSchema,
 });
-
-export const playgroundLiveRequestSchema = z.object({
-  mode: z.literal('live'),
-  userTurn: z.string().min(1).max(2000),
-  injectionLine: z.string().min(1).max(4000),
-  guardMode: guardModeSchema,
-});
-
-export const playgroundRequestSchema = z.discriminatedUnion('mode', [
-  playgroundReplayRequestSchema,
-  playgroundLiveRequestSchema,
-]);
 
 export type PlaygroundRequest = z.infer<typeof playgroundRequestSchema>;
 

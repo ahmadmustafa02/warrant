@@ -10,7 +10,7 @@ Copy from `.env.example`. Required in production:
 | Variable | Purpose |
 | -------- | ------- |
 | `DATABASE_URL` | Postgres connection string |
-| `GROQ_API_KEY` | Playground + eval target model |
+| `GROQ_API_KEY` | Eval harness + local `run:sandbox` (not used by public `/playground`) |
 | `SANDBOX_CANARY_SECRET` | Fake credential for hijack detection |
 
 Optional: `OPENAI_*` for analysis features if enabled later.
@@ -29,11 +29,11 @@ Optional: `OPENAI_*` for analysis features if enabled later.
 3. Build command: `pnpm run build` (default).
 4. After first deploy, run migrations against production `DATABASE_URL` from CI or locally.
 
-The **playground** uses your Groq key and an in-memory **24 runs/hour per IP** limit. For a
-public demo, monitor Groq usage and tighten limits if needed.
+The **playground** only serves **fixed templates** and **seeded lab traces** from Postgres
+(fallback summaries when no eval run exists). It does not call Groq or accept custom prompts.
 
 ## Post-deploy checklist
 
-- [ ] `/playground` — attack preset, guard off then on
+- [ ] `/playground` — template preset, guard off then on (recorded results)
 - [ ] `/dashboard` — at least one completed `eval:full` run
 - [ ] Landing numbers match latest measured runs (or wire live comparison)

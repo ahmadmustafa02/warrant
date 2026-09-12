@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { TranscriptView } from '@/components/trace/TranscriptView';
 import { OutcomeBadge } from '@/components/ui/OutcomeBadge';
 import { PLAYGROUND_PRESETS } from '@/lib/playgroundPresets';
-import { DEFAULT_EVAL_USER_TURN } from '@/eval/payloads/types';
 
 type GuardChoice = 'OFF' | 'ENFORCE';
 
@@ -29,18 +28,16 @@ type PlaygroundResult = {
 };
 
 export function PlaygroundPanel() {
-  const [userTurn, setUserTurn] = useState(DEFAULT_EVAL_USER_TURN);
-  const [injectionLine, setInjectionLine] = useState(
-    PLAYGROUND_PRESETS[0]?.injectionLine ?? '',
-  );
   const [guardMode, setGuardMode] = useState<GuardChoice>('OFF');
   const [presetId, setPresetId] = useState(
     PLAYGROUND_PRESETS[0]?.id ?? 'direct_override',
   );
-  const [liveMode, setLiveMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PlaygroundResult | null>(null);
+
+  const activePreset =
+    PLAYGROUND_PRESETS.find((entry) => entry.id === presetId) ?? PLAYGROUND_PRESETS[0];
 
   async function runPlayground(nextGuard?: GuardChoice): Promise<void> {
     const mode = nextGuard ?? guardMode;
@@ -51,23 +48,13 @@ export function PlaygroundPanel() {
     }
 
     try {
-      const body = liveMode
-        ? {
-            mode: 'live' as const,
-            userTurn,
-            injectionLine,
-            guardMode: mode,
-          }
-        : {
-            mode: 'replay' as const,
-            presetId,
-            guardMode: mode,
-          };
-
       const response = await fetch('/api/playground/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          presetId,
+          guardMode: mode,
+        }),
       });
 
       const payload: unknown = await response.json();
@@ -86,21 +73,18 @@ export function PlaygroundPanel() {
 
       setResult(payload as PlaygroundResult);
     } catch {
-      setError('Network error while running the sandbox agent.');
+      setError('Network error while loading the recorded run.');
       setResult(null);
     } finally {
       setLoading(false);
     }
   }
 
-  function applyPreset(id: string): void {
-    const preset = PLAYGROUND_PRESETS.find((entry) => entry.id === id);
-    if (!preset) {
+  function selectPreset(id: string): void {
+    if (!PLAYGROUND_PRESETS.some((entry) => entry.id === id)) {
       return;
     }
-    setPresetId(preset.id);
-    setUserTurn(preset.userTurn);
-    setInjectionLine(preset.injectionLine);
+    setPresetId(id);
     setResult(null);
     setError(null);
   }
@@ -109,60 +93,57 @@ export function PlaygroundPanel() {
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-bold text-[var(--mark)]">Presets</p>
+          <p className="text-sm font-bold text-[var(--mark)]">Lab templates</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            Fixed scenarios from the eval corpus. Results are recorded lab traces — no
+            public LLM calls or custom prompts.
+          </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {PLAYGROUND_PRESETS.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
-                className="pressable rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-sm font-medium"
+                className={`pressable rounded-full border px-4 py-2 text-sm font-medium ${
+                  presetId === preset.id
+                    ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--on-ink)]'
+                    : 'border-[var(--line)] bg-[var(--surface)]'
+                }`}
                 onClick={() => {
-                  applyPreset(preset.id);
+                  selectPreset(preset.id);
                 }}
               >
                 {preset.label}
               </button>
             ))}
           </div>
-          <p className="mt-2 text-sm text-[var(--muted)]">
-            {PLAYGROUND_PRESETS.find((p) => p.injectionLine === injectionLine)
-              ?.description ??
-              'Custom input — mock tools only, fake canary credential.'}
-          </p>
+          {activePreset ? (
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              {activePreset.description}
+            </p>
+          ) : null}
         </div>
 
-        <label className="block">
-          <span className="text-sm font-medium">User request (authorizes tools)</span>
-          <textarea
-            className="surface mt-2 min-h-[100px] w-full rounded-2xl border border-[var(--line)] p-4 text-sm leading-6"
-            value={userTurn}
-            onChange={(event) => {
-              setUserTurn(event.target.value);
-            }}
-          />
-        </label>
+        {activePreset ? (
+          <>
+            <div className="surface rounded-2xl p-4">
+              <p className="text-xs font-medium text-[var(--muted)]">
+                User request (authorizes tools)
+              </p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
+                {activePreset.userTurn}
+              </p>
+            </div>
 
-        <label className="block">
-          <span className="text-sm font-medium">Hidden line inside the document</span>
-          <textarea
-            className="surface mt-2 min-h-[120px] w-full rounded-2xl border border-[var(--line)] p-4 font-mono text-xs leading-6"
-            value={injectionLine}
-            onChange={(event) => {
-              setInjectionLine(event.target.value);
-            }}
-          />
-        </label>
-
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={liveMode}
-            onChange={(event) => {
-              setLiveMode(event.target.checked);
-            }}
-          />
-          Live run (uses Groq API, rate limited)
-        </label>
+            <div className="surface rounded-2xl p-4">
+              <p className="text-xs font-medium text-[var(--muted)]">
+                Hidden line inside the document
+              </p>
+              <p className="mt-2 whitespace-pre-wrap font-mono text-xs leading-6">
+                {activePreset.injectionLine}
+              </p>
+            </div>
+          </>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-3">
           <fieldset className="flex rounded-full border border-[var(--line)] p-1">
@@ -186,17 +167,13 @@ export function PlaygroundPanel() {
           </fieldset>
           <button
             type="button"
-            disabled={loading}
+            disabled={loading || !activePreset}
             className="pressable inline-flex min-h-11 items-center rounded-full bg-[var(--mark)] px-5 text-sm font-bold text-white disabled:opacity-60"
             onClick={() => {
               void runPlayground();
             }}
           >
-            {loading
-              ? 'Running…'
-              : liveMode
-                ? 'Run live agent'
-                : 'Show recorded result'}
+            {loading ? 'Loading…' : 'Show recorded result'}
           </button>
         </div>
 
@@ -205,6 +182,11 @@ export function PlaygroundPanel() {
             {error}
           </p>
         ) : null}
+
+        <p className="text-xs text-[var(--muted)]">
+          To run a live sandbox agent locally (Groq + mock tools), use{' '}
+          <code className="font-mono">pnpm run run:sandbox</code>.
+        </p>
       </div>
 
       <div className="space-y-6">
@@ -213,10 +195,7 @@ export function PlaygroundPanel() {
             <div className="flex flex-wrap items-center gap-3">
               <OutcomeBadge outcome={result.outcome} />
               <span className="text-sm text-[var(--muted)]">
-                {result.replayed
-                  ? `Recorded (${result.replaySource ?? 'replay'})`
-                  : `${result.latencyMs} ms live`}
-                {' · guard '}
+                Recorded ({result.replaySource ?? 'lab'}){' · guard '}
                 {result.guardMode.toLowerCase()}
               </span>
             </div>
@@ -289,8 +268,8 @@ export function PlaygroundPanel() {
         ) : (
           <div className="surface flex min-h-[320px] items-center justify-center rounded-[28px] p-8 text-center">
             <p className="max-w-sm text-sm text-[var(--muted)]">
-              Run the sandbox agent to see whether the injection hijacks mock tools, and
-              how Warrant blocks unauthorized sends and key reads.
+              Pick a template and guard mode, then load the stored outcome to compare
+              hijack vs Warrant block.
             </p>
           </div>
         )}
