@@ -63,5 +63,8 @@ jobs:
       - name: Test with coverage
         run: pnpm run test:coverage
 
+      - name: Build guard package
+        run: pnpm run build:guard
+
       - name: Build
         run: pnpm run build

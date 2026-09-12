@@ -127,7 +127,22 @@ pnpm run eval:full -- --guard ENFORCE   # both suites, dual-metric scorecard
 pnpm run eval:attack-repeat -- --recipient realistic --repeats 5 --guard OFF
 pnpm run eval:attack-repeat -- --recipient realistic --repeats 5 --guard ENFORCE
 pnpm run dev                         # /playground — interactive sandbox demo in the browser
+pnpm run build:guard                 # compile @warrant/guard for npm publish
 ```
+
+## Using Warrant in your agent
+
+Install the core guard (from this monorepo until published):
+
+```bash
+pnpm run build:guard
+```
+
+See **`docs/INTEGRATION.md`** for the explicit-warrant tool-loop pattern and
+**`packages/guard/README.md`** for the npm package entrypoints (`@warrant/guard` and
+`@warrant/guard/agent`).
+
+Deploy the demo app: **`docs/DEPLOY.md`**.
 
 ## Engineering standards
 

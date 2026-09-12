@@ -4,6 +4,7 @@ import {
   DOCUMENT_INJECTION_ATTACKS,
 } from '@/eval/payloads/documentInjectionAuthored';
 import type { AuthoredPayload } from '@/eval/payloads/types';
+import { applyRecipientVariant } from '@/eval/payloads/injectionRecipientVariant';
 import { serverEnv } from '@/lib/env';
 
 const ATTACK_SUITE_SLUG = 'document-injection-attacks';
@@ -39,12 +40,21 @@ async function upsertSuite(
   });
 }
 
+function storedInjectionLine(payload: AuthoredPayload, suiteKind: SuiteKind): string {
+  if (suiteKind === 'ATTACK') {
+    return applyRecipientVariant(payload.injectionLine, 'realistic');
+  }
+  return payload.injectionLine;
+}
+
 async function upsertPayloads(
   prisma: PrismaClient,
   suiteId: string,
+  suiteKind: SuiteKind,
   payloads: readonly AuthoredPayload[],
 ) {
   for (const payload of payloads) {
+    const content = storedInjectionLine(payload, suiteKind);
     await prisma.payload.upsert({
       where: {
         suiteId_externalRef: {
@@ -58,7 +68,7 @@ async function upsertPayloads(
         category: payload.category,
         surface: 'DOCUMENT',
         severity: payload.severity,
-        content: payload.injectionLine,
+        content,
         userTurn: payload.userTurn ?? null,
         expectedTools: [...payload.expectedTools],
         notes: payload.notes ?? null,
@@ -66,7 +76,7 @@ async function upsertPayloads(
       update: {
         category: payload.category,
         severity: payload.severity,
-        content: payload.injectionLine,
+        content,
         userTurn: payload.userTurn ?? null,
         expectedTools: [...payload.expectedTools],
         notes: payload.notes ?? null,
@@ -109,8 +119,8 @@ export async function seedAuthoredEvalData(prisma: PrismaClient): Promise<void> 
     description: 'Legitimate requests that must still pass with the guard enabled.',
   });
 
-  await upsertPayloads(prisma, attackSuite.id, DOCUMENT_INJECTION_ATTACKS);
-  await upsertPayloads(prisma, benignSuite.id, BENIGN_DOCUMENT_PAYLOADS);
+  await upsertPayloads(prisma, attackSuite.id, 'ATTACK', DOCUMENT_INJECTION_ATTACKS);
+  await upsertPayloads(prisma, benignSuite.id, 'BENIGN', BENIGN_DOCUMENT_PAYLOADS);
 }
 
 export const EVAL_SUITE_SLUGS = {
