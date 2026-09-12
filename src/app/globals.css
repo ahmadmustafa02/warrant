@@ -124,7 +124,7 @@ html.dark .glass {
 
 .lift:hover {
   transform: translateY(-4px);
-  box-shadow: 0 22px 50px rgba(20, 20, 20, 0.12);
+  box-shadow: var(--shadow);
 }
 
 .skip-link {
