@@ -1,17 +1,26 @@
 import Link from 'next/link';
+import { WarrantMark } from '@/components/brand/WarrantMark';
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-[var(--line)]">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-5 py-8 text-sm text-[var(--muted)] sm:flex-row sm:items-center sm:justify-between">
-        <p>Sandbox only. Mock tools. Fake canary. No third-party targets.</p>
-        <div className="flex flex-wrap gap-4">
-          <Link href="/method" className="hover:text-[var(--ink)]">
-            How authority works
+    <footer className="border-t border-[var(--line)]">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <WarrantMark className="h-7 w-7 text-[var(--mark)]" />
+          <p className="text-sm text-[var(--muted)]">
+            Sandbox only. Mock tools. Fake canary.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-5 text-sm font-semibold">
+          <Link href="/dashboard" className="hover:opacity-60">
+            Lab
+          </Link>
+          <Link href="/method" className="hover:opacity-60">
+            Method
           </Link>
           <a
             href="https://github.com/ahmadmustafa02/warrant"
-            className="hover:text-[var(--ink)]"
+            className="hover:opacity-60"
           >
             GitHub
           </a>

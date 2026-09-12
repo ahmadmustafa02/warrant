@@ -22,24 +22,28 @@ export function LandingMotion({ children }: { children: ReactNode }) {
             return;
           }
 
-          const timeline = gsap.timeline({
-            defaults: { ease: 'power3.out', duration: 0.7 },
-          });
-          timeline.from('.hero-line', {
+          gsap.from('.hero-line', {
             y: 28,
             autoAlpha: 0,
+            duration: 0.7,
+            ease: 'power3.out',
             stagger: 0.08,
           });
-          timeline.from(
-            '.metric-card',
-            { y: 18, autoAlpha: 0, stagger: 0.07, duration: 0.55 },
-            '-=0.35',
-          );
-          timeline.from(
-            '.step-card',
-            { y: 16, autoAlpha: 0, stagger: 0.06, duration: 0.5 },
-            '-=0.25',
-          );
+          gsap.from('.hero-visual', {
+            y: 36,
+            autoAlpha: 0,
+            duration: 0.85,
+            delay: 0.2,
+            ease: 'power3.out',
+          });
+          gsap.from('.stat-card', {
+            y: 20,
+            autoAlpha: 0,
+            duration: 0.55,
+            stagger: 0.08,
+            delay: 0.35,
+            ease: 'power3.out',
+          });
         },
       );
 

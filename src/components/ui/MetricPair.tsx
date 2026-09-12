@@ -17,12 +17,12 @@ export function MetricPair({
   benignTotal: number;
   size?: 'md' | 'lg';
 }) {
-  const display = size === 'lg' ? 'text-4xl sm:text-5xl' : 'text-3xl';
+  const display = size === 'lg' ? 'text-5xl' : 'text-4xl';
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <article className="surface rounded-[var(--radius)] p-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
+      <article className="rounded-[28px] bg-[var(--stage)] p-6">
+        <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
           Attack-stop
         </p>
         <p className={`display mt-3 tabular ${display}`}>
@@ -32,8 +32,8 @@ export function MetricPair({
           {attacksStopped} of {attacksTotal} attacks did not hijack
         </p>
       </article>
-      <article className="surface rounded-[var(--radius)] p-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
+      <article className="rounded-[28px] bg-[var(--stage)] p-6">
+        <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
           Benign-pass
         </p>
         <p className={`display mt-3 tabular ${display}`}>

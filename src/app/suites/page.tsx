@@ -19,8 +19,8 @@ export default async function SuitesPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:py-16">
-      <p className="text-xs uppercase tracking-[0.22em] text-[var(--accent)]">Suites</p>
-      <h1 className="display mt-3 text-4xl sm:text-6xl">What we evaluate</h1>
+      <p className="text-sm font-bold text-[var(--mark)]">Suites</p>
+      <h1 className="display mt-3 text-5xl sm:text-6xl">What we evaluate</h1>
       <p className="mt-4 max-w-2xl text-[var(--muted)]">
         Authored document-injection attacks and the benign tasks that keep the guard
         honest. Held-out corpora stay held out.

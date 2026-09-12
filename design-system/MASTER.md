@@ -1,46 +1,34 @@
 # Warrant design system
 
-Product: security evaluation console (SaaS dashboard + product site).
-Audience: reviewers, security engineers, internship/MITACS readers.
+Inspired by [Mobbin](https://mobbin.com/): a white SaaS marketing surface whose color comes from product UI, not from a themed overlay.
 
 ## Intent
 
-Calm authority. A warrant is a legal instrument, not a cyber-hud. The interface should feel like a well-set type specimen and a laboratory notebook — precise, quiet, expensive — not a purple AI landing page.
+Feel like a shipped product site. Huge type. Soft gray stages. Real interface mockups. Motion that lifts cards and ticks marquees. Never a dark essay with no pictures.
 
-## Style
-
-Apple-informed restraint: translucent chrome, materials with depth, springs that settle without bounce unless the user threw something. One accent. No stacked glass. No emoji icons.
-
-## Color tokens
+## Color
 
 | Token | Role | Value |
 | --- | --- | --- |
-| `--bg` | Page | `#0c0b09` warm near-black |
-| `--surface` | Cards | `#161410` |
-| `--surface-2` | Nested | `#1e1b16` |
-| `--ink` | Primary text | `#f3eee4` |
-| `--muted` | Secondary | `#9a9386` |
-| `--line` | Hairline | `rgba(243, 238, 228, 0.10)` |
-| `--accent` | Warrant brass | `#c4a05a` |
-| `--safe` | Passed / allowed | `#8fb08a` |
-| `--hijack` | Failed / leaked | `#d36b5c` |
-| `--blocked` | Guard denied | `#c4a05a` |
-
-Never report attack-stop without benign-pass. Never encode outcome by color alone — always pair with a word.
+| `--bg` | Page | `#ffffff` |
+| `--stage` | Soft sections | `#f4f4f5` |
+| `--ink` | Text | `#141414` |
+| `--muted` | Secondary | `#6b6b6b` |
+| `--line` | Hairline | `#ececec` |
+| `--accent` | Primary action | `#141414` |
+| `--mark` | Brand spark | `#ff4d6d` |
+| `--safe` | Passed | `#0f9d58` |
+| `--hijack` | Failed | `#e23d28` |
+| `--blocked` | Denied | `#c47a00` |
 
 ## Type
 
-- Display: Instrument Serif. Tight leading (~1.05), tracking −0.02em at large sizes.
-- UI: Geist. Body 16px / 1.55.
-- Data: IBM Plex Mono. Tabular figures for rates.
+Plus Jakarta Sans everywhere. Headlines 56–80px, weight 700, tracking −0.03em, line-height ~1.0. Body 16–18px, weight 500, muted gray.
+
+## Layout
+
+Floating capsule nav. Centered hero. Product frames with browser chrome. Chip marquees. Soft-gray feature stages. Pill CTAs.
 
 ## Motion
 
-- Default spring: critically damped, ~300–400ms, transform/opacity only.
-- Press: scale 0.97 on pointer-down.
-- `prefers-reduced-motion`: cross-fade only.
-- `prefers-reduced-transparency`: solid chrome, no blur.
-
-## Anti-patterns
-
-Generic Inter + indigo gradient. Neon grids. Emoji as icons. Color-only status. Hover-only actions. Blocking page transitions. Confetti delight.
+Enter from 24px below. Card hover: translateY(-4px) + shadow. Infinite chip marquee. Reduced motion: no marquee, no translate.

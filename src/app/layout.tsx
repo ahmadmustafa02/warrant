@@ -1,18 +1,13 @@
 import type { Metadata } from 'next';
-import { Geist, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
+import { IBM_Plex_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 import { SiteFooter } from '@/components/site/SiteFooter';
 import { SiteHeader } from '@/components/site/SiteHeader';
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const jakarta = Plus_Jakarta_Sans({
+  variable: '--font-plus-jakarta',
   subsets: ['latin'],
-});
-
-const instrument = Instrument_Serif({
-  variable: '--font-instrument',
-  subsets: ['latin'],
-  weight: '400',
+  weight: ['500', '600', '700', '800'],
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -34,7 +29,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${instrument.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <a className="skip-link" href="#main">

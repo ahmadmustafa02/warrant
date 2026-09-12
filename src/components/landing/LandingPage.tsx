@@ -1,93 +1,153 @@
 import Link from 'next/link';
+import { BrowserFrame } from '@/components/visual/BrowserFrame';
+import { DocumentMock } from '@/components/visual/DocumentMock';
+import { ScorecardMock } from '@/components/visual/ScorecardMock';
+import { TraceMock } from '@/components/visual/TraceMock';
+import { ChipMarquee } from './ChipMarquee';
 import { LandingMotion } from './LandingMotion';
 
-const steps = [
-  {
-    title: 'Derive',
-    body: 'Read the clean user turn and name the tools it actually asked for. Nothing else is in context yet.',
-  },
-  {
-    title: 'Freeze',
-    body: 'Issue a warrant and lock it. Later text — a PDF, a memory row, a worker — cannot edit the permission set.',
-  },
-  {
-    title: 'Check',
-    body: 'Every sensitive call is compared to that frozen set. Content may fill parameters. It cannot add capabilities.',
-  },
-  {
-    title: 'Measure',
-    body: 'Hijack is a fact: which tools fired, whether the canary leaked. Attack-stop is never published without benign-pass.',
-  },
+const stats = [
+  { value: '7 / 10', label: 'Hijacks with the guard off' },
+  { value: '2 / 10', label: 'Caught by PromptGuard' },
+  { value: '2 rates', label: 'Always reported together' },
 ] as const;
 
 export function LandingPage() {
   return (
     <LandingMotion>
-      <section className="mx-auto w-full max-w-6xl px-5 pb-24 pt-16 sm:pt-24">
-        <p className="hero-line text-xs uppercase tracking-[0.22em] text-[var(--accent)]">
+      <section className="mx-auto w-full max-w-5xl px-5 pb-8 pt-16 text-center sm:pt-24">
+        <p className="hero-line inline-flex rounded-full bg-[var(--stage)] px-3 py-1 text-sm font-semibold">
           Provenance-based tool authorization
         </p>
-        <h1 className="display hero-line mt-5 max-w-4xl text-5xl sm:text-7xl">
-          A sensitive action needs a warrant from the human.
+        <h1 className="display hero-line mx-auto mt-6 max-w-4xl text-5xl sm:text-7xl lg:text-[80px]">
+          Stop agents from doing what the user never asked.
         </h1>
-        <p className="hero-line mt-7 max-w-2xl text-lg text-[var(--muted)]">
-          Agents that read untrusted documents while holding real tools can be hijacked.
-          Warrant does not hunt for malicious wording. It checks whether the human
-          already authorized the action — before any document was opened.
+        <p className="hero-line mx-auto mt-6 max-w-xl text-lg text-[var(--muted)]">
+          Hidden instructions in a document can steal tools. Warrant freezes permissions
+          from the human first — then lets content fill details, never add capabilities.
         </p>
-        <div className="hero-line mt-9 flex flex-wrap gap-3">
+        <div className="hero-line mt-8 flex flex-wrap justify-center gap-3">
           <Link
             href="/dashboard"
-            className="pressable inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-6 text-sm font-medium text-[var(--bg)]"
+            className="pressable inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-6 text-[15px] font-semibold text-white"
           >
             Open the lab
           </Link>
           <Link
             href="/method"
-            className="pressable inline-flex min-h-12 items-center rounded-full border border-[var(--line)] px-6 text-sm text-[var(--ink)]"
+            className="pressable inline-flex min-h-12 items-center rounded-full border border-[var(--line)] bg-white px-6 text-[15px] font-semibold"
           >
-            Read the method
+            See the method
           </Link>
         </div>
       </section>
 
-      <section className="mx-auto grid w-full max-w-6xl gap-4 px-5 pb-20 sm:grid-cols-2">
-        <article className="metric-card surface rounded-[var(--radius)] p-7">
-          <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-            Spike, guard off
-          </p>
-          <p className="display mt-4 text-5xl tabular">7 / 10</p>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-            gpt-oss-20b followed hidden instructions in a quarterly notes document and
-            leaked a sandbox secret. Detection-only PromptGuard flagged 2 of 10.
-          </p>
-        </article>
-        <article className="metric-card surface rounded-[var(--radius)] p-7">
-          <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-            What we report
-          </p>
-          <p className="display mt-4 text-5xl">Both rates</p>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-            A lock that never opens looks perfect on attack-stop and is useless. Every
-            scorecard shows benign-pass beside it.
-          </p>
-        </article>
+      <section className="hero-visual mx-auto w-full max-w-6xl px-5 pb-6">
+        <BrowserFrame title="warrant.dev/dashboard" className="float-slow">
+          <ScorecardMock />
+        </BrowserFrame>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-5 pb-28">
-        <h2 className="display text-3xl sm:text-4xl">How a turn is authorized</h2>
-        <ol className="mt-10 grid gap-4 md:grid-cols-2">
-          {steps.map((step, index) => (
-            <li
-              key={step.title}
-              className="step-card surface rounded-[var(--radius)] p-6"
-            >
-              <p className="text-xs tabular text-[var(--accent)]">0{index + 1}</p>
-              <h3 className="mt-3 text-xl font-medium">{step.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{step.body}</p>
-            </li>
-          ))}
-        </ol>
+      <ChipMarquee />
+
+      <section className="mx-auto grid w-full max-w-6xl gap-4 px-5 py-16 sm:grid-cols-3">
+        {stats.map((stat) => (
+          <article
+            key={stat.label}
+            className="stat-card rounded-[28px] bg-[var(--stage)] px-6 py-8 text-center"
+          >
+            <p className="display text-5xl">{stat.value}</p>
+            <p className="mt-3 text-sm font-semibold text-[var(--muted)]">
+              {stat.label}
+            </p>
+          </article>
+        ))}
+      </section>
+
+      <section className="stage py-20">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-5 lg:grid-cols-2">
+          <div>
+            <p className="text-sm font-bold text-[var(--mark)]">01 — See the poison</p>
+            <h2 className="display mt-3 text-4xl sm:text-5xl">
+              The attack lives inside ordinary work.
+            </h2>
+            <p className="mt-4 text-[var(--muted)]">
+              A quarterly notes file looks fine until line three. The user only asked
+              for a summary. The document asked for the API key.
+            </p>
+          </div>
+          <BrowserFrame title="doc-1 · Quarterly notes">
+            <DocumentMock />
+          </BrowserFrame>
+        </div>
+      </section>
+
+      <section className="py-20">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-5 lg:grid-cols-2">
+          <BrowserFrame title="warrant.dev/runs/…/cases" className="lg:order-1">
+            <TraceMock />
+          </BrowserFrame>
+          <div className="lg:order-2">
+            <p className="text-sm font-bold text-[var(--mark)]">
+              02 — Freeze the warrant
+            </p>
+            <h2 className="display mt-3 text-4xl sm:text-5xl">
+              Content may fill details. It cannot add tools.
+            </h2>
+            <p className="mt-4 text-[var(--muted)]">
+              The user authorized read_document. get_api_key was never on the warrant.
+              The guard denied it, then the agent still finished the summary.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="stage py-20">
+        <div className="mx-auto w-full max-w-6xl px-5">
+          <h2 className="display max-w-3xl text-4xl sm:text-6xl">
+            Always both numbers. Always a replay.
+          </h2>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {[
+              {
+                title: 'Lab',
+                body: 'Every run shows attack-stop next to benign-pass.',
+                href: '/dashboard',
+              },
+              {
+                title: 'Suites',
+                body: 'Ten authored injections and the tasks that must still pass.',
+                href: '/suites',
+              },
+              {
+                title: 'Method',
+                body: 'Origin, freeze, parameters, facts — no LLM judge.',
+                href: '/method',
+              },
+            ].map((card) => (
+              <Link
+                key={card.title}
+                href={card.href}
+                className="pressable lift surface block rounded-[28px] p-6"
+              >
+                <h3 className="text-2xl font-bold tracking-tight">{card.title}</h3>
+                <p className="mt-2 text-[var(--muted)]">{card.body}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 py-24 text-center">
+        <h2 className="display mx-auto max-w-3xl text-4xl sm:text-6xl">
+          Open the lab. Watch a hijack fail.
+        </h2>
+        <Link
+          href="/dashboard"
+          className="pressable mt-8 inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-7 text-[15px] font-semibold text-white"
+        >
+          Go to measured runs
+        </Link>
       </section>
     </LandingMotion>
   );

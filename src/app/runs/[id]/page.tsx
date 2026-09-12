@@ -28,9 +28,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
         <span aria-hidden="true"> / </span>
         Run
       </p>
-      <h1 className="display mt-3 text-4xl sm:text-5xl">
-        {guardModeLabel(run.guardMode)}
-      </h1>
+      <h1 className="display mt-3 text-5xl">{guardModeLabel(run.guardMode)}</h1>
       <p className="mt-3 text-sm text-[var(--muted)]">
         {run.targetModelId} · {formatDateTime(run.startedAt)} · {run.status}
       </p>

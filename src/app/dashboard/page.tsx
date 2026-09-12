@@ -26,8 +26,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:py-16">
-      <p className="text-xs uppercase tracking-[0.22em] text-[var(--accent)]">Lab</p>
-      <h1 className="display mt-3 text-4xl sm:text-6xl">Measured runs</h1>
+      <p className="text-sm font-bold text-[var(--mark)]">Lab</p>
+      <h1 className="display mt-3 text-5xl sm:text-6xl">Measured runs</h1>
       <p className="mt-4 max-w-2xl text-[var(--muted)]">
         Every completed run stores both rates. Open a row to inspect the cases, the
         tools that fired, and the warrant decisions.
@@ -75,7 +75,7 @@ pnpm run eval:full -- --guard ENFORCE`}
             <li key={run.id}>
               <Link
                 href={`/runs/${run.id}`}
-                className="pressable surface flex flex-col gap-3 rounded-[var(--radius)] p-5 sm:flex-row sm:items-center sm:justify-between"
+                className="pressable lift surface flex flex-col gap-3 rounded-[28px] p-5 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="font-medium">{guardModeLabel(run.guardMode)}</p>

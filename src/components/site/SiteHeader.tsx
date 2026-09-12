@@ -9,16 +9,16 @@ const links = [
 
 export function SiteHeader() {
   return (
-    <header className="glass sticky top-0 z-40">
-      <div className="mx-auto flex min-h-[var(--header-h)] w-full max-w-6xl items-center justify-between gap-6 px-5">
+    <header className="sticky top-0 z-40 px-4 pt-4">
+      <div className="glass mx-auto flex min-h-14 w-full max-w-5xl items-center justify-between rounded-full border border-[var(--line)] px-3 shadow-[0_10px_40px_rgba(20,20,20,0.06)] sm:px-4">
         <Link
           href="/"
-          className="pressable inline-flex min-h-11 items-center gap-2.5 text-[0.95rem] tracking-tight"
+          className="pressable inline-flex min-h-11 items-center gap-2 rounded-full px-2"
         >
-          <WarrantMark className="h-7 w-7 text-[var(--accent)]" />
-          <span className="font-medium">Warrant</span>
+          <WarrantMark className="h-8 w-8 text-[var(--mark)]" />
+          <span className="text-[15px] font-bold tracking-tight">Warrant</span>
         </Link>
-        <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-2">
+        <nav aria-label="Primary" className="hidden items-center gap-1 sm:flex">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -28,13 +28,13 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/dashboard"
-            className="pressable ml-1 inline-flex min-h-11 items-center rounded-full bg-[var(--ink)] px-4 text-sm font-medium text-[var(--bg)]"
-          >
-            Open lab
-          </Link>
         </nav>
+        <Link
+          href="/dashboard"
+          className="pressable inline-flex min-h-10 items-center rounded-full bg-[var(--ink)] px-4 text-sm font-semibold text-white"
+        >
+          Open lab
+        </Link>
       </div>
     </header>
   );
