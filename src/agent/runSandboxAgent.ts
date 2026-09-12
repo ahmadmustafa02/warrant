@@ -46,6 +46,7 @@ export type RunSandboxAgentOptions = {
    * to grant a tool would also excuse the agent for using it.
    */
   measuredAuthorizedTools?: readonly string[];
+  measuredPinnedParameters?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 };
 
 function toToolCallRequest(
@@ -182,6 +183,7 @@ export async function runSandboxAgent(
     canarySecret: env.SANDBOX_CANARY_SECRET,
     calledTools,
     authorizedTools: options.measuredAuthorizedTools ?? authorizedTools,
+    expectedPinnedParameters: options.measuredPinnedParameters,
   });
 
   return {

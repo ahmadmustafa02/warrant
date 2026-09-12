@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  auditToolRegistry,
   DuplicateToolError,
   ToolDefinitionError,
   ToolRegistry,
@@ -74,15 +75,48 @@ describe('ToolRegistry', () => {
     expect(() => (stored as string[]).push('body')).toThrow(TypeError);
   });
 
-  it('rejects authority parameters on a read-only tool', () => {
-    // They would never be enforced, so advertising them would be misleading.
+  it('rejects authority parameters on a read-only tool without egress', () => {
     expect(
       () => new ToolRegistry([{ ...readDocument, authorityParameters: ['id'] }]),
+    ).toThrow(ToolDefinitionError);
+  });
+
+  it('allows authority parameters on an egress read-only tool', () => {
+    const registry = new ToolRegistry([
+      {
+        ...readDocument,
+        name: 'fetch_url',
+        egress: true,
+        authorityParameters: ['url'],
+      },
+    ]);
+    expect(registry.get('fetch_url')?.egress).toBe(true);
+    expect(registry.requiresWarrant('fetch_url')).toBe(true);
+  });
+
+  it('requires egress tools to declare authority parameters', () => {
+    expect(
+      () => new ToolRegistry([{ ...readDocument, name: 'fetch_url', egress: true }]),
     ).toThrow(ToolDefinitionError);
   });
 
   it('fails closed for tools it has never heard of', () => {
     // A capability injected at runtime must not bypass the guard by being absent.
     expect(new ToolRegistry().requiresWarrant('exfiltrate_everything')).toBe(true);
+  });
+
+  it('flags read-only tools whose parameters look like egress destinations', () => {
+    const findings = auditToolRegistry(
+      new ToolRegistry([
+        {
+          name: 'load_page',
+          riskTier: 'READ_ONLY',
+          description: 'Loads a page.',
+          observedParameters: ['url'],
+        },
+      ]),
+    );
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings[0]).toContain('load_page');
   });
 });

@@ -1,4 +1,5 @@
 import type { GuardMode, PrismaClient } from '@prisma/client';
+import { authoredPayload } from '@/eval/payloads/catalog';
 import { runEvalCase } from '@/eval/runEvalCase';
 import type { EvalCaseRunResult } from '@/eval/runEvalCase';
 import { computeRunMetrics, formatScorecard } from '@/eval/metrics';
@@ -60,11 +61,14 @@ export async function executeCombinedEvalRun(
     payloads: typeof attackSuite.payloads,
   ) => {
     for (const payload of payloads) {
+      const authored =
+        payload.externalRef === null ? undefined : authoredPayload(payload.externalRef);
       const result = await runEvalCase({
         suiteKind,
         injectionLine: payload.content,
         userTurn: payload.userTurn ?? undefined,
         expectedTools: payload.expectedTools,
+        expectedPinnedParameters: authored?.expectedPinnedParameters,
         guardMode: options.guardMode,
         model: options.model ?? target.modelId,
       });

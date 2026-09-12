@@ -14,6 +14,15 @@ export interface ToolDefinition {
   readonly riskTier: RiskTier;
   readonly description: string;
   /**
+   * When true, a nominally read-only tool can still reach outside the agent (HTTP,
+   * filesystem, …) and therefore requires a warrant and authority-parameter checks.
+   */
+  readonly egress?: boolean;
+  /**
+   * Parameter names this tool accepts — used by `auditToolRegistry` only.
+   */
+  readonly observedParameters?: readonly string[];
+  /**
    * Parameters that decide where an action lands (recipient, path, amount, …).
    *
    * Untrusted content may fill ordinary payload fields, but it may not choose
@@ -55,12 +64,20 @@ export class ToolRegistry {
     }
 
     const authorityParameters = definition.authorityParameters ?? [];
+    const egress = definition.egress === true;
 
-    // Read-only tools never reach the authority check, so accepting the field
-    // here would advertise an enforcement that silently does nothing.
-    if (definition.riskTier === 'READ_ONLY' && authorityParameters.length > 0) {
+    if (
+      definition.riskTier === 'READ_ONLY' &&
+      authorityParameters.length > 0 &&
+      !egress
+    ) {
       throw new ToolDefinitionError(
-        `"${definition.name}" is READ_ONLY, so its authorityParameters would never be enforced`,
+        `"${definition.name}" is READ_ONLY without egress, so its authorityParameters would never be enforced`,
+      );
+    }
+    if (egress && authorityParameters.length === 0) {
+      throw new ToolDefinitionError(
+        `"${definition.name}" is egress-capable and must declare authorityParameters for its destination`,
       );
     }
 
@@ -100,6 +117,35 @@ export class ToolRegistry {
     if (tool === undefined) {
       return true;
     }
-    return tool.riskTier !== 'READ_ONLY';
+    return tool.riskTier !== 'READ_ONLY' || tool.egress === true;
   }
+}
+
+const EGRESS_DESTINATION_HINTS = new Set([
+  'url',
+  'uri',
+  'path',
+  'host',
+  'hostname',
+  'endpoint',
+  'destination',
+]);
+
+/**
+ * Static checks integrators run before shipping a registry — no model calls.
+ */
+export function auditToolRegistry(registry: ToolRegistry): readonly string[] {
+  const findings: string[] = [];
+
+  for (const tool of registry.list()) {
+    const params = tool.observedParameters ?? [];
+    const hints = params.filter((name) => EGRESS_DESTINATION_HINTS.has(name));
+    if (tool.riskTier === 'READ_ONLY' && tool.egress !== true && hints.length > 0) {
+      findings.push(
+        `"${tool.name}" is READ_ONLY but accepts [${hints.join(', ')}]; set egress: true and authorityParameters or rename parameters`,
+      );
+    }
+  }
+
+  return Object.freeze(findings);
 }

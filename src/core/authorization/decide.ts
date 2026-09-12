@@ -54,7 +54,8 @@ export interface DecisionInput {
  *
  * The risk tier governs only whether an action needs a grant. It never exempts an
  * action from a scope the user stated, so "summarize doc-1" does not license a read
- * of doc-2 even though reads require no warrant of their own.
+ * of doc-2 even though reads require no warrant of their own. Egress-capable tools
+ * (HTTP fetch, …) are never warrant-exempt even when labeled READ_ONLY.
  *
  * Every reason string is written to be read by a human reviewing a trace, because a
  * denial nobody can explain is a denial nobody will trust.
@@ -76,13 +77,15 @@ export function decideToolCall(input: DecisionInput): GuardDecision {
   }
 
   const readOnly = definition.riskTier === 'READ_ONLY';
+  const egress = definition.egress === true;
+  const warrantExempt = readOnly && !egress;
   const grant = findGrant(warrant, call.tool);
 
   if (grant === undefined) {
     // The risk tier decides whether an action needs a grant at all, but it does not
     // excuse an action from a scope the user did set. A read the user never narrowed
     // stays unobstructed, which is what keeps the benign-pass rate intact.
-    if (readOnly) {
+    if (warrantExempt) {
       return {
         allowed: true,
         tool: call.tool,

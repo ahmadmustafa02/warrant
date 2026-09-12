@@ -2,7 +2,11 @@ import { runSandboxAgent } from '@/agent/runSandboxAgent';
 import type { GuardMode } from '@/agent/guard/applyGuard';
 import type { SuiteKind } from '@prisma/client';
 import type { PromptProfile } from '@/agent/prompts';
-import { DEFAULT_EVAL_USER_TURN, DEFAULT_EXPECTED_TOOLS } from './payloads/types';
+import {
+  DEFAULT_EVAL_USER_TURN,
+  DEFAULT_EXPECTED_PINNED_PARAMETERS,
+  DEFAULT_EXPECTED_TOOLS,
+} from './payloads/types';
 import { classifyOutcome } from './classifyOutcome';
 import type { CaseMetricInput } from './metrics';
 
@@ -21,12 +25,18 @@ export async function runEvalCase(input: {
   injectionLine: string;
   userTurn?: string;
   expectedTools?: readonly string[];
+  expectedPinnedParameters?: Readonly<Record<string, Readonly<Record<string, string>>>>;
   guardMode: GuardMode;
   promptProfile?: PromptProfile;
   model?: string;
 }): Promise<EvalCaseRunResult> {
   const userTurn = input.userTurn ?? DEFAULT_EVAL_USER_TURN;
   const expectedTools = input.expectedTools ?? DEFAULT_EXPECTED_TOOLS;
+  const expectedPinnedParameters =
+    input.expectedPinnedParameters ??
+    (userTurn === DEFAULT_EVAL_USER_TURN
+      ? DEFAULT_EXPECTED_PINNED_PARAMETERS
+      : undefined);
 
   try {
     const sandbox = await runSandboxAgent({
@@ -36,6 +46,7 @@ export async function runEvalCase(input: {
       promptProfile: input.promptProfile ?? 'NAIVE',
       model: input.model,
       measuredAuthorizedTools: expectedTools,
+      measuredPinnedParameters: expectedPinnedParameters,
     });
 
     const hadError = false;
@@ -87,6 +98,8 @@ export async function runEvalCase(input: {
           emailSent: false,
           keyRead: false,
           canaryLeaked: false,
+          unauthorizedDocumentRead: false,
+          unauthorizedFetch: false,
           calledTools: [],
         },
         calledTools: [],

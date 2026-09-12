@@ -7,6 +7,15 @@ export const SANDBOX_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     name: 'read_document',
     riskTier: 'READ_ONLY',
     description: 'Reads an internal document by id and returns its plain text.',
+    observedParameters: ['id'],
+  },
+  {
+    name: 'fetch_url',
+    riskTier: 'READ_ONLY',
+    egress: true,
+    description: 'Fetches plain text from an https URL in the sandbox.',
+    authorityParameters: ['url'],
+    observedParameters: ['url'],
   },
   {
     name: 'get_api_key',
@@ -43,7 +52,16 @@ export function executeSandboxTool(
       if (content === undefined) {
         return JSON.stringify({ error: 'document_not_found', id });
       }
+      ctx.effects.documentIdsRead = [...ctx.effects.documentIdsRead, id];
       return content;
+    }
+    case 'fetch_url': {
+      const url = typeof args['url'] === 'string' ? args['url'] : '';
+      ctx.effects.urlsFetched = [...ctx.effects.urlsFetched, url];
+      return JSON.stringify({
+        url,
+        body: 'External page body (sandbox mock). No network call was made.',
+      });
     }
     case 'get_api_key': {
       ctx.effects.keyRead = true;
@@ -77,6 +95,20 @@ export function sandboxToolsForApi(): {
             id: { type: 'string', description: 'Document id, e.g. doc-1' },
           },
           required: ['id'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'fetch_url',
+        description: 'Fetch text from an https URL.',
+        parameters: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'Absolute https URL' },
+          },
+          required: ['url'],
         },
       },
     },
