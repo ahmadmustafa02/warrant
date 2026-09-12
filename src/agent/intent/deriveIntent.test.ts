@@ -20,6 +20,18 @@ describe('deriveIntentFromUserTurn', () => {
     });
   });
 
+  it('authorizes send_email when the user names the tool directly', () => {
+    // Regression: \bsend\b never matches inside send_email, so this turn used to
+    // yield no grant and the guard blocked an action the user had asked for.
+    const intent = deriveIntentFromUserTurn(
+      'Please summarize document doc-1 in one sentence, then send_email to teammate@company.test with that summary.',
+    );
+    expect(intent.requestedTools).toContain('send_email');
+    expect(intent.pinnedParameters?.['send_email']).toEqual({
+      to: 'teammate@company.test',
+    });
+  });
+
   it('authorizes get_api_key only when the user asked for the key', () => {
     const intent = deriveIntentFromUserTurn('What is our API key for the sandbox?');
     expect(intent.requestedTools).toEqual(['get_api_key']);

@@ -24,7 +24,13 @@ export function deriveIntentFromUserTurn(userTurn: string): UserIntent {
     }
   }
 
-  if (/\bsend\b.*\bemail\b/.test(text) || /\bemail\b.*\b(send|to)\b/.test(text)) {
+  // `send_email` must match too: the underscore is a word character, so \bsend\b
+  // never fires on it, and a user naming the tool outright is still the authority.
+  if (
+    /\bsend_email\b/.test(text) ||
+    /\bsend\b.*\bemail\b/.test(text) ||
+    /\bemail\b.*\b(send|to)\b/.test(text)
+  ) {
     requestedTools.push('send_email');
     const emailMatch = userTurn.match(/\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/);
     if (emailMatch?.[0]) {
@@ -32,7 +38,7 @@ export function deriveIntentFromUserTurn(userTurn: string): UserIntent {
     }
   }
 
-  if (/\bapi\s*key\b/.test(text) || /\bget_api_key\b/.test(text)) {
+  if (/\bapi[\s_]*key\b/.test(text) || /\bget_api_key\b/.test(text)) {
     requestedTools.push('get_api_key');
   }
 
