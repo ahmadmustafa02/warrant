@@ -29,6 +29,13 @@ export class DuplicateToolError extends Error {
   }
 }
 
+export class ToolDefinitionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ToolDefinitionError';
+  }
+}
+
 export class ToolRegistry {
   private readonly tools = new Map<string, ToolDefinition>();
 
@@ -46,7 +53,26 @@ export class ToolRegistry {
     if (this.tools.has(definition.name)) {
       throw new DuplicateToolError(definition.name);
     }
-    this.tools.set(definition.name, Object.freeze({ ...definition }));
+
+    const authorityParameters = definition.authorityParameters ?? [];
+
+    // Read-only tools never reach the authority check, so accepting the field
+    // here would advertise an enforcement that silently does nothing.
+    if (definition.riskTier === 'READ_ONLY' && authorityParameters.length > 0) {
+      throw new ToolDefinitionError(
+        `"${definition.name}" is READ_ONLY, so its authorityParameters would never be enforced`,
+      );
+    }
+
+    this.tools.set(
+      definition.name,
+      Object.freeze({
+        ...definition,
+        ...(definition.authorityParameters === undefined
+          ? {}
+          : { authorityParameters: Object.freeze([...authorityParameters]) }),
+      }),
+    );
     return this;
   }
 

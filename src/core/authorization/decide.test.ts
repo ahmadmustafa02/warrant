@@ -114,6 +114,19 @@ describe('decideToolCall', () => {
 
   it('leaves an omitted pinned parameter to the tool own validation', () => {
     const warrant = warrantFor({
+      requestedTools: ['delete_account'],
+      pinnedParameters: { delete_account: { id: 'acct-1' } },
+    });
+    const decision = decide(warrant, {
+      tool: 'delete_account',
+      args: { reason: taint('cleanup', 'USER') },
+    });
+    // Failing to supply an ordinary argument is not an escalation.
+    expect(decision.allowed).toBe(true);
+  });
+
+  it('refuses to let a tool default choose a pinned authority parameter', () => {
+    const warrant = warrantFor({
       requestedTools: ['send_email'],
       pinnedParameters: { send_email: { to: 'bob@example.com' } },
     });
@@ -121,7 +134,20 @@ describe('decideToolCall', () => {
       tool: 'send_email',
       args: { body: taint('hello', 'USER') },
     });
-    // Failing to supply an argument is not an escalation.
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe(
+      'AUTHORITY_PARAMETER_MISSING',
+    );
+  });
+
+  it('allows an authority parameter that came straight from the user', () => {
+    const decision = decide(warrantFor({ requestedTools: ['send_email'] }), {
+      tool: 'send_email',
+      args: {
+        to: taint('bob@example.com', 'USER'),
+        body: taint('summary from the document', 'TOOL_RESULT'),
+      },
+    });
     expect(decision.allowed).toBe(true);
   });
 

@@ -7,7 +7,8 @@ export type DenialCode =
   | 'UNKNOWN_TOOL'
   | 'NO_WARRANT_FOR_TOOL'
   | 'PINNED_PARAMETER_CONFLICT'
-  | 'AUTHORITY_PARAMETER_FROM_CONTENT';
+  | 'AUTHORITY_PARAMETER_FROM_CONTENT'
+  | 'AUTHORITY_PARAMETER_MISSING';
 
 export type AuthorizationBasis = 'USER_WARRANT' | 'RISK_TIER';
 
@@ -115,13 +116,28 @@ export function decideToolCall(input: DecisionInput): GuardDecision {
 
   for (const parameter of definition.authorityParameters ?? []) {
     const supplied = call.args[parameter];
+    const pinned = grant.pinnedParameters[parameter];
+
     if (supplied === undefined) {
-      continue;
+      // Omitting a pinned authority parameter is an escalation, unlike omitting an
+      // ordinary one: the tool falls back to its own default, so the action lands
+      // somewhere the user did not choose.
+      if (pinned === undefined) {
+        continue;
+      }
+      return {
+        allowed: false,
+        tool: call.tool,
+        riskTier: definition.riskTier,
+        code: 'AUTHORITY_PARAMETER_MISSING',
+        taintSources,
+        reason: `the user pinned ${parameter} to "${pinned}" but this call omits it, which would leave the target to a tool default`,
+      };
     }
+
     if (!isUntrusted(supplied)) {
       continue;
     }
-    const pinned = grant.pinnedParameters[parameter];
     if (pinned !== undefined && describeValue(supplied.value) === pinned) {
       // Model/worker taint on an argument that still matches the user pin is OK.
       continue;

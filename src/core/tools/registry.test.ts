@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DuplicateToolError, ToolRegistry, type ToolDefinition } from './registry';
+import {
+  DuplicateToolError,
+  ToolDefinitionError,
+  ToolRegistry,
+  type ToolDefinition,
+} from './registry';
 
 const readDocument: ToolDefinition = {
   name: 'read_document',
@@ -57,6 +62,23 @@ describe('ToolRegistry', () => {
     const registry = new ToolRegistry([sendEmail, deleteAccount]);
     expect(registry.requiresWarrant('send_email')).toBe(true);
     expect(registry.requiresWarrant('delete_account')).toBe(true);
+  });
+
+  it('freezes authority parameters against later mutation', () => {
+    const mutable = ['to'];
+    const registry = new ToolRegistry([{ ...sendEmail, authorityParameters: mutable }]);
+    mutable.push('body');
+
+    const stored = registry.get('send_email')?.authorityParameters;
+    expect(stored).toEqual(['to']);
+    expect(() => (stored as string[]).push('body')).toThrow(TypeError);
+  });
+
+  it('rejects authority parameters on a read-only tool', () => {
+    // They would never be enforced, so advertising them would be misleading.
+    expect(
+      () => new ToolRegistry([{ ...readDocument, authorityParameters: ['id'] }]),
+    ).toThrow(ToolDefinitionError);
   });
 
   it('fails closed for tools it has never heard of', () => {
