@@ -126,6 +126,7 @@ pnpm run eval:full -- --guard OFF       # naive agent baseline (hijack rate)
 pnpm run eval:full -- --guard ENFORCE   # both suites, dual-metric scorecard
 pnpm run eval:attack-repeat -- --recipient realistic --repeats 5 --guard OFF
 pnpm run eval:attack-repeat -- --recipient realistic --repeats 5 --guard ENFORCE
+pnpm run dev                         # /playground — interactive sandbox demo in the browser
 ```
 
 ## Engineering standards

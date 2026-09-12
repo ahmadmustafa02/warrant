@@ -23,10 +23,10 @@ export function LandingPage() {
         </p>
         <div className="hero-line mt-8 flex flex-wrap justify-center gap-3">
           <Link
-            href="/dashboard"
+            href="/playground"
             className="pressable inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-6 text-[15px] font-semibold text-[var(--on-ink)]"
           >
-            Open the lab
+            Try the playground
           </Link>
           <Link
             href="/method"
@@ -88,8 +88,13 @@ export function LandingPage() {
           <h2 className="display max-w-3xl text-4xl sm:text-6xl">
             Always both numbers. Always a replay.
           </h2>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
+              {
+                title: 'Playground',
+                body: 'Paste an injection, run guard off, then turn Warrant on.',
+                href: '/playground',
+              },
               {
                 title: 'Lab',
                 body: 'Every run shows attack-stop next to benign-pass.',

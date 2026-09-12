@@ -3,6 +3,7 @@ import { WarrantMark } from '@/components/brand/WarrantMark';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 const links = [
+  { href: '/playground', label: 'Playground' },
   { href: '/dashboard', label: 'Lab' },
   { href: '/suites', label: 'Suites' },
   { href: '/method', label: 'Method' },
@@ -33,10 +34,10 @@ export function SiteHeader() {
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <Link
-            href="/dashboard"
+            href="/playground"
             className="pressable inline-flex min-h-10 items-center rounded-full bg-[var(--ink)] px-4 text-sm font-semibold text-[var(--on-ink)]"
           >
-            Open lab
+            Try playground
           </Link>
         </div>
       </div>
