@@ -110,7 +110,9 @@ pnpm run verify           # format + lint + typecheck + test
 pnpm run run:sandbox      # one injected document case with guard ENFORCE
 pnpm run run:sandbox:baseline  # same case with guard OFF (baseline hijack)
 pnpm run eval:seed             # load authored attack + benign suites into Postgres
+pnpm run eval:baseline         # score attacks with llama-prompt-guard-2 (Groq)
 pnpm run eval:run -- --suite document-injection-attacks --guard ENFORCE
+pnpm run eval:full -- --guard OFF       # naive agent baseline (hijack rate)
 pnpm run eval:full -- --guard ENFORCE   # both suites, dual-metric scorecard
 ```
 
