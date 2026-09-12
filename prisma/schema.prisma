@@ -269,6 +269,14 @@ model ApprovalRequest {
   @@index([status, requestedAt])
 }
 
+/// Durable playground live-run rate limit (one row per client key).
+model PlaygroundRateBucket {
+  clientKey   String   @id
+  windowStart DateTime
+  count       Int
+  updatedAt   DateTime @updatedAt
+}
+
 model Finding {
   id            String        @id @default(cuid())
   runId         String

@@ -40,7 +40,7 @@ export function InstallPanel() {
           <h2 className="display mt-3 text-4xl sm:text-5xl">Three steps, any agent.</h2>
           <p className="mt-4 text-[var(--muted)]">
             The guard is framework-free TypeScript with zero runtime dependencies. It
-            works wherever your tool loop lives — OpenAI, Groq, Anthropic, or your own
+            works wherever your tool loop lives — OpenAI, Groq, or your own
             orchestrator.
           </p>
 

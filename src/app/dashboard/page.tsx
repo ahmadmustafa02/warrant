@@ -3,7 +3,11 @@ import Link from 'next/link';
 import { MetricPair } from '@/components/ui/MetricPair';
 import { formatDateTime, guardModeLabel } from '@/lib/format';
 import { MeasuredComparisonPanel } from '@/components/lab/MeasuredComparisonPanel';
+import { DetectOnlyPanel } from '@/components/lab/DetectOnlyPanel';
+import { HeldOutComparisonPanel } from '@/components/lab/HeldOutComparisonPanel';
 import { getMeasuredComparison } from '@/server/eval/baselineComparison';
+import { getDetectOnlySummary } from '@/server/eval/detectOnlySummary';
+import { getHeldOutComparison } from '@/server/eval/heldOutComparison';
 import { countEvalOverview, listEvalRuns } from '@/server/eval/queries';
 import { prisma } from '@/server/db';
 
@@ -17,13 +21,17 @@ export default async function DashboardPage() {
   let runs: Awaited<ReturnType<typeof listEvalRuns>> = [];
   let overview: Awaited<ReturnType<typeof countEvalOverview>> | null = null;
   let comparison: Awaited<ReturnType<typeof getMeasuredComparison>> = null;
+  let heldOut: Awaited<ReturnType<typeof getHeldOutComparison>> = null;
+  let detectOnly: Awaited<ReturnType<typeof getDetectOnlySummary>> = null;
   let loadError: string | null = null;
 
   try {
-    [runs, overview, comparison] = await Promise.all([
+    [runs, overview, comparison, heldOut, detectOnly] = await Promise.all([
       listEvalRuns(),
       countEvalOverview(),
       getMeasuredComparison(prisma),
+      getHeldOutComparison(prisma),
+      getDetectOnlySummary(prisma),
     ]);
   } catch (error) {
     loadError =
@@ -51,6 +59,10 @@ export default async function DashboardPage() {
 
       {comparison ? <MeasuredComparisonPanel comparison={comparison} /> : null}
 
+      {heldOut ? <HeldOutComparisonPanel heldOut={heldOut} /> : null}
+
+      {detectOnly ? <DetectOnlyPanel summary={detectOnly} /> : null}
+
       {latestMetric ? (
         <div className="mt-10">
           <MetricPair
@@ -76,7 +88,9 @@ export default async function DashboardPage() {
             {`pnpm run eval:seed
 pnpm run eval:baseline
 pnpm run eval:full -- --guard OFF
-pnpm run eval:full -- --guard ENFORCE`}
+pnpm run eval:full -- --guard ENFORCE
+pnpm run eval:held-out -- --guard OFF
+pnpm run eval:detect-only`}
           </pre>
         </div>
       ) : null}

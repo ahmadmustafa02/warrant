@@ -50,7 +50,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const clientKey = clientKeyFromRequest(request);
-  const limit = checkPlaygroundRateLimit(clientKey);
+  const limit = await checkPlaygroundRateLimit(clientKey, prisma);
   if (!limit.allowed) {
     return Response.json(
       {

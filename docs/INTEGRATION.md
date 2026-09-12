@@ -93,6 +93,15 @@ import { taint } from '@warrant/guard';
 const body = taint(emailBodyFromDoc, 'TOOL_RESULT');
 ```
 
+## Approval escalation
+
+Hard denies are the default. A future path will surface `ApprovalRequest` rows for
+human confirm — see [APPROVAL.md](./APPROVAL.md).
+
+## Held-out evaluation
+
+Do not tune against suites marked `isHeldOut`. See [HELD_OUT.md](./HELD_OUT.md).
+
 ## What Warrant does not do
 
 - It does not wrap ChatGPT, Claude.ai, or Cursor internals.

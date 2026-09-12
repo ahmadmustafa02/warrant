@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MeasuredComparisonPanel } from '@/components/lab/MeasuredComparisonPanel';
+import { HeldOutComparisonPanel } from '@/components/lab/HeldOutComparisonPanel';
 import { getMeasuredComparison } from '@/server/eval/baselineComparison';
+import { getHeldOutComparison } from '@/server/eval/heldOutComparison';
 import { prisma } from '@/server/db';
 
 export const metadata: Metadata = {
@@ -31,10 +33,15 @@ export const dynamic = 'force-dynamic';
 
 export default async function MethodPage() {
   let comparison: Awaited<ReturnType<typeof getMeasuredComparison>> = null;
+  let heldOut: Awaited<ReturnType<typeof getHeldOutComparison>> = null;
   try {
-    comparison = await getMeasuredComparison(prisma);
+    [comparison, heldOut] = await Promise.all([
+      getMeasuredComparison(prisma),
+      getHeldOutComparison(prisma),
+    ]);
   } catch {
     comparison = null;
+    heldOut = null;
   }
 
   return (
@@ -55,6 +62,11 @@ export default async function MethodPage() {
       {comparison ? (
         <div className="mt-12">
           <MeasuredComparisonPanel comparison={comparison} compact />
+        </div>
+      ) : null}
+      {heldOut ? (
+        <div className="mt-8">
+          <HeldOutComparisonPanel heldOut={heldOut} />
         </div>
       ) : null}
       <Link

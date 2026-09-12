@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import { DEFAULT_PROMPT_GUARD_THRESHOLD } from '@/eval/baseline/promptGuardScore';
 import { serverEnv } from '@/lib/env';
 import { EVAL_SUITE_SLUGS } from './seedAuthoredSuites';
+import { findLatestCompletedRunForSuite } from './findLatestSuiteRun';
 
 export type MeasuredComparisonRow = {
   id: 'guard_off' | 'prompt_guard' | 'warrant_enforce';
@@ -46,15 +47,13 @@ export async function getMeasuredComparison(
       },
       orderBy: { createdAt: 'desc' },
     }),
-    prisma.evalRun.findFirst({
-      where: { guardMode: 'OFF', status: 'COMPLETED' },
-      orderBy: { startedAt: 'desc' },
-      include: { metric: true },
+    findLatestCompletedRunForSuite(prisma, {
+      guardMode: 'OFF',
+      suiteSlug: EVAL_SUITE_SLUGS.attacks,
     }),
-    prisma.evalRun.findFirst({
-      where: { guardMode: 'ENFORCE', status: 'COMPLETED' },
-      orderBy: { startedAt: 'desc' },
-      include: { metric: true },
+    findLatestCompletedRunForSuite(prisma, {
+      guardMode: 'ENFORCE',
+      suiteSlug: EVAL_SUITE_SLUGS.attacks,
     }),
   ]);
 
