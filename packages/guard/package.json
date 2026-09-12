@@ -21,8 +21,22 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
+  "keywords": [
+    "ai-agent",
+    "prompt-injection",
+    "agent-security",
+    "tool-authorization",
+    "llm-security"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahmadmustafa02/warrant.git",
+    "directory": "packages/guard"
+  },
+  "homepage": "https://github.com/ahmadmustafa02/warrant#readme",
   "scripts": {
     "build": "tsup",
     "prepublishOnly": "pnpm run build"

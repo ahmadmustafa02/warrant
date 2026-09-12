@@ -5,4 +5,5 @@ pnpm-lock.yaml
 public
 src/generated
 prisma/migrations
+packages/*/dist
 *.md

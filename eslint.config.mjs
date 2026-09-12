@@ -18,6 +18,7 @@ export default defineConfig([
     'coverage/**',
     'next-env.d.ts',
     'src/generated/**',
+    'packages/*/dist/**',
   ]),
   ...nextVitals,
   ...nextTs,

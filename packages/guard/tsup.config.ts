@@ -7,7 +7,8 @@ const repoRoot = path.join(fileURLToPath(new URL('.', import.meta.url)), '../..'
 export default defineConfig({
   entry: ['src/index.ts', 'src/agent.ts'],
   format: ['esm', 'cjs'],
-  dts: { tsconfig: './tsconfig.json' },
+  dts: true,
+  tsconfig: './tsconfig.json',
   splitting: false,
   sourcemap: true,
   clean: true,
