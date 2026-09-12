@@ -30,9 +30,9 @@ const cases = [
 ] as const;
 
 const badge: Record<(typeof cases)[number]['tone'], string> = {
-  blocked: 'bg-[#fff4e0] text-[#c47a00]',
-  safe: 'bg-[#e8f6ee] text-[#0f9d58]',
-  hijack: 'bg-[#fdecea] text-[#e23d28]',
+  blocked: 'bg-[var(--blocked-soft)] text-[var(--blocked)]',
+  safe: 'bg-[var(--safe-soft)] text-[var(--safe)]',
+  hijack: 'bg-[var(--hijack-soft)] text-[var(--hijack)]',
 };
 
 export function ScorecardMock() {

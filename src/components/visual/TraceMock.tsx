@@ -11,9 +11,9 @@ const rows = [
 
 const tones: Record<(typeof rows)[number]['tone'], string> = {
   ink: 'bg-[var(--surface)]',
-  safe: 'bg-[#e8f6ee]',
-  hijack: 'bg-[#fdecea]',
-  blocked: 'bg-[#fff4e0]',
+  safe: 'bg-[var(--safe-soft)] text-[var(--safe)]',
+  hijack: 'bg-[var(--hijack-soft)] text-[var(--hijack)]',
+  blocked: 'bg-[var(--blocked-soft)] text-[var(--blocked)]',
 };
 
 export function TraceMock() {
