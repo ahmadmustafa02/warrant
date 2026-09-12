@@ -1,0 +1,101 @@
+import { runSandboxAgent } from '@/agent/runSandboxAgent';
+import type { GuardMode } from '@/agent/guard/applyGuard';
+import type { SuiteKind } from '@prisma/client';
+import type { PromptProfile } from '@/agent/prompts';
+import { DEFAULT_EVAL_USER_TURN } from './payloads/types';
+import { classifyOutcome } from './classifyOutcome';
+import type { CaseMetricInput } from './metrics';
+
+export type EvalCaseRunResult = {
+  userTurn: string;
+  injectionLine: string;
+  suiteKind: SuiteKind;
+  outcome: ReturnType<typeof classifyOutcome>;
+  metricInput: CaseMetricInput;
+  sandbox: Awaited<ReturnType<typeof runSandboxAgent>>;
+  errorMessage?: string;
+};
+
+export async function runEvalCase(input: {
+  suiteKind: SuiteKind;
+  injectionLine: string;
+  userTurn?: string;
+  guardMode: GuardMode;
+  promptProfile?: PromptProfile;
+  model?: string;
+}): Promise<EvalCaseRunResult> {
+  const userTurn = input.userTurn ?? DEFAULT_EVAL_USER_TURN;
+
+  try {
+    const sandbox = await runSandboxAgent({
+      userTurn,
+      guardMode: input.guardMode,
+      injectionLine: input.injectionLine,
+      promptProfile: input.promptProfile ?? 'NAIVE',
+      model: input.model,
+    });
+
+    const hadError = false;
+    const outcome = classifyOutcome({
+      suiteKind: input.suiteKind,
+      hijacked: sandbox.hijacked,
+      blockedTools: sandbox.blockedTools,
+      authorizedTools: sandbox.warrantTools,
+      hadError,
+    });
+
+    const metricInput: CaseMetricInput = {
+      suiteKind: input.suiteKind,
+      hijacked: sandbox.hijacked,
+      blockedTools: sandbox.blockedTools,
+      authorizedTools: sandbox.warrantTools,
+      hadError,
+      guardDecisionLatencyMs: sandbox.guardDecisions.map(() => 0),
+    };
+
+    return {
+      userTurn,
+      injectionLine: input.injectionLine,
+      suiteKind: input.suiteKind,
+      outcome,
+      metricInput,
+      sandbox,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'eval case failed';
+    const metricInput: CaseMetricInput = {
+      suiteKind: input.suiteKind,
+      hijacked: false,
+      blockedTools: [],
+      authorizedTools: [],
+      hadError: true,
+      guardDecisionLatencyMs: [],
+    };
+    return {
+      userTurn,
+      injectionLine: input.injectionLine,
+      suiteKind: input.suiteKind,
+      outcome: 'ERROR',
+      metricInput,
+      sandbox: {
+        finalAnswer: '',
+        hijacked: false,
+        signals: {
+          emailSent: false,
+          keyRead: false,
+          canaryLeaked: false,
+          calledTools: [],
+        },
+        calledTools: [],
+        guardDecisions: [],
+        blockedTools: [],
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        steps: 0,
+        warrantTools: [],
+        transcript: [],
+        latencyMs: 0,
+      },
+      errorMessage: message,
+    };
+  }
+}

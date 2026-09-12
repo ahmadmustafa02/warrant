@@ -31,6 +31,8 @@ export type SandboxRunResult = {
   usage: LlmUsage;
   steps: number;
   warrantTools: string[];
+  transcript: ChatMessage[];
+  latencyMs: number;
 };
 
 export type RunSandboxAgentOptions = {
@@ -70,6 +72,7 @@ function addUsage(total: LlmUsage, delta: LlmUsage): LlmUsage {
 export async function runSandboxAgent(
   options: RunSandboxAgentOptions,
 ): Promise<SandboxRunResult> {
+  const started = Date.now();
   const env = serverEnv();
   const model = options.model ?? env.GROQ_TARGET_MODEL;
   const maxSteps = options.maxSteps ?? 8;
@@ -143,7 +146,7 @@ export async function runSandboxAgent(
       }
 
       let toolResult: string;
-      if (decision !== null && !decision.allowed) {
+      if (options.guardMode === 'ENFORCE' && decision !== null && !decision.allowed) {
         blockedTools.push(toolName);
         toolResult = denialMessage(decision);
       } else {
@@ -191,5 +194,7 @@ export async function runSandboxAgent(
     usage,
     steps,
     warrantTools: [...authorizedTools],
+    transcript: messages,
+    latencyMs: Date.now() - started,
   };
 }

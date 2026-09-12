@@ -4,7 +4,7 @@ import type { ProvenanceKind } from '@/core/provenance/types';
 import type { Warrant } from '@/core/authorization/warrant';
 import type { ToolRegistry } from '@/core/tools/registry';
 
-export type GuardMode = 'OFF' | 'ENFORCE';
+export type GuardMode = 'OFF' | 'DETECT_ONLY' | 'ENFORCE';
 
 export function parseToolArguments(raw: string): Record<string, unknown> {
   if (raw.trim() === '') {
@@ -44,7 +44,7 @@ export function evaluateToolCall(options: {
   }
 
   const argsObject = parseToolArguments(options.rawArguments);
-  return decideToolCall({
+  const decision = decideToolCall({
     warrant: options.warrant,
     registry: options.registry,
     call: {
@@ -52,6 +52,7 @@ export function evaluateToolCall(options: {
       args: taintToolArguments(argsObject),
     },
   });
+  return decision;
 }
 
 export function denialMessage(decision: GuardDecision): string {
