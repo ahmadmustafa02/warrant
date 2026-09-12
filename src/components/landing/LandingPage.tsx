@@ -20,7 +20,8 @@ export function LandingPage() {
           Provenance-based tool authorization
         </p>
         <h1 className="display hero-line mx-auto mt-6 max-w-4xl text-5xl sm:text-7xl lg:text-[80px]">
-          Stop agents from doing what the user never asked.
+          Stop <span className="text-[var(--mark)]">agents</span> from doing what the
+          user never asked.
         </h1>
         <p className="hero-line mx-auto mt-6 max-w-xl text-lg text-[var(--muted)]">
           Hidden instructions in a document can steal tools. Warrant freezes permissions

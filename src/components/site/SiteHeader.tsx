@@ -15,7 +15,7 @@ export function SiteHeader() {
           href="/"
           className="pressable inline-flex min-h-11 items-center gap-2 rounded-full px-2"
         >
-          <WarrantMark className="h-8 w-8 text-[var(--mark)]" />
+          <WarrantMark />
           <span className="text-[15px] font-bold tracking-tight">Warrant</span>
         </Link>
         <nav aria-label="Primary" className="hidden items-center gap-1 sm:flex">
