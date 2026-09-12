@@ -1,8 +1,12 @@
 import { deriveIntentFromUserTurn } from '@/agent/intent/deriveIntent';
 import { runSandboxAgent } from '@/agent/runSandboxAgent';
-import { playgroundOutcome, type PlaygroundRequest } from './playgroundRequestSchema';
+import { playgroundOutcome } from './playgroundRequestSchema';
 
-export async function runPlaygroundSession(body: PlaygroundRequest) {
+export async function runPlaygroundSession(body: {
+  userTurn: string;
+  injectionLine: string;
+  guardMode: 'OFF' | 'ENFORCE';
+}) {
   const intent = deriveIntentFromUserTurn(body.userTurn);
   const measuredAuthorizedTools =
     intent.requestedTools.length > 0 ? intent.requestedTools : ['read_document'];

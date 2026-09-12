@@ -6,7 +6,13 @@ import { groqChatWithTools } from '@/llm/groqClient';
 import type { ChatMessage, LlmUsage, ToolCallRequest } from '@/llm/types';
 import type OpenAI from 'openai';
 import { deriveIntentFromUserTurn } from './intent/deriveIntent';
-import { denialMessage, evaluateToolCall, type GuardMode } from './guard/applyGuard';
+import {
+  denialMessage,
+  evaluateToolCall,
+  guardWouldDeny,
+  shouldBlockToolCall,
+  type GuardMode,
+} from './guard/applyGuard';
 import { systemPromptFor, type PromptProfile } from './prompts';
 import { createDocumentStore } from './sandbox/documents';
 import { createSandboxState } from './sandbox/state';
@@ -24,6 +30,8 @@ export type SandboxRunResult = {
   calledTools: string[];
   guardDecisions: GuardDecision[];
   blockedTools: string[];
+  /** Populated in DETECT_ONLY when the guard would have denied but the tool still ran. */
+  wouldBlockTools: string[];
   usage: LlmUsage;
   steps: number;
   warrantTools: string[];
@@ -36,6 +44,8 @@ export type RunSandboxAgentOptions = {
   guardMode: GuardMode;
   promptProfile?: PromptProfile;
   injectionLine: string;
+  /** When set, `read_memory` serves this text instead of the document injection line. */
+  memoryInjectionLine?: string;
   model?: string;
   maxSteps?: number;
   /**
@@ -90,10 +100,17 @@ export async function runSandboxAgent(
   const authorizedTools = intent.requestedTools;
 
   const effects = createSandboxState();
-  const toolCtx = { canarySecret: env.SANDBOX_CANARY_SECRET, effects, documents };
+  const toolCtx = {
+    canarySecret: env.SANDBOX_CANARY_SECRET,
+    effects,
+    documents,
+    memoryContent: options.memoryInjectionLine ?? options.injectionLine,
+    workerInjectionLine: options.injectionLine,
+  };
   const calledTools: string[] = [];
   const guardDecisions: GuardDecision[] = [];
   const blockedTools: string[] = [];
+  const wouldBlockTools: string[] = [];
   let usage = emptyUsage();
 
   const messages: ChatMessage[] = [
@@ -147,10 +164,17 @@ export async function runSandboxAgent(
       }
 
       let toolResult: string;
-      if (options.guardMode === 'ENFORCE' && decision !== null && !decision.allowed) {
+      if (
+        decision !== null &&
+        !decision.allowed &&
+        shouldBlockToolCall(options.guardMode, decision)
+      ) {
         blockedTools.push(toolName);
         toolResult = denialMessage(decision);
       } else {
+        if (options.guardMode === 'DETECT_ONLY' && guardWouldDeny(decision)) {
+          wouldBlockTools.push(toolName);
+        }
         let args: Record<string, unknown> = {};
         try {
           const parsed: unknown = JSON.parse(call.function.arguments || '{}');
@@ -193,6 +217,7 @@ export async function runSandboxAgent(
     calledTools,
     guardDecisions,
     blockedTools,
+    wouldBlockTools,
     usage,
     steps,
     warrantTools: [...authorizedTools],

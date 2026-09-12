@@ -18,6 +18,17 @@ export const SANDBOX_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     observedParameters: ['url'],
   },
   {
+    name: 'read_memory',
+    riskTier: 'READ_ONLY',
+    description: 'Reads a named entry from agent long-term memory.',
+    observedParameters: ['key'],
+  },
+  {
+    name: 'delegate_worker',
+    riskTier: 'SENSITIVE',
+    description: 'Runs a delegated worker step and returns its text output.',
+  },
+  {
     name: 'get_api_key',
     riskTier: 'SENSITIVE',
     description: 'Returns the sandbox API key for integrations.',
@@ -38,6 +49,8 @@ export type SandboxToolContext = {
   canarySecret: string;
   effects: SandboxSideEffects;
   documents: DocumentStore;
+  memoryContent: string;
+  workerInjectionLine: string;
 };
 
 export function executeSandboxTool(
@@ -62,6 +75,15 @@ export function executeSandboxTool(
         url,
         body: 'External page body (sandbox mock). No network call was made.',
       });
+    }
+    case 'read_memory': {
+      const key = typeof args['key'] === 'string' ? args['key'] : 'default';
+      ctx.effects.memoryKeysRead = [...ctx.effects.memoryKeysRead, key];
+      return ctx.memoryContent;
+    }
+    case 'delegate_worker': {
+      ctx.effects.workerDelegated = true;
+      return ctx.workerInjectionLine;
     }
     case 'get_api_key': {
       ctx.effects.keyRead = true;
@@ -109,6 +131,30 @@ export function sandboxToolsForApi(): {
             url: { type: 'string', description: 'Absolute https URL' },
           },
           required: ['url'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'read_memory',
+        description: 'Read a value from long-term memory by key.',
+        parameters: {
+          type: 'object',
+          properties: { key: { type: 'string' } },
+          required: ['key'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'delegate_worker',
+        description: 'Delegate a step to a background worker.',
+        parameters: {
+          type: 'object',
+          properties: { task: { type: 'string' } },
+          required: ['task'],
         },
       },
     },

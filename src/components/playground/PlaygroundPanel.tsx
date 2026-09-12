@@ -11,6 +11,8 @@ type GuardChoice = 'OFF' | 'ENFORCE';
 type PlaygroundResult = {
   outcome: string;
   hijacked: boolean;
+  replayed?: boolean;
+  replaySource?: string;
   guardMode: GuardChoice;
   warrantTools: string[];
   calledTools: string[];
@@ -32,6 +34,10 @@ export function PlaygroundPanel() {
     PLAYGROUND_PRESETS[0]?.injectionLine ?? '',
   );
   const [guardMode, setGuardMode] = useState<GuardChoice>('OFF');
+  const [presetId, setPresetId] = useState(
+    PLAYGROUND_PRESETS[0]?.id ?? 'direct_override',
+  );
+  const [liveMode, setLiveMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PlaygroundResult | null>(null);
@@ -45,14 +51,23 @@ export function PlaygroundPanel() {
     }
 
     try {
+      const body = liveMode
+        ? {
+            mode: 'live' as const,
+            userTurn,
+            injectionLine,
+            guardMode: mode,
+          }
+        : {
+            mode: 'replay' as const,
+            presetId,
+            guardMode: mode,
+          };
+
       const response = await fetch('/api/playground/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userTurn,
-          injectionLine,
-          guardMode: mode,
-        }),
+        body: JSON.stringify(body),
       });
 
       const payload: unknown = await response.json();
@@ -83,6 +98,7 @@ export function PlaygroundPanel() {
     if (!preset) {
       return;
     }
+    setPresetId(preset.id);
     setUserTurn(preset.userTurn);
     setInjectionLine(preset.injectionLine);
     setResult(null);
@@ -137,6 +153,17 @@ export function PlaygroundPanel() {
           />
         </label>
 
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={liveMode}
+            onChange={(event) => {
+              setLiveMode(event.target.checked);
+            }}
+          />
+          Live run (uses Groq API, rate limited)
+        </label>
+
         <div className="flex flex-wrap items-center gap-3">
           <fieldset className="flex rounded-full border border-[var(--line)] p-1">
             <legend className="sr-only">Guard mode</legend>
@@ -165,7 +192,11 @@ export function PlaygroundPanel() {
               void runPlayground();
             }}
           >
-            {loading ? 'Running…' : 'Run sandbox agent'}
+            {loading
+              ? 'Running…'
+              : liveMode
+                ? 'Run live agent'
+                : 'Show recorded result'}
           </button>
         </div>
 
@@ -182,7 +213,11 @@ export function PlaygroundPanel() {
             <div className="flex flex-wrap items-center gap-3">
               <OutcomeBadge outcome={result.outcome} />
               <span className="text-sm text-[var(--muted)]">
-                {result.latencyMs} ms · guard {result.guardMode.toLowerCase()}
+                {result.replayed
+                  ? `Recorded (${result.replaySource ?? 'replay'})`
+                  : `${result.latencyMs} ms live`}
+                {' · guard '}
+                {result.guardMode.toLowerCase()}
               </span>
             </div>
 

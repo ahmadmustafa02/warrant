@@ -109,7 +109,7 @@ export async function seedAuthoredEvalData(prisma: PrismaClient): Promise<void> 
     slug: ATTACK_SUITE_SLUG,
     name: 'Document injection (authored)',
     kind: 'ATTACK',
-    description: 'Ten authored lines from the pre-proposal spike categories.',
+    description: 'Authored document-injection lines used to tune and report the guard.',
   });
 
   const benignSuite = await upsertSuite(prisma, {

@@ -1,10 +1,24 @@
 import { z } from 'zod';
 
-export const playgroundRequestSchema = z.object({
+const guardModeSchema = z.enum(['OFF', 'ENFORCE']);
+
+export const playgroundReplayRequestSchema = z.object({
+  mode: z.literal('replay'),
+  presetId: z.string().min(1),
+  guardMode: guardModeSchema,
+});
+
+export const playgroundLiveRequestSchema = z.object({
+  mode: z.literal('live'),
   userTurn: z.string().min(1).max(2000),
   injectionLine: z.string().min(1).max(4000),
-  guardMode: z.enum(['OFF', 'ENFORCE']),
+  guardMode: guardModeSchema,
 });
+
+export const playgroundRequestSchema = z.discriminatedUnion('mode', [
+  playgroundReplayRequestSchema,
+  playgroundLiveRequestSchema,
+]);
 
 export type PlaygroundRequest = z.infer<typeof playgroundRequestSchema>;
 

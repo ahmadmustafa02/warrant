@@ -15,9 +15,9 @@ export default function PlaygroundPage() {
         Hijack this agent — then guard it.
       </h1>
       <p className="mt-4 max-w-2xl text-[var(--muted)]">
-        Pick a preset or paste your own injection. Run it with the guard off to see the
-        agent take an action the user never asked for, then turn the guard on and run
-        the same attack again. Mock tools only; nothing leaves this sandbox.
+        Presets replay stored lab results instantly (no API cost). Optionally enable
+        live runs to hit Groq with mock tools only. Toggle guard off, then run the same
+        preset with Warrant on to compare outcomes.
       </p>
       <div className="mt-10">
         <PlaygroundPanel />

@@ -6,6 +6,8 @@ export type SandboxSideEffects = {
   documentIdsRead: string[];
   /** URLs successfully fetched — used to score egress hijacks when guard is off. */
   urlsFetched: string[];
+  memoryKeysRead: string[];
+  workerDelegated: boolean;
 };
 
 export function createSandboxState(): SandboxSideEffects {
@@ -15,5 +17,7 @@ export function createSandboxState(): SandboxSideEffects {
     sentEmails: [],
     documentIdsRead: [],
     urlsFetched: [],
+    memoryKeysRead: [],
+    workerDelegated: false,
   };
 }

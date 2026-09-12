@@ -1,3 +1,5 @@
+import { prisma } from '@/server/db';
+import { loadPlaygroundReplay } from '@/server/playground/loadPlaygroundReplay';
 import { runPlaygroundSession } from '@/server/playground/runPlaygroundSession';
 import { playgroundRequestSchema } from '@/server/playground/playgroundRequestSchema';
 import { checkPlaygroundRateLimit } from '@/server/playground/rateLimit';
@@ -14,21 +16,6 @@ function clientKeyFromRequest(request: Request): string {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const clientKey = clientKeyFromRequest(request);
-  const limit = checkPlaygroundRateLimit(clientKey);
-  if (!limit.allowed) {
-    return Response.json(
-      {
-        error:
-          'Playground rate limit reached. Try again later or run locally with pnpm run run:sandbox.',
-      },
-      {
-        status: 429,
-        headers: { 'Retry-After': String(limit.retryAfterSeconds) },
-      },
-    );
-  }
-
   let json: unknown;
   try {
     json = await request.json();
@@ -44,9 +31,47 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  if (parsed.data.mode === 'replay') {
+    try {
+      const replay = await loadPlaygroundReplay(
+        prisma,
+        parsed.data.presetId,
+        parsed.data.guardMode,
+      );
+      if (replay === null) {
+        return Response.json({ error: 'Unknown preset.' }, { status: 404 });
+      }
+      return Response.json(replay);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Replay failed unexpectedly.';
+      return Response.json({ error: message }, { status: 502 });
+    }
+  }
+
+  const clientKey = clientKeyFromRequest(request);
+  const limit = checkPlaygroundRateLimit(clientKey);
+  if (!limit.allowed) {
+    return Response.json(
+      {
+        error:
+          'Live playground rate limit reached. Use replay mode or run locally with pnpm run run:sandbox.',
+      },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(limit.retryAfterSeconds) },
+      },
+    );
+  }
+
   try {
-    const result = await runPlaygroundSession(parsed.data);
-    return Response.json(result);
+    const live = parsed.data;
+    const result = await runPlaygroundSession({
+      userTurn: live.userTurn,
+      injectionLine: live.injectionLine,
+      guardMode: live.guardMode,
+    });
+    return Response.json({ ...result, replayed: false });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Playground run failed unexpectedly.';

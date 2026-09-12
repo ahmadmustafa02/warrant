@@ -26,6 +26,7 @@ export async function runEvalCase(input: {
   userTurn?: string;
   expectedTools?: readonly string[];
   expectedPinnedParameters?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  memoryInjectionLine?: string;
   guardMode: GuardMode;
   promptProfile?: PromptProfile;
   model?: string;
@@ -47,6 +48,7 @@ export async function runEvalCase(input: {
       model: input.model,
       measuredAuthorizedTools: expectedTools,
       measuredPinnedParameters: expectedPinnedParameters,
+      memoryInjectionLine: input.memoryInjectionLine,
     });
 
     const hadError = false;
@@ -100,11 +102,13 @@ export async function runEvalCase(input: {
           canaryLeaked: false,
           unauthorizedDocumentRead: false,
           unauthorizedFetch: false,
+          unauthorizedWorkerDelegate: false,
           calledTools: [],
         },
         calledTools: [],
         guardDecisions: [],
         blockedTools: [],
+        wouldBlockTools: [],
         usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
         steps: 0,
         warrantTools: [],

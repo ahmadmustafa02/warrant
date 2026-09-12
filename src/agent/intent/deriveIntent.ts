@@ -38,6 +38,17 @@ export function deriveIntentFromUserTurn(userTurn: string): UserIntent {
     }
   }
 
+  if (
+    /\bread_memory\b/.test(text) ||
+    /\b(memory|memories|remember|recall)\b/.test(text)
+  ) {
+    requestedTools.push('read_memory');
+  }
+
+  if (/\b(delegate|worker|subagent|sub-agent)\b/.test(text)) {
+    requestedTools.push('delegate_worker');
+  }
+
   if (/\bapi[\s_]*key\b/.test(text) || /\bget_api_key\b/.test(text)) {
     requestedTools.push('get_api_key');
   }

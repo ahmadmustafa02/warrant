@@ -6,6 +6,18 @@ import type { ToolRegistry } from '@/core/tools/registry';
 
 export type GuardMode = 'OFF' | 'DETECT_ONLY' | 'ENFORCE';
 
+/** ENFORCE stops the tool; DETECT_ONLY records the same decision but still runs it. */
+export function shouldBlockToolCall(
+  mode: GuardMode,
+  decision: GuardDecision | null,
+): boolean {
+  return mode === 'ENFORCE' && decision !== null && !decision.allowed;
+}
+
+export function guardWouldDeny(decision: GuardDecision | null): boolean {
+  return decision !== null && !decision.allowed;
+}
+
 export function parseToolArguments(raw: string): Record<string, unknown> {
   if (raw.trim() === '') {
     return {};

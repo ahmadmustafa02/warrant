@@ -45,6 +45,14 @@ lines while many injections still drove tool calls under a naive agent.
 
 Cursor integration (project hooks, shadow mode by default): see [docs/CURSOR_HOOK.md](docs/CURSOR_HOOK.md).
 
+Held-out suite (do not tune the guard against these payloads):
+
+```bash
+pnpm run eval:seed
+pnpm run eval:held-out -- --guard ENFORCE
+pnpm run cursor:shadow-report
+```
+
 ## Core idea
 
 Authority flows from the user, never from content.

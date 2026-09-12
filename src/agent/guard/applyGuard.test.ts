@@ -2,7 +2,36 @@ import { describe, expect, it } from 'vitest';
 import { issueWarrant } from '@/core/authorization/warrant';
 import { taint } from '@/core/provenance/tainted';
 import { createSandboxRegistry } from '../sandbox/tools';
-import { denialMessage, evaluateToolCall, parseToolArguments } from './applyGuard';
+import type { DeniedDecision } from '@/core/authorization/decide';
+import {
+  denialMessage,
+  evaluateToolCall,
+  guardWouldDeny,
+  parseToolArguments,
+  shouldBlockToolCall,
+} from './applyGuard';
+
+describe('shouldBlockToolCall', () => {
+  const denial: DeniedDecision = {
+    allowed: false,
+    tool: 'send_email',
+    riskTier: 'SENSITIVE',
+    code: 'NO_WARRANT_FOR_TOOL',
+    taintSources: ['WORKER'],
+    reason: 'denied',
+  };
+
+  it('blocks only in ENFORCE', () => {
+    expect(shouldBlockToolCall('ENFORCE', denial)).toBe(true);
+    expect(shouldBlockToolCall('DETECT_ONLY', denial)).toBe(false);
+    expect(shouldBlockToolCall('OFF', null)).toBe(false);
+  });
+
+  it('detects would-deny for DETECT_ONLY', () => {
+    expect(guardWouldDeny(denial)).toBe(true);
+    expect(guardWouldDeny(null)).toBe(false);
+  });
+});
 
 describe('parseToolArguments', () => {
   it('treats empty raw arguments as an empty object', () => {

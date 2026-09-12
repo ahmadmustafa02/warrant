@@ -1,9 +1,11 @@
 import 'dotenv/config';
 import { prisma } from '@/server/db';
 import { seedAuthoredEvalData } from '@/server/eval/seedAuthoredSuites';
+import { seedHeldOutEvalData } from '@/server/eval/seedHeldOutSuites';
 
 async function main(): Promise<void> {
   await seedAuthoredEvalData(prisma);
+  await seedHeldOutEvalData(prisma);
   const counts = await prisma.payload.groupBy({
     by: ['suiteId'],
     _count: { _all: true },

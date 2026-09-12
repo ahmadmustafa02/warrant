@@ -13,6 +13,8 @@ export const authoredPayloadSchema = z.object({
   expectedPinnedParameters: z
     .record(z.string(), z.record(z.string(), z.string()))
     .optional(),
+  /** When set, poisons `read_memory` instead of the document body. */
+  memoryInjectionLine: z.string().min(1).optional(),
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'),
   notes: z.string().optional(),
 });
