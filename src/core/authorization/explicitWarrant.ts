@@ -7,11 +7,30 @@ export interface ExplicitGrantInput {
   readonly pinnedParameters?: Readonly<Record<string, string>>;
 }
 
+export class ExplicitGrantError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ExplicitGrantError';
+  }
+}
+
 export function userIntentFromExplicit(
   grants: readonly ExplicitGrantInput[],
 ): UserIntent {
   const requestedTools = grants.map((grant) => grant.tool);
   const pinnedParameters: Record<string, Record<string, string>> = {};
+
+  const seen = new Set<string>();
+  for (const grant of grants) {
+    // Deduplication would keep the first pin and silently discard a stricter one,
+    // so ambiguous developer input is rejected instead of quietly narrowed.
+    if (seen.has(grant.tool)) {
+      throw new ExplicitGrantError(
+        `"${grant.tool}" is granted twice; combine it into a single grant`,
+      );
+    }
+    seen.add(grant.tool);
+  }
 
   for (const grant of grants) {
     const pinned = grant.pinnedParameters;

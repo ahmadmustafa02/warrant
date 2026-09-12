@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ToolRegistry } from '../tools/registry';
-import { issueWarrantFromExplicit } from './explicitWarrant';
+import { ExplicitGrantError, issueWarrantFromExplicit } from './explicitWarrant';
 import { findGrant } from './warrant';
 
 const registry = new ToolRegistry([
@@ -28,6 +28,18 @@ describe('issueWarrantFromExplicit', () => {
     const grant = findGrant(warrant, 'send_email');
     expect(grant?.pinnedParameters).toEqual({ to: 'manager@company.test' });
     expect(warrant.issuedAt).toBe('2026-09-12T00:00:00.000Z');
+  });
+
+  it('rejects the same tool granted twice rather than keeping one pin', () => {
+    expect(() =>
+      issueWarrantFromExplicit(
+        [
+          { tool: 'send_email', pinnedParameters: { to: 'a@company.test' } },
+          { tool: 'send_email', pinnedParameters: { to: 'b@company.test' } },
+        ],
+        registry,
+      ),
+    ).toThrow(ExplicitGrantError);
   });
 
   it('drops unknown tool names into diagnostics', () => {
