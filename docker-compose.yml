@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: warrant-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: warrant
+      POSTGRES_PASSWORD: warrant_dev_password
+      POSTGRES_DB: warrant
+    ports:
+      - '5433:5432'
+    volumes:
+      - warrant-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U warrant -d warrant']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  warrant-pgdata:
