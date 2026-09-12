@@ -15,9 +15,8 @@ export default function PlaygroundPage() {
         Hijack this agent — then guard it.
       </h1>
       <p className="mt-4 max-w-2xl text-[var(--muted)]">
-        Choose a fixed eval template and load seeded outcomes from the lab (full
-        transcripts when the database is seeded). Toggle guard off, then the same
-        scenario with Warrant on — no public Groq calls or custom prompts.
+        Choose a template and load recorded outcomes from the lab. Toggle guard off,
+        then the same scenario with Warrant on to compare.
       </p>
       <div className="mt-10">
         <PlaygroundPanel />

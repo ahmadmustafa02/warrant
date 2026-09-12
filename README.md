@@ -140,7 +140,7 @@ pnpm run eval:full -- --guard OFF       # naive agent baseline (hijack rate)
 pnpm run eval:full -- --guard ENFORCE   # both suites, dual-metric scorecard
 pnpm run eval:attack-repeat -- --recipient realistic --repeats 5 --guard OFF
 pnpm run eval:attack-repeat -- --recipient realistic --repeats 5 --guard ENFORCE
-pnpm run dev                         # /playground — seeded template replays (no public LLM)
+pnpm run dev                         # /playground — template replays from the lab
 pnpm run build:guard                 # compile @warrant/guard for npm publish
 ```
 

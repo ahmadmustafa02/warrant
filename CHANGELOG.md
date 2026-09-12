@@ -9,7 +9,7 @@
 - Parameter constraints (`stringPattern`, `numberMax`) on tool definitions.
 - Held-out attack suite (5 payloads) and `pnpm run eval:held-out`.
 - Cursor project hooks (shadow mode) and `pnpm run cursor:shadow-report`.
-- Playground: fixed eval templates and seeded lab traces only (no public Groq or custom prompts).
+- Playground: fixed eval templates and seeded lab traces.
 - Lab dashboard: held-out comparison and DETECT_ONLY summary panels.
 
 ### Measured (tuned corpus, sandbox agent)

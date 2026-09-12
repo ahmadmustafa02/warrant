@@ -95,8 +95,7 @@ export function PlaygroundPanel() {
         <div>
           <p className="text-sm font-bold text-[var(--mark)]">Lab templates</p>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            Fixed scenarios from the eval corpus. Results are recorded lab traces — no
-            public LLM calls or custom prompts.
+            Fixed scenarios from the eval corpus with recorded lab outcomes.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {PLAYGROUND_PRESETS.map((preset) => (
@@ -182,11 +181,6 @@ export function PlaygroundPanel() {
             {error}
           </p>
         ) : null}
-
-        <p className="text-xs text-[var(--muted)]">
-          To run a live sandbox agent locally (Groq + mock tools), use{' '}
-          <code className="font-mono">pnpm run run:sandbox</code>.
-        </p>
       </div>
 
       <div className="space-y-6">

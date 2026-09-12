@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const guardModeSchema = z.enum(['OFF', 'ENFORCE']);
 
-/** Public playground accepts only known presets — no custom prompts or live LLM runs. */
+/** Replay request: known preset id and guard mode. */
 export const playgroundRequestSchema = z.object({
   presetId: z.string().min(1),
   guardMode: guardModeSchema,
