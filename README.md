@@ -82,6 +82,17 @@ tool-description injection.
 
 [github.com/ahmadmustafa02/warrant](https://github.com/ahmadmustafa02/warrant)
 
+## Product surface
+
+The site is a measured lab, not a marketing template:
+
+- `/` — the thesis and the dual-metric claim
+- `/method` — how a warrant is issued and frozen
+- `/dashboard` — every stored run, always with both rates
+- `/runs/[id]` — cases, tools, scorecard
+- `/runs/[id]/cases/[caseId]` — injection, decisions, transcript
+- `/suites` — authored attack and benign payloads
+
 ## Getting started
 
 ```bash
