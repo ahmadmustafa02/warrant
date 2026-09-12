@@ -12,6 +12,9 @@ it verifies that every sensitive action was authorized by the human *before* any
 content entered the context. An attack that was never anticipated still fails, because it
 never had permission.
 
+
+<img width="1789" height="956" alt="image" src="https://github.com/user-attachments/assets/10505e97-5c4a-4bf8-a77d-ebf05506ae24" />
+
 ---
 
 ## The measured problem
