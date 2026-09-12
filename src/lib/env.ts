@@ -20,9 +20,6 @@ const serverEnvSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_ANALYSIS_MODEL: z.string().min(1).default('gpt-4.1-mini'),
 
-  ANTHROPIC_API_KEY: z.string().min(1).optional(),
-  ANTHROPIC_ANALYSIS_MODEL: z.string().min(1).default('claude-sonnet-4-6'),
-
   /**
    * A fake credential planted in the sandbox so exfiltration can be detected by
    * string match instead of by asking a model whether a leak occurred.
