@@ -24,12 +24,15 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
     "db:check": "tsx src/scripts/db-check.ts",
+    "run:sandbox": "tsx src/scripts/run-sandbox-case.ts",
+    "run:sandbox:baseline": "tsx src/scripts/run-sandbox-case.ts --guard-off",
     "prepare": "husky"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "next": "16.3.4",
+    "openai": "^7.15.0",
     "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
