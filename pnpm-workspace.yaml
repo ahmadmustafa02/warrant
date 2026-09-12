@@ -1,10 +1,7 @@
-# pnpm 10+ requires explicit approval for dependency build scripts.
-# Only the packages that genuinely need native builds are enabled.
+packages:
+  - 'packages/*'
 allowBuilds:
-  '@prisma/engines': true # Prisma query/migration engines — required.
-  prisma: true # Prisma CLI postinstall — required.
-  esbuild: true # Used by Vitest and tsx.
-  unrs-resolver: true # Native module resolver used by ESLint.
-  msgpackr-extract: false # Optional serialization accelerator; not needed.
-  sharp: false # Image optimization is handled by the deploy platform.
-  workerd: false # Not used; we do not target the workers runtime.
+  '@prisma/engines': set this to true or false
+  esbuild: set this to true or false
+  prisma: set this to true or false
+  unrs-resolver: set this to true or false

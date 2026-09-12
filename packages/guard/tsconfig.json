@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "incremental": false,
+    "isolatedModules": true,
+    "paths": {
+      "@/*": ["../../src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "../../src/core/**/*.ts", "../../src/agent/guard/**/*.ts"]
+}
