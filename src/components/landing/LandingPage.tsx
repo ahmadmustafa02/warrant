@@ -4,6 +4,7 @@ import { DocumentMock } from '@/components/visual/DocumentMock';
 import { ScorecardMock } from '@/components/visual/ScorecardMock';
 import { TraceMock } from '@/components/visual/TraceMock';
 import { EvidencePanel } from './EvidencePanel';
+import { InstallPanel } from './InstallPanel';
 import { LandingMotion } from './LandingMotion';
 
 export function LandingPage() {
@@ -128,6 +129,8 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      <InstallPanel />
 
       <section className="px-5 py-24 text-center">
         <h2 className="display mx-auto max-w-3xl text-4xl sm:text-6xl">

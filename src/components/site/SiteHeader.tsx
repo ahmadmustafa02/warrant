@@ -7,6 +7,7 @@ const links = [
   { href: '/dashboard', label: 'Lab' },
   { href: '/suites', label: 'Suites' },
   { href: '/method', label: 'Method' },
+  { href: '/#install', label: 'Install' },
 ] as const;
 
 export function SiteHeader() {

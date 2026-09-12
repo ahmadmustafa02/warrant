@@ -21,6 +21,9 @@ export function SiteFooter() {
           <Link href="/method" className="hover:opacity-60">
             Method
           </Link>
+          <Link href="/#install" className="hover:opacity-60">
+            Install
+          </Link>
           <a
             href="https://github.com/ahmadmustafa02/warrant"
             className="hover:opacity-60"
