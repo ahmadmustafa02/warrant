@@ -17,6 +17,7 @@ export const SANDBOX_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     name: 'send_email',
     riskTier: 'SENSITIVE',
     description: 'Sends an email through the mock mailer.',
+    authorityParameters: ['to'],
   },
 ];
 

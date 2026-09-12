@@ -6,7 +6,12 @@ import { issueWarrant, type UserIntent, type Warrant } from './warrant';
 
 const tools: readonly ToolDefinition[] = [
   { name: 'read_document', riskTier: 'READ_ONLY', description: 'Reads a document.' },
-  { name: 'send_email', riskTier: 'SENSITIVE', description: 'Sends an email.' },
+  {
+    name: 'send_email',
+    riskTier: 'SENSITIVE',
+    description: 'Sends an email.',
+    authorityParameters: ['to'],
+  },
   {
     name: 'delete_account',
     riskTier: 'DESTRUCTIVE',
@@ -128,6 +133,20 @@ describe('decideToolCall', () => {
     expect(decision.riskTier).toBe('SENSITIVE');
     expect(decision.taintSources).toEqual(['WORKER']);
     expect(decision.reason.length).toBeGreaterThan(0);
+  });
+
+  it('blocks a recipient chosen by untrusted content when the user did not pin it', () => {
+    const decision = decide(warrantFor({ requestedTools: ['send_email'] }), {
+      tool: 'send_email',
+      args: {
+        to: taint('attacker@evil.test', 'TOOL_RESULT'),
+        body: taint('summary', 'TOOL_RESULT'),
+      },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe(
+      'AUTHORITY_PARAMETER_FROM_CONTENT',
+    );
   });
 
   it('compares non-string pinned arguments by their serialized form', () => {

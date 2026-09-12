@@ -1,10 +1,13 @@
-import { describeValue, sourcesOfArguments } from '../provenance/tainted';
+import { describeValue, isUntrusted, sourcesOfArguments } from '../provenance/tainted';
 import type { ProvenanceKind, TaintedValue } from '../provenance/types';
 import type { RiskTier, ToolRegistry } from '../tools/registry';
 import { findGrant, type Warrant } from './warrant';
 
 export type DenialCode =
-  'UNKNOWN_TOOL' | 'NO_WARRANT_FOR_TOOL' | 'PINNED_PARAMETER_CONFLICT';
+  | 'UNKNOWN_TOOL'
+  | 'NO_WARRANT_FOR_TOOL'
+  | 'PINNED_PARAMETER_CONFLICT'
+  | 'AUTHORITY_PARAMETER_FROM_CONTENT';
 
 export type AuthorizationBasis = 'USER_WARRANT' | 'RISK_TIER';
 
@@ -108,6 +111,29 @@ export function decideToolCall(input: DecisionInput): GuardDecision {
         reason: `the user pinned ${parameter} to "${pinned}" but this call supplies "${suppliedText}"`,
       };
     }
+  }
+
+  for (const parameter of definition.authorityParameters ?? []) {
+    const supplied = call.args[parameter];
+    if (supplied === undefined) {
+      continue;
+    }
+    if (!isUntrusted(supplied)) {
+      continue;
+    }
+    const pinned = grant.pinnedParameters[parameter];
+    if (pinned !== undefined && describeValue(supplied.value) === pinned) {
+      // Model/worker taint on an argument that still matches the user pin is OK.
+      continue;
+    }
+    return {
+      allowed: false,
+      tool: call.tool,
+      riskTier: definition.riskTier,
+      code: 'AUTHORITY_PARAMETER_FROM_CONTENT',
+      taintSources,
+      reason: `${parameter} decides where this action lands; content may not choose it unless the user pinned that value`,
+    };
   }
 
   return {
