@@ -43,6 +43,8 @@ A real hijack (guard off), from deterministic sandbox signals — unauthorized `
 Detection-based defense leaves a measurable gap: PromptGuard flagged only two of twelve authored
 lines while many injections still drove tool calls under a naive agent.
 
+Cursor integration (project hooks, shadow mode by default): see [docs/CURSOR_HOOK.md](docs/CURSOR_HOOK.md).
+
 ## Core idea
 
 Authority flows from the user, never from content.

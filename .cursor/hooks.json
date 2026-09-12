@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "pnpm exec tsx src/scripts/warrant-cursor-hook.ts beforeSubmitPrompt"
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": "pnpm exec tsx src/scripts/warrant-cursor-hook.ts beforeShellExecution"
+      }
+    ],
+    "beforeMCPExecution": [
+      {
+        "command": "pnpm exec tsx src/scripts/warrant-cursor-hook.ts beforeMCPExecution"
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "pnpm exec tsx src/scripts/warrant-cursor-hook.ts postToolUse"
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "pnpm exec tsx src/scripts/warrant-cursor-hook.ts preToolUse"
+      }
+    ]
+  }
+}

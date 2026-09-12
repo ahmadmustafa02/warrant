@@ -1,0 +1,4 @@
+{
+  "protectedPathPrefixes": [".warrant/", ".github/workflows/", ".husky/"],
+  "mode": "SHADOW"
+}

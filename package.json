@@ -33,6 +33,7 @@
     "eval:attack-repeat": "tsx src/scripts/run-attack-baseline-repeat.ts",
     "build:guard": "pnpm --filter @warrant/guard build",
     "guard:doctor": "tsx src/scripts/warrant-doctor.ts",
+    "cursor:hook": "tsx src/scripts/warrant-cursor-hook.ts",
     "prepare": "husky"
   },
   "dependencies": {
