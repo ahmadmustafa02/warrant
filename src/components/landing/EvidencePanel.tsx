@@ -1,20 +1,20 @@
 const rows = [
   {
     who: 'Guard off',
-    value: '7 / 10',
-    detail: 'hijacked on gpt-oss-20b',
+    value: '21 / 46',
+    detail: 'hijacked · realistic recipients · 5× repeats · gpt-oss-20b',
     tone: 'hijack',
   },
   {
     who: 'PromptGuard',
     value: '2 / 10',
-    detail: 'flagged at threshold 0.5',
+    detail: 'flagged at threshold 0.5 on authored lines',
     tone: 'blocked',
   },
   {
     who: 'Warrant',
-    value: 'Both rates',
-    detail: 'attack-stop next to benign-pass',
+    value: '0 / 50',
+    detail: 'hijacks on same repeat matrix · 2 / 2 benign-pass on seeded suite',
     tone: 'safe',
   },
 ] as const;
