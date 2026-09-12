@@ -10,7 +10,7 @@ const rows = [
 ] as const;
 
 const tones: Record<(typeof rows)[number]['tone'], string> = {
-  ink: 'bg-[var(--surface)]',
+  ink: 'bg-[var(--surface)] text-[var(--ink)]',
   safe: 'bg-[var(--safe-soft)] text-[var(--safe)]',
   hijack: 'bg-[var(--hijack-soft)] text-[var(--hijack)]',
   blocked: 'bg-[var(--blocked-soft)] text-[var(--blocked)]',
