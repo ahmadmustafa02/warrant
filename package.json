@@ -29,6 +29,7 @@
     "eval:seed": "tsx src/scripts/seed-eval-data.ts",
     "eval:run": "tsx src/scripts/run-suite.ts",
     "eval:full": "tsx src/scripts/run-eval-full.ts",
+    "eval:baseline": "tsx src/scripts/run-prompt-guard-baseline.ts",
     "prepare": "husky"
   },
   "dependencies": {
