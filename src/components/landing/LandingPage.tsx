@@ -3,14 +3,8 @@ import { BrowserFrame } from '@/components/visual/BrowserFrame';
 import { DocumentMock } from '@/components/visual/DocumentMock';
 import { ScorecardMock } from '@/components/visual/ScorecardMock';
 import { TraceMock } from '@/components/visual/TraceMock';
-import { ChipMarquee } from './ChipMarquee';
+import { EvidencePanel } from './EvidencePanel';
 import { LandingMotion } from './LandingMotion';
-
-const stats = [
-  { value: '7 / 10', label: 'Hijacks with the guard off' },
-  { value: '2 / 10', label: 'Caught by PromptGuard' },
-  { value: '2 rates', label: 'Always reported together' },
-] as const;
 
 export function LandingPage() {
   return (
@@ -49,21 +43,7 @@ export function LandingPage() {
         </BrowserFrame>
       </section>
 
-      <ChipMarquee />
-
-      <section className="mx-auto grid w-full max-w-6xl gap-4 px-5 py-16 sm:grid-cols-3">
-        {stats.map((stat) => (
-          <article
-            key={stat.label}
-            className="stat-card rounded-[28px] bg-[var(--stage)] px-6 py-8 text-center"
-          >
-            <p className="display text-5xl">{stat.value}</p>
-            <p className="mt-3 text-sm font-semibold text-[var(--muted)]">
-              {stat.label}
-            </p>
-          </article>
-        ))}
-      </section>
+      <EvidencePanel />
 
       <section className="stage py-20">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-5 lg:grid-cols-2">
