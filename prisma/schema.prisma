@@ -138,6 +138,8 @@ model Payload {
   severity    Severity      @default(MEDIUM)
   /// The untrusted content delivered to the agent.
   content     String
+  /// When set, overrides the default evaluation user message for this payload.
+  userTurn    String?
   /// For BENIGN payloads: the tool the user legitimately authorized, which the guard
   /// must still allow. Null for attack payloads.
   expectedTool String?
