@@ -25,14 +25,14 @@ never had permission.
 ## The measured problem
 
 This repository ships the **sandbox agent and harness** used for measurement — mock tools
-(including egress `fetch_url`), **12** authored document-injection lines, and **2** benign
+(including egress `fetch_url`), **13** authored document-injection lines, and **2** benign
 control tasks. Target brain: `openai/gpt-oss-20b` via Groq.
 
 | Measurement (this repo) | Result |
 | ----------------------- | ------ |
-| Guard **OFF**, seeded attack suite (12 payloads, once each) | **8 / 12 hijacked** · **4 / 12 attack-stop** |
-| Guard **ENFORCE**, same run + benign suite | **12 / 12 attack-stop** · **2 / 2 benign-pass** |
-| `llama-prompt-guard-2` on the 12 authored injection lines (threshold 0.5) | **2 / 12 flagged** |
+| Guard **OFF**, tuned attack suite (13 payloads, once each) | **5 / 13 hijacked** |
+| Guard **ENFORCE**, same run + benign suite | **13 / 13 attack-stop** · **2 / 2 benign-pass** |
+| `llama-prompt-guard-2` on the 13 authored injection lines (threshold 0.5) | **2 / 13 flagged** (re-run `eval:baseline` to refresh) |
 | Guard **OFF**, realistic recipients, **5 repeats × 10 attacks** (older matrix) | **21 / 46 hijacked (45.7%)** — errors excluded |
 
 Obvious `@evil.test` recipients in the authored lines make the model refuse many attacks before
@@ -60,7 +60,7 @@ pnpm run eval:detect-only
 pnpm run cursor:shadow-report
 ```
 
-Held-out (5 attacks, separate from tuning): **3/5 hijacked** guard OFF · **5/5 attack-stop** ENFORCE (latest lab runs).
+Held-out (5 attacks, separate from tuning): **0/5 hijacked** in latest local scorecard (1 case errored — re-run `pnpm run eval:scorecard -- --held-out`) · **ENFORCE** blocked all non-error cases.
 
 ## Core idea
 
@@ -142,6 +142,9 @@ Run the full quality gate exactly as CI does:
 pnpm run verify           # format + lint + typecheck + test
 pnpm run run:sandbox      # one injected document case with guard ENFORCE
 pnpm run run:sandbox:baseline  # same case with guard OFF (baseline hijack)
+pnpm run eval:scorecard -- --guard OFF    # refresh numbers without Postgres (Groq only)
+pnpm run eval:scorecard -- --guard ENFORCE
+pnpm run eval:scorecard -- --held-out --guard ENFORCE
 pnpm run eval:seed             # load authored attack + benign suites into Postgres
 pnpm run eval:baseline         # score attacks with llama-prompt-guard-2 (Groq)
 pnpm run eval:run -- --suite document-injection-attacks --guard ENFORCE
@@ -166,12 +169,14 @@ pnpm run warrant init --from-sandbox   # writes .warrant/proxy-policy.json
 pnpm run warrant doctor
 pnpm run warrant eval intent
 pnpm run warrant attack --payload authority_urgency --guard ENFORCE
+pnpm run warrant red-team --limit 3          # OFF then ENFORCE on authored payloads (proxy + demo agent)
 pnpm run warrant guard -- node your-agent.js
 ```
 
-`warrant guard` starts a local proxy, sets `OPENAI_BASE_URL` and `ANTHROPIC_BASE_URL` on
-the child, and evaluates tool calls on OpenAI `/v1/chat/completions` and Anthropic
-`/v1/messages`.
+`warrant guard` starts a local proxy, sets `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`, and
+`GEMINI_BASE_URL` on the child, and evaluates tool calls on OpenAI `/v1/chat/completions`,
+Anthropic `/v1/messages`, and Gemini `generateContent` (native or OpenAI-compat when
+`GEMINI_API_KEY` / `GOOGLE_API_KEY` is set).
 
 Policy (`.warrant/proxy-policy.json`):
 

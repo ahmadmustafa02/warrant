@@ -8,6 +8,7 @@ import type { ApprovalCoordinator } from './proxyApproval';
 import type { ApprovalMode, StreamingPolicy } from './proxyPolicy';
 import { ProxySession } from './proxySession';
 import type { AdvertisedTool, ToolDrift } from '@/core/tools/toolSetDrift';
+import { geminiNativeUpstreamBase } from '@/cli/upstream';
 
 export interface ProxyServerOptions {
   readonly mode: GuardMode;
@@ -94,19 +95,35 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
       }
 
       const path = req.url?.split('?')[0] ?? '';
-      const isOpenAi = path === '/v1/chat/completions';
-      const isAnthropic = path === '/v1/messages';
-      if (req.method !== 'POST' || (!isOpenAi && !isAnthropic)) {
+      const isGeminiNative = path.includes('generateContent');
+      const isOpenAi =
+        path.endsWith('/chat/completions') || path === '/v1/chat/completions';
+      const isAnthropic = path.endsWith('/messages') || path === '/v1/messages';
+      if (req.method !== 'POST' || (!isOpenAi && !isAnthropic && !isGeminiNative)) {
         writeJson(res, 404, { error: 'not_found' });
         return;
       }
 
       try {
         const requestBody = await readJsonBody(req);
-        const upstreamPath = isAnthropic ? '/messages' : '/chat/completions';
+        let upstreamUrl: string;
+        if (isGeminiNative) {
+          const geminiPath = path.startsWith('/v1beta')
+            ? path.slice('/v1beta'.length)
+            : path;
+          upstreamUrl = joinUrl(geminiNativeUpstreamBase(), geminiPath);
+        } else if (isAnthropic) {
+          upstreamUrl = joinUrl(
+            options.upstreamBaseUrl.replace(/\/openai\/?$/, ''),
+            '/messages',
+          );
+        } else {
+          upstreamUrl = joinUrl(options.upstreamBaseUrl, '/chat/completions');
+        }
+
         const result = await guardChatCompletion({
           mode: options.mode,
-          upstreamUrl: joinUrl(options.upstreamBaseUrl, upstreamPath),
+          upstreamUrl,
           upstreamHeaders: resolveUpstreamHeaders(req, options.upstreamHeaders),
           requestBody,
           overrides: options.overrides,

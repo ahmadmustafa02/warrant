@@ -5,6 +5,7 @@ import { runDoctorCommand } from '@/cli/commands/doctor';
 import { runEvalIntentCommand } from '@/cli/commands/evalIntent';
 import { runGuardCommand } from '@/cli/commands/guard';
 import { runInitCommand } from '@/cli/commands/init';
+import { runRedTeamCommand } from '@/cli/commands/redTeam';
 import { warrantBanner } from '@/cli/ui/brand';
 
 const HELP = `${warrantBanner()}
@@ -15,9 +16,10 @@ Usage:
   warrant doctor
   warrant eval intent
   warrant attack [--payload <id>] [--guard ENFORCE|OFF|DETECT_ONLY]
+  warrant red-team [--limit N] [--held-out] [-- -- <command...>]
 
 Environment:
-  GROQ_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY — upstream model access
+  GROQ_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY / GEMINI_API_KEY — upstream model access
   WARRANT_INTENT=llm|heuristic — override policy intent mode
 `;
 
@@ -45,6 +47,8 @@ export async function runCli(argv: readonly string[]): Promise<number> {
         return 1;
       case 'attack':
         return await runAttackCommand(rest);
+      case 'red-team':
+        return await runRedTeamCommand(rest);
       default:
         p.log.error(`Unknown command: ${command}`);
         process.stdout.write(`${HELP}\n`);

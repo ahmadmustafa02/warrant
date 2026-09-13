@@ -14,6 +14,7 @@ import {
   clackApprovalPrompt,
   nonInteractiveApprovalPrompt,
 } from '@/cli/ui/approvalPrompt';
+import { proxyEnvForChild, upstreamAuthHeader, upstreamBaseUrl } from '@/cli/upstream';
 import {
   modeBadge,
   statusOk,
@@ -44,41 +45,6 @@ function parseGuardArgs(argv: readonly string[]): {
   return { mode, command: argv.slice(dash + 1), noApproval };
 }
 
-function upstreamBaseUrl(): string {
-  const explicit = process.env.WARRANT_UPSTREAM?.trim();
-  if (explicit !== undefined && explicit !== '') {
-    return explicit.replace(/\/$/, '');
-  }
-  const anthropic = process.env.ANTHROPIC_API_KEY?.trim();
-  if (anthropic !== undefined && anthropic !== '') {
-    return 'https://api.anthropic.com/v1';
-  }
-  const openAi = process.env.OPENAI_BASE_URL?.trim();
-  if (openAi !== undefined && openAi !== '') {
-    return openAi.replace(/\/$/, '');
-  }
-  return 'https://api.groq.com/openai/v1';
-}
-
-function upstreamAuthHeader(): Record<string, string> {
-  const anthropic = process.env.ANTHROPIC_API_KEY?.trim();
-  if (anthropic !== undefined && anthropic !== '') {
-    return {
-      'x-api-key': anthropic,
-      'anthropic-version': process.env.ANTHROPIC_VERSION?.trim() ?? '2023-06-01',
-    };
-  }
-  const groq = process.env.GROQ_API_KEY?.trim();
-  if (groq !== undefined && groq !== '') {
-    return { authorization: `Bearer ${groq}` };
-  }
-  const openAi = process.env.OPENAI_API_KEY?.trim();
-  if (openAi !== undefined && openAi !== '') {
-    return { authorization: `Bearer ${openAi}` };
-  }
-  return {};
-}
-
 export async function runGuardCommand(argv: readonly string[]): Promise<number> {
   p.intro(warrantBanner('Guard — route model traffic through the local proxy'));
 
@@ -89,7 +55,7 @@ export async function runGuardCommand(argv: readonly string[]): Promise<number> 
 
   if (Object.keys(headers).length === 0) {
     p.log.warn(
-      'No GROQ_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY in this shell — forwarding Authorization from the agent when present.',
+      'No GROQ_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY / GEMINI_API_KEY in this shell — forwarding Authorization from the agent when present.',
     );
   }
 
@@ -149,9 +115,7 @@ export async function runGuardCommand(argv: readonly string[]): Promise<number> 
     stdio: 'inherit',
     env: {
       ...process.env,
-      OPENAI_BASE_URL: url,
-      OPENAI_API_BASE: url,
-      ANTHROPIC_BASE_URL: url,
+      ...proxyEnvForChild(url),
     },
     shell: process.platform === 'win32',
   });

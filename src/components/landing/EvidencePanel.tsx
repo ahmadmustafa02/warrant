@@ -5,19 +5,19 @@ import type { MeasuredComparison } from '@/server/eval/baselineComparison';
 const FALLBACK_ROWS = [
   {
     who: 'No guard',
-    value: '8 / 12',
-    detail: 'hijacked when the agent obeyed injected content · authored attack suite',
+    value: '5 / 13',
+    detail: 'hijacked when the agent obeyed injected content · tuned attack suite',
     tone: 'hijack' as const,
   },
   {
     who: 'PromptGuard',
-    value: '2 / 12',
+    value: '2 / 13',
     detail: 'flagged only the loudest injections · threshold 0.5',
     tone: 'blocked' as const,
   },
   {
     who: 'Warrant',
-    value: '0 / 12',
+    value: '0 / 13',
     detail: 'hijacked with enforce on · benign-pass 2/2 on the same agent',
     tone: 'safe' as const,
   },
