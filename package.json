@@ -85,13 +85,5 @@
   },
   "engines": {
     "node": ">=22"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "@prisma/engines",
-      "prisma",
-      "unrs-resolver"
-    ]
   }
 }
