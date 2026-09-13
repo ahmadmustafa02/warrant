@@ -36,6 +36,7 @@
     "cursor:shadow-report": "tsx src/scripts/warrant-shadow-report.ts",
     "build:guard": "pnpm --filter @warrant/guard build",
     "guard:doctor": "tsx src/scripts/warrant-doctor.ts",
+    "guard:proxy": "tsx src/scripts/warrant-guard.ts",
     "cursor:hook": "tsx src/scripts/warrant-cursor-hook.ts",
     "prepare": "husky"
   },

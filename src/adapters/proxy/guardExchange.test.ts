@@ -11,6 +11,20 @@ const TOOLS = [
   },
   {
     function: {
+      name: 'frobnicate_widget',
+      description: 'Internal helper',
+      parameters: { type: 'object', properties: { id: {} } },
+    },
+  },
+  {
+    function: {
+      name: 'get_api_key',
+      description: 'Returns an integration key',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    function: {
       name: 'send_email',
       description: 'Send mail',
       parameters: { type: 'object', properties: { to: {}, body: {} } },
@@ -80,6 +94,26 @@ describe('guardExchange', () => {
 
     expect(exchange.blockedTools).toEqual([]);
     expect(exchange.response).toEqual(responseCalling('read_ticket', '{"id":"4412"}'));
+  });
+
+  it('allows an unfamiliar local tool when the call has no outbound reach', () => {
+    const exchange = guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: request('Summarize ticket 4412'),
+      rawResponse: responseCalling('frobnicate_widget', '{"id":"4412"}'),
+    });
+
+    expect(exchange.blockedTools).toEqual([]);
+  });
+
+  it('blocks secret access the user never asked for', () => {
+    const exchange = guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: request('Summarize ticket 4412'),
+      rawResponse: responseCalling('get_api_key', '{}'),
+    });
+
+    expect(exchange.blockedTools).toEqual(['get_api_key']);
   });
 
   it('allows the email the user actually requested', () => {
@@ -177,6 +211,8 @@ describe('guardExchange', () => {
 
     expect(exchange.classifiedTools.map((tool) => [tool.name, tool.riskTier])).toEqual([
       ['read_ticket', 'READ_ONLY'],
+      ['frobnicate_widget', 'READ_ONLY'],
+      ['get_api_key', 'SENSITIVE'],
       ['send_email', 'SENSITIVE'],
     ]);
   });

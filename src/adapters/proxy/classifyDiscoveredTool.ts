@@ -136,9 +136,36 @@ export function tokenizeToolName(name: string): readonly string[] {
     .filter((token) => token !== '');
 }
 
+/** Names that reach for credentials — never warrant-exempt even when they look like reads. */
+function inferSecretAccessTool(tokens: readonly string[]): boolean {
+  if (
+    tokens.includes('password') ||
+    tokens.includes('secret') ||
+    tokens.includes('credential')
+  ) {
+    return true;
+  }
+  if (
+    tokens.includes('key') &&
+    (tokens.includes('api') || tokens.includes('private') || tokens.includes('signing'))
+  ) {
+    return true;
+  }
+  if (
+    tokens.includes('token') &&
+    (tokens.includes('access') || tokens.includes('auth') || tokens.includes('bearer'))
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function inferRiskTier(tokens: readonly string[]): RiskTier {
   if (tokens.some((token) => DESTRUCTIVE_TOKENS.has(token))) {
     return 'DESTRUCTIVE';
+  }
+  if (inferSecretAccessTool(tokens)) {
+    return 'SENSITIVE';
   }
   if (tokens.some((token) => SIDE_EFFECT_TOKENS.has(token))) {
     return 'SENSITIVE';
@@ -146,9 +173,9 @@ function inferRiskTier(tokens: readonly string[]): RiskTier {
   if (tokens.some((token) => READ_TOKENS.has(token) || EGRESS_TOKENS.has(token))) {
     return 'READ_ONLY';
   }
-  // Unrecognized verbs are treated as consequential. A tool that turns out to be a
-  // harmless read costs one policy line; the reverse costs a breach.
-  return 'SENSITIVE';
+  // Unknown verbs default to local work. Outbound reach is enforced from the tool's
+  // parameter shape (destination fields) and from side-effect / secret name tokens.
+  return 'READ_ONLY';
 }
 
 /**
@@ -176,10 +203,10 @@ export function classifyDiscoveredTool(
     tool.description === '' ? `Observed tool ${tool.name}.` : tool.description;
 
   if (riskTier === 'READ_ONLY') {
-    // An outbound read still needs a destination check, and the registry requires a
-    // declared authority parameter to mark one. Without a destination-shaped
-    // parameter there is nothing to enforce, so it stays a plain read.
-    if (reachesOutside && authorityParameters.length > 0) {
+    // Any call that names where data goes needs a warrant and destination checks,
+    // even when the tool name is unfamiliar. Plain id-only tools stay exempt.
+    const hasDestinationShape = authorityParameters.length > 0;
+    if ((reachesOutside || hasDestinationShape) && hasDestinationShape) {
       return {
         name: tool.name,
         riskTier,

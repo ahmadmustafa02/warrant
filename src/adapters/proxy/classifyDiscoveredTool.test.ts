@@ -51,10 +51,24 @@ describe('classifyDiscoveredTool', () => {
     expect(definition.authorityParameters).toEqual(['url']);
   });
 
-  it('fails closed on a verb it does not recognize', () => {
+  it('treats an unrecognized verb as local read-only work', () => {
     expect(classifyDiscoveredTool(tool('frobnicate_widget')).riskTier).toBe(
-      'SENSITIVE',
+      'READ_ONLY',
     );
+  });
+
+  it('requires a warrant when an unknown tool advertises a destination parameter', () => {
+    const definition = classifyDiscoveredTool(
+      tool('frobnicate_widget', ['to', 'payload']),
+    );
+
+    expect(definition.riskTier).toBe('READ_ONLY');
+    expect(definition.egress).toBe(true);
+    expect(definition.authorityParameters).toEqual(['to']);
+  });
+
+  it('treats secret-bearing tool names as sensitive even when they look like reads', () => {
+    expect(classifyDiscoveredTool(tool('get_api_key')).riskTier).toBe('SENSITIVE');
   });
 
   it('lets an explicit override win over the inferred tier', () => {
@@ -72,9 +86,11 @@ describe('buildProxyRegistry', () => {
       tool('read_ticket', ['id']),
       tool('send_email', ['to']),
       tool('fetch_url', ['url']),
+      tool('frobnicate_widget', ['id']),
     ]);
 
     expect(registry.requiresWarrant('read_ticket')).toBe(false);
+    expect(registry.requiresWarrant('frobnicate_widget')).toBe(false);
     expect(registry.requiresWarrant('send_email')).toBe(true);
     expect(registry.requiresWarrant('fetch_url')).toBe(true);
   });
