@@ -1,8 +1,10 @@
 # Warrant
 
+Stop your AI agent from being hijacked. Warrant guards what it’s allowed to do — block risky tool calls and measure how well it still handles normal tasks.
+
 **Stop agent hijacks at the tool call — with numbers to prove it.**
 
-Warrant is provenance-based **tool authorization** for AI agents: freeze what the user actually authorized, then deny any sensitive action that untrusted content (documents, web, memory, tool output) tries to add later. This repo ships the **guard**, a **CLI proxy**, and a **measured adversarial lab** (60 tuned attacks, 24 benign tasks, 15 held-out).
+Warrant is provenance-based **tool authorization** for AI agents: freeze what the user actually authorized, then deny any sensitive action untrusted input tries to add later. This repo ships the **guard**, a **CLI proxy**, and a **measured adversarial lab** (60 tuned attacks, 24 benign tasks, 15 held-out).
 
 [![npm @warrant-lab/cli](https://img.shields.io/npm/v/@warrant-lab/cli?label=cli)](https://www.npmjs.com/package/@warrant-lab/cli)
 [![npm @warrant-lab/guard](https://img.shields.io/npm/v/@warrant-lab/guard?label=guard)](https://www.npmjs.com/package/@warrant-lab/guard)
