@@ -6,6 +6,8 @@ import { groqChatWithTools } from '@/llm/groqClient';
 import type { ChatMessage, LlmUsage, ToolCallRequest } from '@/llm/types';
 import type OpenAI from 'openai';
 import { deriveIntentFromUserTurn } from './intent/deriveIntent';
+import { resolveProxyIntent } from './intent/resolveProxyIntent';
+import type { IntentParseMode } from './intent/parseUserIntentLlm';
 import {
   denialMessage,
   evaluateToolCall,
@@ -76,6 +78,8 @@ export type RunSandboxAgentOptions = {
    * drift detection is carrying the denial rather than the risk tier.
    */
   lateToolAvailability?: 'AFTER_DOCUMENT_READ' | 'FROM_START';
+  /** When set, uses the same intent path as the HTTP proxy (heuristic = deriveProxyIntent). */
+  intentParseMode?: IntentParseMode;
 };
 
 function toToolCallRequest(
@@ -114,7 +118,15 @@ export async function runSandboxAgent(
 
   const documents = createDocumentStore(options.injectionLine);
   const registry = createSandboxRegistry();
-  const intent = deriveIntentFromUserTurn(options.userTurn);
+  const intent =
+    options.intentParseMode === 'heuristic' || options.intentParseMode === 'llm'
+      ? await resolveProxyIntent({
+          mode: options.intentParseMode,
+          userRequest: options.userTurn,
+          registry,
+          destructiveRequiresExplicitUser: true,
+        })
+      : deriveIntentFromUserTurn(options.userTurn);
   const warrant = issueWarrant(taint(intent, 'USER'), registry);
   const authorizedTools = intent.requestedTools;
 

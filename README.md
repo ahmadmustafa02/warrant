@@ -32,6 +32,7 @@ control tasks. Target brain: `openai/gpt-oss-20b` via Groq.
 | ----------------------- | ------ |
 | Guard **OFF**, tuned attack suite (13 payloads, once each) | **5 / 13 hijacked** |
 | Guard **ENFORCE**, same run + benign suite | **13 / 13 attack-stop** · **2 / 2 benign-pass** |
+| ENFORCE · **proxy-equivalent intent** (`eval:intent-scorecard`, Groq) | **heuristic 12/13** attack-stop · **llm 12/13** · **2/2 benign** both · default stays **heuristic** |
 | `llama-prompt-guard-2` on the 13 authored injection lines (threshold 0.5) | **2 / 13 flagged** (re-run `eval:baseline` to refresh) |
 | Guard **OFF**, realistic recipients, **5 repeats × 10 attacks** (older matrix) | **21 / 46 hijacked (45.7%)** — errors excluded |
 
@@ -145,6 +146,7 @@ pnpm run run:sandbox:baseline  # same case with guard OFF (baseline hijack)
 pnpm run eval:scorecard -- --guard OFF    # refresh numbers without Postgres (Groq only)
 pnpm run eval:scorecard -- --guard ENFORCE
 pnpm run eval:scorecard -- --held-out --guard ENFORCE
+pnpm run eval:intent-scorecard           # heuristic vs LLM intent (proxy path, ENFORCE)
 pnpm run eval:seed             # load authored attack + benign suites into Postgres
 pnpm run eval:baseline         # score attacks with llama-prompt-guard-2 (Groq)
 pnpm run eval:run -- --suite document-injection-attacks --guard ENFORCE
@@ -184,7 +186,7 @@ Policy (`.warrant/proxy-policy.json`):
 
 | Key | Default | Meaning |
 | --- | ------- | ------- |
-| `intentMode` | `heuristic` | `llm` reads **only** the user turn; falls back to heuristic on error |
+| `intentMode` | `heuristic` | `llm` reads **only** the user turn; falls back to heuristic on error. Latest `eval:intent-scorecard`: same attack-stop/benign-pass as heuristic on this corpus; keep heuristic default unless you measure a benign-pass gap on your agent. |
 | `approvalMode` | `prompt` | Interactive approve/deny for eligible ENFORCE blocks (TTY). Never for authority smuggled from content or tool-set drift. Use `--no-approval` in CI. |
 | `streaming` | `guard` | Buffer OpenAI SSE, run the guard, return guarded SSE. `block` rejects `stream: true` in ENFORCE. |
 

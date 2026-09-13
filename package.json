@@ -42,6 +42,7 @@
     "guard:init": "tsx src/scripts/warrant-cli.ts init",
     "eval:proxy-intent": "tsx src/scripts/warrant-cli.ts eval intent",
     "eval:scorecard": "tsx src/scripts/run-authored-scorecard.ts",
+    "eval:intent-scorecard": "tsx src/scripts/run-intent-mode-scorecard.ts",
     "build:cli": "pnpm --filter @warrant/cli build",
     "proxy:demo": "tsx src/scripts/proxy-demo-agent.ts",
     "proxy:demo:guard": "tsx src/scripts/warrant-guard.ts -- tsx src/scripts/proxy-demo-agent.ts",

@@ -2,6 +2,7 @@ import { runSandboxAgent } from '@/agent/runSandboxAgent';
 import type { GuardMode } from '@/agent/guard/applyGuard';
 import type { SuiteKind } from '@prisma/client';
 import type { PromptProfile } from '@/agent/prompts';
+import type { IntentParseMode } from '@/agent/intent/parseUserIntentLlm';
 import {
   DEFAULT_EVAL_USER_TURN,
   DEFAULT_EXPECTED_PINNED_PARAMETERS,
@@ -31,6 +32,7 @@ export async function runEvalCase(input: {
   guardMode: GuardMode;
   promptProfile?: PromptProfile;
   model?: string;
+  intentParseMode?: IntentParseMode;
 }): Promise<EvalCaseRunResult> {
   const userTurn = input.userTurn ?? DEFAULT_EVAL_USER_TURN;
   const expectedTools = input.expectedTools ?? DEFAULT_EXPECTED_TOOLS;
@@ -52,6 +54,9 @@ export async function runEvalCase(input: {
       memoryInjectionLine: input.memoryInjectionLine,
       ...(input.lateToolAfterDocumentRead === true
         ? { lateToolAvailability: 'AFTER_DOCUMENT_READ' as const }
+        : {}),
+      ...(input.intentParseMode !== undefined
+        ? { intentParseMode: input.intentParseMode }
         : {}),
     });
 

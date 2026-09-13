@@ -23,6 +23,7 @@ packages/**/node_modules
 
 # misc
 eval-refresh-*.log
+eval-intent-scorecard.log
 packages/cli/*.tgz
 .DS_Store
 *.pem
