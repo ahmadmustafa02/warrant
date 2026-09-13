@@ -50,10 +50,10 @@ export function ProductPath() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-2 lg:grid-rows-3">
+        <div className="mt-10 flex flex-col gap-6 lg:flex-row lg:items-stretch">
           <Link
             href={featured.href}
-            className="pressable lift reveal-card group relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-[32px] bg-[var(--ink)] p-7 text-[var(--on-ink)] sm:min-h-[320px] sm:p-9 lg:row-span-3"
+            className="pressable group flex min-h-[260px] w-full flex-col justify-between rounded-[32px] bg-[var(--ink)] p-7 text-[var(--on-ink)] sm:p-8 lg:w-1/2"
           >
             <div>
               <p className="font-mono text-xs tracking-[0.14em] text-[var(--on-ink)]/55">
@@ -78,39 +78,41 @@ export function ProductPath() {
             </span>
           </Link>
 
-          {rest.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.title}
-                href={item.href}
-                className="pressable lift reveal-card group surface flex min-h-[132px] items-start gap-4 rounded-[28px] p-6"
-              >
-                <span className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--stage)]">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-start justify-between gap-3">
-                    <span>
-                      <span className="font-mono text-[11px] tracking-[0.14em] text-[var(--muted)]">
-                        {item.step}
-                      </span>
-                      <h3 className="mt-1 text-xl font-bold tracking-tight">
-                        {item.title}
-                      </h3>
-                    </span>
-                    <ArrowUpRight
-                      className="mt-1 h-4 w-4 shrink-0 text-[var(--muted)] transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--ink)]"
-                      aria-hidden="true"
-                    />
+          <div className="flex w-full flex-col gap-4 lg:w-1/2">
+            {rest.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.title}
+                  href={item.href}
+                  className="pressable group surface flex flex-1 items-start gap-4 rounded-[28px] p-5 sm:p-6"
+                >
+                  <span className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--stage)]">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
-                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                    {item.body}
-                  </p>
-                </span>
-              </Link>
-            );
-          })}
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-start justify-between gap-3">
+                      <span>
+                        <span className="font-mono text-[11px] tracking-[0.14em] text-[var(--muted)]">
+                          {item.step}
+                        </span>
+                        <h3 className="mt-1 text-xl font-bold tracking-tight">
+                          {item.title}
+                        </h3>
+                      </span>
+                      <ArrowUpRight
+                        className="mt-1 h-4 w-4 shrink-0 text-[var(--muted)] transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--ink)]"
+                        aria-hidden="true"
+                      />
+                    </span>
+                    <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+                      {item.body}
+                    </p>
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
