@@ -37,7 +37,7 @@ export function MeasuredComparisonPanel({
               }`}
             >
               <span
-                className={`mb-5 block h-1.5 w-10 rounded-full ${barTone[row.tone]}`}
+                className={`reveal-bar mb-5 block h-1.5 w-10 rounded-full ${barTone[row.tone]}`}
               />
               <p className="text-sm font-bold text-[var(--muted)]">{row.label}</p>
               <p className="display mt-3 text-4xl sm:text-5xl">{row.headline}</p>

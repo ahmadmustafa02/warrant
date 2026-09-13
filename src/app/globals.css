@@ -55,6 +55,7 @@ html {
   background: var(--bg);
   color: var(--ink);
   color-scheme: light;
+  scroll-behavior: smooth;
 }
 
 html.dark {
@@ -158,6 +159,10 @@ html.dark .glass {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .float-slow {
     animation: none !important;
   }

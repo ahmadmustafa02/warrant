@@ -46,11 +46,13 @@ export default async function MethodPage() {
 
   return (
     <article className="mx-auto w-full max-w-3xl px-5 py-16 sm:py-20">
-      <p className="text-sm font-bold text-[var(--mark)]">Method</p>
-      <h1 className="display mt-3 text-5xl sm:text-6xl">
-        Content fills details. It never expands the permission set.
-      </h1>
-      <ol className="mt-12 space-y-6">
+      <div data-reveal>
+        <p className="text-sm font-bold text-[var(--mark)]">Method</p>
+        <h1 className="display mt-3 text-5xl sm:text-6xl">
+          Content fills details. It never expands the permission set.
+        </h1>
+      </div>
+      <ol className="mt-12 space-y-6" data-reveal-stagger>
         {rules.map((rule, index) => (
           <li key={rule.title} className="rounded-[28px] bg-[var(--stage)] p-6">
             <p className="text-sm font-bold text-[var(--muted)]">0{index + 1}</p>
@@ -60,17 +62,18 @@ export default async function MethodPage() {
         ))}
       </ol>
       {comparison ? (
-        <div className="mt-12">
+        <div className="mt-12" data-reveal>
           <MeasuredComparisonPanel comparison={comparison} compact />
         </div>
       ) : null}
       {heldOut ? (
-        <div className="mt-8">
+        <div className="mt-8" data-reveal>
           <HeldOutComparisonPanel heldOut={heldOut} />
         </div>
       ) : null}
       <Link
         href="/dashboard"
+        data-reveal
         className="pressable mt-10 inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-6 text-sm font-semibold text-[var(--on-ink)]"
       >
         See measured runs

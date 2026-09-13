@@ -41,16 +41,20 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
       </section>
 
       <section className="hero-visual mx-auto w-full max-w-6xl px-5 pb-6">
-        <BrowserFrame title="warrant.dev/dashboard" className="float-slow">
-          <ScorecardMock />
-        </BrowserFrame>
+        <div className="hero-visual-inner">
+          <div className="hero-float">
+            <BrowserFrame title="warrant.dev/dashboard">
+              <ScorecardMock />
+            </BrowserFrame>
+          </div>
+        </div>
       </section>
 
       <EvidencePanel comparison={comparison} />
 
-      <section className="stage py-20">
+      <section className="stage reveal-section py-20">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-5 lg:grid-cols-2">
-          <div>
+          <div className="reveal-copy">
             <p className="text-sm font-bold text-[var(--mark)]">01 — The hijack</p>
             <h2 className="display mt-3 text-4xl sm:text-5xl">
               The attack looks like part of the job.
@@ -61,18 +65,22 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
               work. No exploit chain, just text the agent was trained to follow.
             </p>
           </div>
-          <BrowserFrame title="doc-1 · Quarterly notes">
-            <DocumentMock />
-          </BrowserFrame>
+          <div className="reveal-visual">
+            <BrowserFrame title="doc-1 · Quarterly notes">
+              <DocumentMock />
+            </BrowserFrame>
+          </div>
         </div>
       </section>
 
-      <section className="py-20">
+      <section className="reveal-section py-20">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-5 lg:grid-cols-2">
-          <BrowserFrame title="warrant.dev/runs/…/cases" className="lg:order-1">
-            <TraceMock />
-          </BrowserFrame>
-          <div className="lg:order-2">
+          <div className="reveal-visual lg:order-1">
+            <BrowserFrame title="warrant.dev/runs/…/cases">
+              <TraceMock />
+            </BrowserFrame>
+          </div>
+          <div className="reveal-copy lg:order-2">
             <p className="text-sm font-bold text-[var(--mark)]">02 — The guard</p>
             <h2 className="display mt-3 text-4xl sm:text-5xl">
               Stop the hijack at the tool call.
@@ -86,20 +94,22 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
         </div>
       </section>
 
-      <section className="stage py-20">
+      <section className="stage reveal-section py-20">
         <div className="mx-auto w-full max-w-6xl px-5">
-          <h2 className="display max-w-3xl text-4xl sm:text-6xl">
-            Red-team it. Measure it. Ship the guard.
-          </h2>
-          <p className="mt-4 max-w-2xl text-lg text-[var(--muted)]">
-            Attack an agent, watch the hijack land with the guard off, then prove the
-            guard stops it without breaking legitimate work.
-          </p>
+          <div className="reveal-copy">
+            <h2 className="display max-w-3xl text-4xl sm:text-6xl">
+              Red-team it. Measure it. Ship the guard.
+            </h2>
+            <p className="mt-4 max-w-2xl text-lg text-[var(--muted)]">
+              Attack an agent, watch the hijack land with the guard off, then prove the
+              guard stops it without breaking legitimate work.
+            </p>
+          </div>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 title: 'Playground',
-                body: 'Hijack a live agent, then run the same attack with the guard on.',
+                body: 'Replay a recorded hijack, then the same scenario with the guard on.',
                 href: '/playground',
               },
               {
@@ -121,7 +131,7 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
               <Link
                 key={card.title}
                 href={card.href}
-                className="pressable lift surface block rounded-[28px] p-6"
+                className="pressable lift reveal-card surface block rounded-[28px] p-6"
               >
                 <h3 className="text-2xl font-bold tracking-tight">{card.title}</h3>
                 <p className="mt-2 text-[var(--muted)]">{card.body}</p>
@@ -133,26 +143,28 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
 
       <InstallPanel />
 
-      <section className="px-5 py-24 text-center">
-        <h2 className="display mx-auto max-w-3xl text-4xl sm:text-6xl">
-          Try the hijack. Then turn the guard on.
-        </h2>
-        <p className="mx-auto mt-4 max-w-lg text-[var(--muted)]">
-          Two runs in the playground say more than any claim about agent security.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link
-            href="/playground"
-            className="pressable inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-7 text-[15px] font-semibold text-[var(--on-ink)]"
-          >
-            Open playground
-          </Link>
-          <Link
-            href="/dashboard"
-            className="pressable inline-flex min-h-12 items-center rounded-full border border-[var(--line)] bg-[var(--surface)] px-7 text-[15px] font-semibold"
-          >
-            View measured runs
-          </Link>
+      <section className="reveal-section px-5 py-24 text-center">
+        <div className="reveal-copy mx-auto max-w-3xl">
+          <h2 className="display text-4xl sm:text-6xl">
+            Try the hijack. Then turn the guard on.
+          </h2>
+          <p className="mx-auto mt-4 max-w-lg text-[var(--muted)]">
+            Two runs in the playground say more than any claim about agent security.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/playground"
+              className="pressable inline-flex min-h-12 items-center rounded-full bg-[var(--ink)] px-7 text-[15px] font-semibold text-[var(--on-ink)]"
+            >
+              Open playground
+            </Link>
+            <Link
+              href="/dashboard"
+              className="pressable inline-flex min-h-12 items-center rounded-full border border-[var(--line)] bg-[var(--surface)] px-7 text-[15px] font-semibold"
+            >
+              View measured runs
+            </Link>
+          </div>
         </div>
       </section>
     </LandingMotion>

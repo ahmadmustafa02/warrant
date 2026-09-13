@@ -42,12 +42,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:py-16">
-      <p className="text-sm font-bold text-[var(--mark)]">Lab</p>
-      <h1 className="display mt-3 text-5xl sm:text-6xl">Measured runs</h1>
-      <p className="mt-4 max-w-2xl text-[var(--muted)]">
-        Every completed run stores both rates. Open a row to inspect the cases, the
-        tools that fired, and the warrant decisions.
-      </p>
+      <div data-reveal>
+        <p className="text-sm font-bold text-[var(--mark)]">Lab</p>
+        <h1 className="display mt-3 text-5xl sm:text-6xl">Measured runs</h1>
+        <p className="mt-4 max-w-2xl text-[var(--muted)]">
+          Every completed run stores both rates. Open a row to inspect the cases, the
+          tools that fired, and the warrant decisions.
+        </p>
+      </div>
 
       {loadError ? (
         <div className="surface mt-10 rounded-[var(--radius)] p-8" role="alert">
@@ -57,14 +59,26 @@ export default async function DashboardPage() {
         </div>
       ) : null}
 
-      {comparison ? <MeasuredComparisonPanel comparison={comparison} /> : null}
+      {comparison ? (
+        <div data-reveal>
+          <MeasuredComparisonPanel comparison={comparison} />
+        </div>
+      ) : null}
 
-      {heldOut ? <HeldOutComparisonPanel heldOut={heldOut} /> : null}
+      {heldOut ? (
+        <div data-reveal>
+          <HeldOutComparisonPanel heldOut={heldOut} />
+        </div>
+      ) : null}
 
-      {detectOnly ? <DetectOnlyPanel summary={detectOnly} /> : null}
+      {detectOnly ? (
+        <div data-reveal>
+          <DetectOnlyPanel summary={detectOnly} />
+        </div>
+      ) : null}
 
       {latestMetric ? (
-        <div className="mt-10">
+        <div className="mt-10" data-reveal>
           <MetricPair
             size="lg"
             attackStopRate={latestMetric.attackStopRate}
@@ -96,7 +110,7 @@ pnpm run eval:detect-only`}
       ) : null}
 
       {runs.length > 0 ? (
-        <ul className="mt-10 space-y-3">
+        <ul className="mt-10 space-y-3" data-reveal-stagger>
           {runs.map((run) => (
             <li key={run.id}>
               <Link

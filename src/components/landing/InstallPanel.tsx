@@ -33,9 +33,12 @@ if (decision && !decision.allowed) {
 
 export function InstallPanel() {
   return (
-    <section id="install" className="mx-auto w-full max-w-6xl px-5 py-20 scroll-mt-24">
+    <section
+      id="install"
+      className="reveal-section mx-auto w-full max-w-6xl scroll-mt-24 px-5 py-20"
+    >
       <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-        <div>
+        <div className="reveal-copy">
           <p className="text-sm font-bold text-[var(--mark)]">Drop it in</p>
           <h2 className="display mt-3 text-4xl sm:text-5xl">Three steps, any agent.</h2>
           <p className="mt-4 text-[var(--muted)]">
@@ -66,7 +69,7 @@ export function InstallPanel() {
           </a>
         </div>
 
-        <div className="surface overflow-hidden rounded-[28px] border border-[var(--line)]">
+        <div className="reveal-visual surface overflow-hidden rounded-[28px] border border-[var(--line)]">
           <div className="flex items-center gap-2 border-b border-[var(--line)] px-5 py-3">
             <span className="h-2.5 w-2.5 rounded-full bg-[var(--hijack)]" />
             <span className="h-2.5 w-2.5 rounded-full bg-[var(--blocked)]" />

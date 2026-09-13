@@ -12,7 +12,7 @@ const links = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 px-4 pt-4">
+    <header className="site-header-shell sticky top-0 z-40 px-4 pt-4">
       <div className="glass mx-auto flex min-h-14 w-full max-w-5xl items-center justify-between rounded-full border border-[var(--line)] px-3 shadow-[var(--shadow)] sm:px-4">
         <Link
           href="/"
