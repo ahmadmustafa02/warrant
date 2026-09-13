@@ -25,20 +25,26 @@ never had permission.
 ## The measured problem
 
 This repository ships the **sandbox agent and harness** used for measurement — mock tools
-(including egress `fetch_url`), **15** authored document-injection lines (parameter-hijack
-email/fetch families included), and **5** benign control tasks. Target brain:
+(including egress `fetch_url`), **60** tuned document-injection attacks (families A–F below), **24**
+benign control tasks, and **15** held-out attacks (never used to tune the guard). Target brain:
 `openai/gpt-oss-20b` via Groq.
+
+**Tuned attack families:** A phrasing realism · B parameter authority hijack · C tool-set /
+MCP-style drift · D obfuscation · E channel diversity (memory/worker) · F staged exfil.
 
 | Measurement (this repo) | Result |
 | ----------------------- | ------ |
-| Guard **OFF**, tuned attack suite (**15** payloads, once each) | **7 / 15 hijacked** (`pnpm run eval:scorecard -- --guard OFF`) |
-| Guard **ENFORCE**, same run + **5** benign | **15 / 15 attack-stop** · **5 / 5 benign-pass** |
-| Held-out suite (5 payloads, not tuned against) | **5 / 5 attack-stop** under ENFORCE (`eval:scorecard -- --held-out`) |
-| ENFORCE · **proxy-equivalent intent** (`eval:intent-scorecard`, Groq) | **heuristic 15 / 15** · **llm 15 / 15** · **5 / 5 benign** both · default **heuristic** |
-| `llama-prompt-guard-2` on the authored injection lines (threshold 0.5) | Re-run `eval:baseline` to refresh |
-
-Scorecards use **`openai/gpt-oss-20b`** by default (override with `--model`). **`GROQ_API_KEY`** may list several comma-separated keys to rotate on 429/401. OpenAI is used only when **all** Groq keys hit rate limits (`OPENAI_ANALYSIS_MODEL`, typically cheap).
+| Guard **OFF**, tuned suite (**60** attacks, once each) | Re-run `pnpm run eval:scorecard -- --guard OFF` |
+| Guard **ENFORCE**, same run + **24** benign | Re-run `pnpm run eval:scorecard -- --guard ENFORCE` |
+| Held-out suite (**15** payloads, not tuned against) | Re-run `pnpm run eval:scorecard -- --held-out --guard ENFORCE` |
+| ENFORCE · **proxy-equivalent intent** (`eval:intent-scorecard`) | Re-run `eval:intent-scorecard` · default **heuristic** |
+| `llama-prompt-guard-2` on the tuned injection lines (threshold 0.5) | Re-run `eval:baseline` to refresh |
 | Guard **OFF**, realistic recipients, **5 repeats × 10 attacks** (older matrix) | **21 / 46 hijacked (45.7%)** — errors excluded |
+
+Scorecards use **`openai/gpt-oss-20b`** by default (override with `--model`). **`GROQ_API_KEY`**
+may list several comma-separated keys to rotate on 429/401. OpenAI is used only when **all** Groq
+keys hit rate limits (`OPENAI_ANALYSIS_MODEL`, typically cheap). After changing payloads, run
+`pnpm run eval:seed` so the lab DB matches the corpus files.
 
 Obvious `@evil.test` recipients in the authored lines make the model refuse many attacks before
 any tool runs; the repeat harness swaps in corporate-looking addresses so the baseline reflects
