@@ -11,7 +11,8 @@ Warrant is provenance-based **tool authorization** for AI agents: freeze what th
 [![Live lab](https://img.shields.io/badge/demo-warrant--lab.vercel.app-111)](https://warrant-lab.vercel.app/)
 
 ---
-
+<img width="1696" height="948" alt="image" src="https://github.com/user-attachments/assets/019a9475-aac7-4044-853b-0114d6cefc43" />
+---
 ## Quick start — guard an agent
 
 No Warrant API key. Use your existing model keys; Warrant wraps your process and filters tool calls through a local HTTP proxy.
