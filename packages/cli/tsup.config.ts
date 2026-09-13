@@ -5,7 +5,10 @@ import { defineConfig } from 'tsup';
 const repoRoot = path.join(fileURLToPath(new URL('.', import.meta.url)), '../..');
 
 export default defineConfig({
-  entry: { warrant: '../../src/scripts/warrant-cli.ts' },
+  entry: {
+    warrant: '../../src/scripts/warrant-cli.ts',
+    'eval-child': '../../src/scripts/warrant-eval-child.ts',
+  },
   format: ['esm'],
   platform: 'node',
   target: 'node22',

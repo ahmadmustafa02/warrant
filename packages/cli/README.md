@@ -8,35 +8,26 @@ Command-line interface for [Warrant](https://github.com/ahmadmustafa02/warrant) 
 npm install -g @warrant/cli
 ```
 
-Set **`GROQ_API_KEY`** (or `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) in your environment. Postgres is **not** required for the CLI.
+Configure **your agent the way you already do** (e.g. `GROQ_API_KEY` / `OPENAI_API_KEY` in the agent’s `.env`). Warrant runs that agent and routes model traffic through a local proxy. No Warrant-hosted models, no separate Warrant API key. Postgres is **not** required.
 
 ## Quick start
 
 ```bash
 warrant init --from-sandbox
-warrant doctor
-warrant red-team --limit 3          # guard OFF, then ENFORCE (local proxy + demo agent)
-warrant guard -- node my-agent.js   # wrap your agent; model traffic goes through the proxy
+warrant guard -- node my-agent.js
 ```
+
+Optional: `warrant doctor` (sanity check), `warrant red-team -- node my-agent.js` (attack corpus, OFF then ENFORCE — see [INTEGRATION.md](../docs/INTEGRATION.md)).
 
 ## Commands
 
 | Command | Purpose |
 | ------- | ------- |
 | `init` | Write `.warrant/proxy-policy.json` |
-| `doctor` | Keys, policy, registry sanity |
-| `red-team` | Run authored injections through the **proxy** (product path) |
-| `guard` | Start proxy and run your command with `OPENAI_BASE_URL` (and Anthropic/Gemini bases) pointed at it |
-| `attack` | Single payload in the **in-repo sandbox harness** (eval-style, one guard mode) |
-| `eval intent` | Compare heuristic vs LLM intent on fixtures |
-
-Custom agent under red-team:
-
-```bash
-warrant red-team --limit 1 -- -- node my-openai-agent.js
-```
-
-Your agent must read `OPENAI_BASE_URL` from the environment (OpenAI SDK-compatible clients work out of the box).
+| `guard` | Proxy + your command (`OPENAI_BASE_URL` → Warrant) |
+| `red-team` | Scripted OFF/ENFORCE runs against **your** agent |
+| `doctor` | Optional: keys visible, policy file, registry |
+| `attack` / `eval intent` | Warrant lab development only |
 
 ## Build from monorepo
 

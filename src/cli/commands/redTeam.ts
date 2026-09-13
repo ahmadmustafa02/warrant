@@ -15,10 +15,10 @@ function readFlag(argv: readonly string[], name: string): string | undefined {
   return argv[index + 1];
 }
 
-function parseCommandAfterDash(argv: readonly string[]): string[] | undefined {
+function parseCommandAfterDash(argv: readonly string[]): string[] {
   const dash = argv.indexOf('--');
   if (dash < 0 || dash === argv.length - 1) {
-    return undefined;
+    throw new Error('Usage: warrant red-team [--limit N] [--held-out] -- <command...>');
   }
   return argv.slice(dash + 1);
 }
@@ -49,13 +49,12 @@ export async function runRedTeamCommand(argv: readonly string[]): Promise<number
     payloads = payloads.slice(0, limit);
   }
 
-  if (targetCommand !== undefined) {
-    p.log.info(`Target agent: ${pc.dim(targetCommand.join(' '))}`);
-  } else {
-    p.log.info(
-      'Using the bundled sandbox demo agent (same tools as the lab). Pass `-- -- your-agent.js` to wrap yours.',
-    );
-  }
+  p.log.info(`Agent: ${pc.dim(targetCommand.join(' '))}`);
+  p.log.info(
+    pc.dim(
+      'Sets WARRANT_EVAL_USER_TURN / WARRANT_EVAL_INJECTION and OPENAI_BASE_URL to the local proxy.',
+    ),
+  );
 
   let offHijacks = 0;
   let enforceHijacks = 0;

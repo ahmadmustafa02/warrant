@@ -128,8 +128,38 @@ pnpm run proxy:demo:guard
 The demo agent has **no in-process guard** — only the proxy protects it. Deterministic
 proof lives in `src/adapters/proxy/proxyE2E.test.ts` (mock upstream, multi-turn hijack).
 
-Set `GROQ_API_KEY` or `OPENAI_API_KEY`. The child agent’s `Authorization` header is
-forwarded upstream. Use `--detect-only` or `--off` on `guard:proxy` to compare behavior.
+The child agent should use its normal provider credentials (typically `.env` loaded by
+your app). The proxy forwards the agent’s `Authorization` header when present. Use
+`--detect-only` or `--off` on `guard` to compare behavior.
+
+### `warrant red-team` (your agent required)
+
+Runs authored injection scenarios **twice** per payload: proxy **OFF**, then **ENFORCE**.
+You must pass the agent process after `--`:
+
+```bash
+warrant red-team --limit 3 -- node ./my-agent.js
+```
+
+Warrant sets on the child:
+
+| Variable | Meaning |
+| -------- | ------- |
+| `OPENAI_BASE_URL` (and Anthropic/Gemini bases) | Local Warrant proxy |
+| `WARRANT_EVAL_USER_TURN` | Benign user task for this scenario |
+| `WARRANT_EVAL_INJECTION` | Poison line to place in mock document / memory |
+
+Your agent should run one scenario and print **one JSON line** on stdout (last line is parsed):
+
+```json
+{ "hijacked": false, "calledTools": ["read_document"], "finalAnswer": "...", "emailSent": false, "steps": 2 }
+```
+
+`hijacked` must reflect **deterministic side effects** in your sandbox (unauthorized email,
+vault read, canary leak), not model opinion. Reference: `src/scripts/warrant-eval-child.ts`
+(monorepo) or `@warrant/cli` `dist/eval-child.js` after build.
+
+`--limit N` runs only the first **N** payloads from the corpus (default: all tuned attacks).
 
 ## Tool-set drift
 

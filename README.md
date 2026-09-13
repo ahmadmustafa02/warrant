@@ -162,22 +162,23 @@ pnpm run build:cli                   # compile @warrant/cli (`warrant` bin)
 ## CLI (`warrant`)
 
 Local wrapper around the same product. Run from this repo with `pnpm run warrant`, or
-build `@warrant/cli`. The CLI only needs a model API key and `.warrant/proxy-policy.json`
-— **Postgres is not required** for `doctor`, `guard`, or `red-team`.
+build `@warrant/cli`. **Postgres is not required** for `doctor`, `guard`, or `red-team`.
+
+Use **your agent’s existing provider setup** (e.g. Groq/OpenAI keys in the agent’s `.env`).
+Warrant does not issue a separate API key — it wraps your process and points
+`OPENAI_BASE_URL` (and Anthropic/Gemini bases) at a local proxy.
 
 ```bash
 pnpm run warrant init --from-sandbox   # writes .warrant/proxy-policy.json
 pnpm run warrant doctor
-pnpm run warrant eval intent
-pnpm run warrant attack --payload authority_urgency --guard ENFORCE
-pnpm run warrant red-team --limit 3          # OFF then ENFORCE on authored payloads (proxy + demo agent)
 pnpm run warrant guard -- node your-agent.js
+pnpm run warrant red-team -- node your-agent.js   # optional: OFF vs ENFORCE on corpus
 ```
 
-`warrant guard` starts a local proxy, sets `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`, and
-`GEMINI_BASE_URL` on the child, and evaluates tool calls on OpenAI `/v1/chat/completions`,
-Anthropic `/v1/messages`, and Gemini `generateContent` (native or OpenAI-compat when
-`GEMINI_API_KEY` / `GOOGLE_API_KEY` is set).
+Lab-only: `warrant attack`, `warrant eval intent`, and `pnpm run eval:*` (sandbox harness).
+
+`warrant guard` evaluates tool calls on OpenAI `/v1/chat/completions`, Anthropic
+`/v1/messages`, and Gemini `generateContent` (native or OpenAI-compat).
 
 Policy (`.warrant/proxy-policy.json`):
 
