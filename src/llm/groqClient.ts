@@ -1,16 +1,37 @@
 import OpenAI from 'openai';
 import { serverEnv } from '@/lib/env';
+import { isGroqKeyRotationError, parseGroqApiKeys } from '@/lib/groqKeys';
 import { chatWithTools } from './openAiCompatibleClient';
 import type { ChatMessage, LlmUsage, ToolDefinitionForApi } from './types';
 
 const GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
 
-let cachedClient: OpenAI | undefined;
+const clientByKey = new Map<string, OpenAI>();
+
+/** Index of the last Groq key that succeeded; rotation starts here on the next failure. */
+let preferredGroqKeyIndex = 0;
+
+export function groqApiKeys(): readonly string[] {
+  return parseGroqApiKeys(serverEnv().GROQ_API_KEY);
+}
+
+function clientForGroqKey(apiKey: string): OpenAI {
+  const existing = clientByKey.get(apiKey);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const client = new OpenAI({ apiKey, baseURL: GROQ_BASE_URL });
+  clientByKey.set(apiKey, client);
+  return client;
+}
 
 export function getGroqClient(): OpenAI {
-  const { GROQ_API_KEY } = serverEnv();
-  cachedClient ??= new OpenAI({ apiKey: GROQ_API_KEY, baseURL: GROQ_BASE_URL });
-  return cachedClient;
+  const keys = groqApiKeys();
+  const key = keys[preferredGroqKeyIndex] ?? keys[0];
+  if (key === undefined) {
+    throw new Error('GROQ_API_KEY is empty after parsing');
+  }
+  return clientForGroqKey(key);
 }
 
 export type GroqChatWithToolsResult = {
@@ -23,13 +44,16 @@ function isGroqRateLimited(message: string): boolean {
   return message.includes('429') || /rate limit/i.test(message);
 }
 
-async function groqChatWithToolsOnce(options: {
-  model: string;
-  messages: ChatMessage[];
-  tools: ToolDefinitionForApi[];
-  temperature?: number;
-}): Promise<GroqChatWithToolsResult> {
-  const client = getGroqClient();
+async function groqChatWithToolsOnce(
+  options: {
+    model: string;
+    messages: ChatMessage[];
+    tools: ToolDefinitionForApi[];
+    temperature?: number;
+  },
+  apiKey: string,
+): Promise<GroqChatWithToolsResult> {
+  const client = clientForGroqKey(apiKey);
   let completion: OpenAI.Chat.Completions.ChatCompletion;
   try {
     completion = await client.chat.completions.create({
@@ -61,9 +85,9 @@ async function groqChatWithToolsOnce(options: {
 }
 
 /**
- * Sandbox eval chat. Prefers Groq; when the org hits Groq rate/TPD limits and
- * OPENAI_API_KEY is set, falls back once to OPENAI_ANALYSIS_MODEL so scorecards
- * can finish without silently marking cases as ERROR.
+ * Sandbox eval chat. Tries each comma-separated Groq key on auth/rate-limit errors.
+ * Only when every Groq key is rate-limited and OPENAI_API_KEY is set, falls back to
+ * OPENAI_ANALYSIS_MODEL (small/cheap) for that completion.
  */
 export async function groqChatWithTools(options: {
   model: string;
@@ -71,20 +95,49 @@ export async function groqChatWithTools(options: {
   tools: ToolDefinitionForApi[];
   temperature?: number;
 }): Promise<GroqChatWithToolsResult> {
-  try {
-    return await groqChatWithToolsOnce(options);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Groq request failed';
-    if (!isGroqRateLimited(message)) {
-      throw error;
+  const keys = groqApiKeys();
+  if (keys.length === 0) {
+    throw new Error('GROQ_API_KEY is empty after parsing');
+  }
+
+  let lastError: Error | undefined;
+  for (let offset = 0; offset < keys.length; offset += 1) {
+    const index = (preferredGroqKeyIndex + offset) % keys.length;
+    const apiKey = keys[index];
+    if (apiKey === undefined) {
+      continue;
     }
-    const env = serverEnv();
-    const openAiKey = env.OPENAI_API_KEY?.trim();
-    if (openAiKey === undefined || openAiKey === '') {
-      throw error;
+    try {
+      const result = await groqChatWithToolsOnce(options, apiKey);
+      preferredGroqKeyIndex = index;
+      return result;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Groq request failed');
+      lastError = err;
+      const message = err.message;
+      if (isGroqKeyRotationError(message) && offset < keys.length - 1) {
+        process.stderr.write(
+          `[groqClient] Groq key ${index + 1}/${keys.length} failed; trying next key.\n`,
+        );
+        continue;
+      }
+      if (!isGroqRateLimited(message)) {
+        throw err;
+      }
+      break;
     }
+  }
+
+  const env = serverEnv();
+  const openAiKey = env.OPENAI_API_KEY?.trim();
+  if (
+    lastError !== undefined &&
+    isGroqRateLimited(lastError.message) &&
+    openAiKey !== undefined &&
+    openAiKey !== ''
+  ) {
     process.stderr.write(
-      `[groqClient] Groq rate limited; falling back to ${env.OPENAI_ANALYSIS_MODEL} for this completion.\n`,
+      `[groqClient] All Groq keys rate limited; falling back to ${env.OPENAI_ANALYSIS_MODEL} for this completion.\n`,
     );
     const client = new OpenAI({ apiKey: openAiKey });
     return chatWithTools({
@@ -95,4 +148,6 @@ export async function groqChatWithTools(options: {
       temperature: options.temperature,
     });
   }
+
+  throw lastError ?? new Error('Groq chat completion failed');
 }

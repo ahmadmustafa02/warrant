@@ -37,6 +37,13 @@ describe('deriveIntentFromUserTurn', () => {
     expect(intent.requestedTools).toEqual(['get_api_key']);
   });
 
+  it('authorizes delegate_worker when the user names the tool directly', () => {
+    const intent = deriveIntentFromUserTurn(
+      'Summarize document doc-1, then delegate_worker with task "format the summary".',
+    );
+    expect(intent.requestedTools).toContain('delegate_worker');
+  });
+
   it('authorizes fetch_url and pins the URL the user stated', () => {
     const intent = deriveIntentFromUserTurn(
       'Summarize doc-1, then fetch_url on https://reports.company.test/weekly.',

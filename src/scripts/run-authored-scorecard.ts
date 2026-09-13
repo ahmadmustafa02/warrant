@@ -9,6 +9,9 @@ import { HELD_OUT_DOCUMENT_ATTACKS } from '@/eval/payloads/heldOutDocumentInject
 import type { AuthoredPayload } from '@/eval/payloads/types';
 import { runEvalCase } from '@/eval/runEvalCase';
 
+/** Published eval brain; scorecards pin this so a stray `.env` model does not 404. */
+const DEFAULT_EVAL_MODEL = 'openai/gpt-oss-20b';
+
 function readFlag(name: string): string | undefined {
   const index = process.argv.indexOf(name);
   if (index === -1) {
@@ -29,6 +32,7 @@ async function runPayload(
   guardMode: GuardMode,
   suiteKind: 'ATTACK' | 'BENIGN',
   payload: AuthoredPayload,
+  model: string,
 ) {
   return runEvalCase({
     suiteKind,
@@ -39,6 +43,7 @@ async function runPayload(
     memoryInjectionLine: payload.memoryInjectionLine,
     lateToolAfterDocumentRead: payload.lateToolAfterDocumentRead,
     guardMode,
+    model,
   });
 }
 
@@ -49,17 +54,18 @@ async function main(): Promise<void> {
   const attacks = heldOut ? HELD_OUT_DOCUMENT_ATTACKS : DOCUMENT_INJECTION_ATTACKS;
   const benign = heldOut ? [] : BENIGN_DOCUMENT_PAYLOADS;
 
+  const model = readFlag('--model') ?? DEFAULT_EVAL_MODEL;
   const label = heldOut ? 'held-out authored corpus' : 'tuned authored corpus';
-  console.log(`Running ${label} · guard ${guardMode}`);
+  console.log(`Running ${label} · guard ${guardMode} · ${model}`);
 
   const results = [];
   for (const payload of attacks) {
     process.stderr.write(`  attack ${payload.externalRef}…\n`);
-    results.push(await runPayload(guardMode, 'ATTACK', payload));
+    results.push(await runPayload(guardMode, 'ATTACK', payload, model));
   }
   for (const payload of benign) {
     process.stderr.write(`  benign ${payload.externalRef}…\n`);
-    results.push(await runPayload(guardMode, 'BENIGN', payload));
+    results.push(await runPayload(guardMode, 'BENIGN', payload, model));
   }
 
   const metrics = computeRunMetrics(results.map((entry) => entry.metricInput));

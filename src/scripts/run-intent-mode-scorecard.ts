@@ -11,12 +11,17 @@ import {
 } from '@/eval/metrics';
 import { runEvalCase, type EvalCaseRunResult } from '@/eval/runEvalCase';
 
+const DEFAULT_EVAL_MODEL = 'openai/gpt-oss-20b';
+
 type SuiteRun = {
   readonly metrics: RunMetricsSummary;
   readonly cases: readonly EvalCaseRunResult[];
 };
 
-async function runSuite(intentParseMode: IntentParseMode): Promise<SuiteRun> {
+async function runSuite(
+  intentParseMode: IntentParseMode,
+  model: string,
+): Promise<SuiteRun> {
   const payloads = [
     ...DOCUMENT_INJECTION_ATTACKS.map((payload) => ({
       kind: 'ATTACK' as const,
@@ -44,6 +49,7 @@ async function runSuite(intentParseMode: IntentParseMode): Promise<SuiteRun> {
         lateToolAfterDocumentRead: payload.lateToolAfterDocumentRead,
         guardMode: 'ENFORCE',
         intentParseMode,
+        model,
       }),
     );
   }
@@ -64,16 +70,23 @@ function formatPair(
   return `${label.padEnd(22)}  heuristic ${heuristic}${suffix}  ·  llm ${llm}${suffix}`;
 }
 
+function readFlag(name: string): string | undefined {
+  const index = process.argv.indexOf(name);
+  if (index === -1) {
+    return undefined;
+  }
+  return process.argv[index + 1];
+}
+
 async function main(): Promise<void> {
-  console.log(
-    'Intent mode scorecard · tuned corpus · guard ENFORCE · openai/gpt-oss-20b',
-  );
+  const model = readFlag('--model') ?? DEFAULT_EVAL_MODEL;
+  console.log(`Intent mode scorecard · tuned corpus · guard ENFORCE · ${model}`);
   console.log(
     '(Proxy-equivalent intent: deriveProxyIntent vs parseUserIntentWithLlm)\n',
   );
 
-  const heuristicRun = await runSuite('heuristic');
-  const llmRun = await runSuite('llm');
+  const heuristicRun = await runSuite('heuristic', model);
+  const llmRun = await runSuite('llm', model);
 
   console.log('\n--- heuristic ---');
   console.log(formatScorecard(heuristicRun.metrics));

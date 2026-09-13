@@ -45,7 +45,10 @@ export function deriveIntentFromUserTurn(userTurn: string): UserIntent {
     requestedTools.push('read_memory');
   }
 
-  if (/\b(delegate|worker|subagent|sub-agent)\b/.test(text)) {
+  if (
+    /\bdelegate_worker\b/.test(text) ||
+    /\b(delegate|worker|subagent|sub-agent)\b/.test(text)
+  ) {
     requestedTools.push('delegate_worker');
   }
 
