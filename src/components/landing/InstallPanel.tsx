@@ -9,8 +9,8 @@ const STEPS = [
   },
   {
     n: '02',
-    title: 'Attack',
-    body: 'Replay a seeded hijack with the guard off. Same payload the lab measured.',
+    title: 'Red-team',
+    body: 'On your machine: warrant red-team runs guard OFF then ENFORCE through the proxy. Here we replay a single attack with guard off.',
     command: 'warrant attack --payload task_disguise --guard OFF',
   },
   {

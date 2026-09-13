@@ -162,7 +162,8 @@ pnpm run build:cli                   # compile @warrant/cli (`warrant` bin)
 ## CLI (`warrant`)
 
 Local wrapper around the same product. Run from this repo with `pnpm run warrant`, or
-build `@warrant/cli`.
+build `@warrant/cli`. The CLI only needs a model API key and `.warrant/proxy-policy.json`
+— **Postgres is not required** for `doctor`, `guard`, or `red-team`.
 
 ```bash
 pnpm run warrant init --from-sandbox   # writes .warrant/proxy-policy.json

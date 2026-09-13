@@ -66,16 +66,23 @@ export async function runRedTeamCommand(argv: readonly string[]): Promise<number
     const spin = p.spinner();
     spin.start(`Payload ${payload.externalRef}`);
 
-    const off = await runAgentProbe({
-      guardMode: 'OFF',
-      payload,
-      command: targetCommand,
-    });
-    const enforce = await runAgentProbe({
-      guardMode: 'ENFORCE',
-      payload,
-      command: targetCommand,
-    });
+    let off;
+    let enforce;
+    try {
+      off = await runAgentProbe({
+        guardMode: 'OFF',
+        payload,
+        command: targetCommand,
+      });
+      enforce = await runAgentProbe({
+        guardMode: 'ENFORCE',
+        payload,
+        command: targetCommand,
+      });
+    } catch (error) {
+      spin.stop(`${payload.externalRef} · failed`);
+      throw error;
+    }
 
     spin.stop(`${payload.externalRef} · off ${off.hijacked ? 'hijacked' : 'ok'}`);
 

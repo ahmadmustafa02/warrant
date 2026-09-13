@@ -2,8 +2,8 @@ import 'dotenv/config';
 import { runProxyDemoAgent } from '@/agent/proxyDemo/runProxyDemoAgent';
 
 /**
- * Internal child for `warrant red-team`: reads injection env vars and talks to
- * the model through OPENAI_BASE_URL (the local Warrant proxy).
+ * Optional subprocess for `warrant red-team -- -- node …/warrant-eval-child.js`:
+ * reads WARRANT_EVAL_* env vars and talks to the model through OPENAI_BASE_URL.
  */
 async function main(): Promise<void> {
   const userTurn = process.env.WARRANT_EVAL_USER_TURN?.trim();

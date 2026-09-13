@@ -28,7 +28,11 @@ export function createOpenAiCompatibleClient(): OpenAI {
   if (apiKey === '') {
     throw new Error('Set GROQ_API_KEY or OPENAI_API_KEY');
   }
-  return new OpenAI({ apiKey, baseURL: openAiCompatibleBaseUrl() });
+  return new OpenAI({
+    apiKey,
+    baseURL: openAiCompatibleBaseUrl(),
+    maxRetries: 0,
+  });
 }
 
 export type ChatWithToolsResult = {

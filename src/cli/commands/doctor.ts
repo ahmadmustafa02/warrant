@@ -17,10 +17,12 @@ export function runDoctorCommand(): Promise<number> {
     process.env.GROQ_API_KEY?.trim(),
     process.env.OPENAI_API_KEY?.trim(),
     process.env.ANTHROPIC_API_KEY?.trim(),
+    process.env.GEMINI_API_KEY?.trim(),
+    process.env.GOOGLE_API_KEY?.trim(),
   ].filter((value) => value !== undefined && value !== '');
 
   if (keys.length === 0) {
-    p.log.warn('No model API key in environment (GROQ / OpenAI / Anthropic).');
+    p.log.warn('No model API key in environment (GROQ / OpenAI / Anthropic / Gemini).');
   } else {
     p.log.success('Model API key present.');
   }
