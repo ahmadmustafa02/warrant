@@ -6,14 +6,14 @@ import { messageText, openAiChatRequestSchema } from './openaiWire';
  * Reconstructs which tool produced each tool-role message so secret results can be
  * tracked for output redaction on the model's next reply.
  */
-export function buildSecretTrackerFromOpenAiRequest(
+export function appendOpenAiToolSecretsToTracker(
+  tracker: TurnSecretTracker,
   rawRequest: unknown,
   registry: ToolRegistry,
-): TurnSecretTracker {
-  const tracker = new TurnSecretTracker();
+): void {
   const parsed = openAiChatRequestSchema.safeParse(rawRequest);
   if (!parsed.success) {
-    return tracker;
+    return;
   }
 
   const callIdToTool = new Map<string, string>();
@@ -36,6 +36,13 @@ export function buildSecretTrackerFromOpenAiRequest(
     }
     tracker.recordToolResult(toolName, messageText(message.content), true);
   }
+}
 
+export function buildSecretTrackerFromOpenAiRequest(
+  rawRequest: unknown,
+  registry: ToolRegistry,
+): TurnSecretTracker {
+  const tracker = new TurnSecretTracker();
+  appendOpenAiToolSecretsToTracker(tracker, rawRequest, registry);
   return tracker;
 }

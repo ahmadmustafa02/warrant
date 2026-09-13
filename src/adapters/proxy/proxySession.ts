@@ -1,3 +1,5 @@
+import { TurnSecretTracker } from '@/core/output/turnSecrets';
+import type { ToolRegistry } from '@/core/tools/registry';
 import {
   detectToolSetDrift,
   establishToolSetBaseline,
@@ -5,6 +7,8 @@ import {
   type ToolDrift,
   type ToolSetBaseline,
 } from '@/core/tools/toolSetDrift';
+import { appendAnthropicToolSecretsToTracker } from './ingestAnthropicToolResults';
+import { appendOpenAiToolSecretsToTracker } from './ingestOpenAiToolResults';
 
 /**
  * Per-run memory for the one thing the proxy has to remember: the capability
@@ -19,6 +23,8 @@ import {
  */
 export class ProxySession {
   private baseline: ToolSetBaseline | undefined;
+  /** Secrets seen in tool results across the whole `warrant guard` run. */
+  readonly secretTracker = new TurnSecretTracker();
 
   constructor(pinnedTools?: readonly AdvertisedTool[]) {
     if (pinnedTools !== undefined) {
@@ -43,5 +49,13 @@ export class ProxySession {
       return [];
     }
     return detectToolSetDrift(this.baseline, tools);
+  }
+
+  ingestOpenAiRequestSecrets(rawRequest: unknown, registry: ToolRegistry): void {
+    appendOpenAiToolSecretsToTracker(this.secretTracker, rawRequest, registry);
+  }
+
+  ingestAnthropicRequestSecrets(rawRequest: unknown, registry: ToolRegistry): void {
+    appendAnthropicToolSecretsToTracker(this.secretTracker, rawRequest, registry);
   }
 }

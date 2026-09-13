@@ -1,20 +1,29 @@
 import { evaluateToolCall, type GuardMode } from '@/agent/guard/applyGuard';
 import type { GuardDecision } from '@/core/authorization/decide';
 import { issueWarrant } from '@/core/authorization/warrant';
+import type { UserIntent } from '@/core/authorization/warrant';
 import { taint } from '@/core/provenance/tainted';
+import { TurnSecretTracker } from '@/core/output/turnSecrets';
 import type { ToolDefinition } from '@/core/tools/registry';
 import { driftedToolNames, type ToolDrift } from '@/core/tools/toolSetDrift';
 import { buildProxyRegistry, type ToolOverride } from './classifyDiscoveredTool';
-import type { ProxySession } from './proxySession';
 import { deriveProxyIntent } from './deriveProxyIntent';
-import { buildSecretTrackerFromOpenAiRequest } from './ingestOpenAiToolResults';
 import {
-  parseOpenAiRequest,
-  parseOpenAiToolCalls,
-  redactUnauthorizedSecretsInResponse,
-  stripDeniedToolCalls,
-  WireParseError,
-} from './openaiWire';
+  detectExchangeWire,
+  ExchangeParseError,
+  parseExchangeRequest,
+  parseExchangeToolCalls,
+  rewriteExchangeResponse,
+  type ExchangeWire,
+} from './exchangeWire';
+import { appendAnthropicToolSecretsToTracker } from './ingestAnthropicToolResults';
+import { appendOpenAiToolSecretsToTracker } from './ingestOpenAiToolResults';
+import type { ProxySession } from './proxySession';
+import {
+  augmentIntentWithTool,
+  isApprovalEligible,
+  type ApprovalCoordinator,
+} from './proxyApproval';
 
 /**
  * A call the guard could not evaluate is tracked separately from one it judged.
@@ -86,21 +95,28 @@ export function guardExchange(options: {
   readonly rawRequest: unknown;
   readonly rawResponse: unknown;
   readonly overrides?: Readonly<Record<string, ToolOverride>>;
-  /** Supplies the per-run tool-set baseline; omitted when drift is not tracked. */
   readonly session?: ProxySession;
+  readonly wire?: ExchangeWire;
+  readonly httpPath?: string;
+  /** When omitted, the heuristic parser runs (tests and legacy callers). */
+  readonly intent?: UserIntent;
 }): ProxyExchange {
   if (options.mode === 'OFF') {
     return { ...EMPTY_EXCHANGE, response: options.rawResponse };
   }
 
+  const wire =
+    options.wire ?? detectExchangeWire(options.rawRequest, options.httpPath ?? '');
+
   let request;
   let toolCalls;
   try {
-    request = parseOpenAiRequest(options.rawRequest);
-    toolCalls = parseOpenAiToolCalls(options.rawResponse);
+    request = parseExchangeRequest(options.rawRequest, wire);
+    toolCalls = parseExchangeToolCalls(options.rawResponse, wire);
   } catch (error) {
     if (options.mode === 'ENFORCE') {
-      const detail = error instanceof WireParseError ? error.message : 'unknown shape';
+      const detail =
+        error instanceof ExchangeParseError ? error.message : 'unknown shape';
       throw new ProxyGuardError(
         `refusing to forward an unguarded exchange: ${detail}. Set mode SHADOW to observe traffic the guard cannot read.`,
       );
@@ -111,38 +127,43 @@ export function guardExchange(options: {
   const registry = buildProxyRegistry(request.tools, options.overrides ?? {});
   const classifiedTools = registry.list();
 
-  // Observed on every exchange, not only those that propose calls, so a capability
-  // advertised on a quiet turn is still measured against the original baseline.
   const drifts = options.session?.observeTools(request.tools) ?? [];
   const drifted = driftedToolNames(drifts);
 
-  // The warrant is issued from the user turn only, before any tool result in this
-  // exchange is considered, which is what makes later injected text unable to widen it.
-  const intent = deriveProxyIntent(request.userRequest, registry);
+  const intent = options.intent ?? deriveProxyIntent(request.userRequest, registry);
 
-  const withOutputRedaction = (body: unknown): unknown => {
+  const finalizeResponse = (denials: ReadonlyMap<string, string>): unknown => {
     if (options.mode !== 'ENFORCE') {
-      return body;
+      return options.rawResponse;
     }
-    const secretTracker = buildSecretTrackerFromOpenAiRequest(
-      options.rawRequest,
-      registry,
-    );
-    return redactUnauthorizedSecretsInResponse(
-      body,
-      (text) =>
-        secretTracker.redactUnauthorizedInText(text, intent.requestedTools).text,
-    );
+    const tracker = options.session?.secretTracker ?? new TurnSecretTracker();
+    if (options.session !== undefined && wire === 'openai') {
+      options.session.ingestOpenAiRequestSecrets(options.rawRequest, registry);
+    } else if (wire === 'openai') {
+      appendOpenAiToolSecretsToTracker(tracker, options.rawRequest, registry);
+    } else if (options.session !== undefined && wire === 'anthropic') {
+      options.session.ingestAnthropicRequestSecrets(options.rawRequest, registry);
+    } else if (wire === 'anthropic') {
+      appendAnthropicToolSecretsToTracker(tracker, options.rawRequest, registry);
+    }
+    return rewriteExchangeResponse({
+      wire,
+      rawResponse: options.rawResponse,
+      denialsByCallId: denials,
+      redactText: (text) =>
+        tracker.redactUnauthorizedInText(text, intent.requestedTools).text,
+    });
   };
 
   if (toolCalls.length === 0) {
     return {
       ...EMPTY_EXCHANGE,
-      response: withOutputRedaction(options.rawResponse),
+      response: finalizeResponse(new Map()),
       classifiedTools,
       drifts: Object.freeze([...drifts]),
     };
   }
+
   const warrant = issueWarrant(taint(intent, 'USER'), registry);
 
   const decisions: ProxyDecision[] = [];
@@ -151,9 +172,6 @@ export function guardExchange(options: {
   const wouldBlockTools: string[] = [];
 
   for (const call of toolCalls) {
-    // Drift is checked before the warrant, and it overrides the read-only exemption.
-    // A tool whose origin is suspect gets no benefit from its own risk tier, because
-    // that tier was inferred from a name the injector chose.
     if (drifted.has(call.name)) {
       const drift = drifts.find((entry) => entry.toolName === call.name);
       const reason = `Warrant denied ${call.name}: ${drift?.reason ?? 'its advertised surface changed mid-session'}.`;
@@ -219,12 +237,175 @@ export function guardExchange(options: {
   }
 
   return {
-    response: withOutputRedaction(
-      stripDeniedToolCalls(options.rawResponse, denialsByCallId),
-    ),
+    response: finalizeResponse(denialsByCallId),
     decisions: Object.freeze(decisions),
     blockedTools: Object.freeze(blockedTools),
     wouldBlockTools: Object.freeze(wouldBlockTools),
+    classifiedTools,
+    authorizedTools: Object.freeze([...intent.requestedTools]),
+    drifts: Object.freeze([...drifts]),
+  };
+}
+
+/** Same as `guardExchange`, but may pause for interactive approval on eligible denials. */
+export async function guardExchangeAsync(options: {
+  readonly mode: GuardMode;
+  readonly rawRequest: unknown;
+  readonly rawResponse: unknown;
+  readonly overrides?: Readonly<Record<string, ToolOverride>>;
+  readonly session?: ProxySession;
+  readonly wire?: ExchangeWire;
+  readonly httpPath?: string;
+  readonly intent?: UserIntent;
+  readonly approval?: ApprovalCoordinator;
+}): Promise<ProxyExchange> {
+  if (options.mode !== 'ENFORCE' || options.approval === undefined) {
+    return guardExchange(options);
+  }
+
+  const wire =
+    options.wire ?? detectExchangeWire(options.rawRequest, options.httpPath ?? '');
+
+  let request;
+  let toolCalls;
+  try {
+    request = parseExchangeRequest(options.rawRequest, wire);
+    toolCalls = parseExchangeToolCalls(options.rawResponse, wire);
+  } catch (error) {
+    const detail =
+      error instanceof ExchangeParseError ? error.message : 'unknown shape';
+    throw new ProxyGuardError(
+      `refusing to forward an unguarded exchange: ${detail}. Set mode SHADOW to observe traffic the guard cannot read.`,
+    );
+  }
+
+  const registry = buildProxyRegistry(request.tools, options.overrides ?? {});
+  const classifiedTools = registry.list();
+  const drifts = options.session?.observeTools(request.tools) ?? [];
+  const drifted = driftedToolNames(drifts);
+
+  let intent = options.intent ?? deriveProxyIntent(request.userRequest, registry);
+
+  const buildFinalize =
+    (activeIntent: UserIntent) =>
+    (denials: ReadonlyMap<string, string>): unknown => {
+      const tracker = options.session?.secretTracker ?? new TurnSecretTracker();
+      if (options.session !== undefined && wire === 'openai') {
+        options.session.ingestOpenAiRequestSecrets(options.rawRequest, registry);
+      } else if (wire === 'openai') {
+        appendOpenAiToolSecretsToTracker(tracker, options.rawRequest, registry);
+      } else if (options.session !== undefined && wire === 'anthropic') {
+        options.session.ingestAnthropicRequestSecrets(options.rawRequest, registry);
+      } else if (wire === 'anthropic') {
+        appendAnthropicToolSecretsToTracker(tracker, options.rawRequest, registry);
+      }
+      return rewriteExchangeResponse({
+        wire,
+        rawResponse: options.rawResponse,
+        denialsByCallId: denials,
+        redactText: (text) =>
+          tracker.redactUnauthorizedInText(text, activeIntent.requestedTools).text,
+      });
+    };
+
+  if (toolCalls.length === 0) {
+    return {
+      ...EMPTY_EXCHANGE,
+      response: buildFinalize(intent)(new Map()),
+      classifiedTools,
+      drifts: Object.freeze([...drifts]),
+    };
+  }
+
+  let warrant = issueWarrant(taint(intent, 'USER'), registry);
+  const decisions: ProxyDecision[] = [];
+  const denialsByCallId = new Map<string, string>();
+  const blockedTools: string[] = [];
+
+  for (const call of toolCalls) {
+    if (drifted.has(call.name)) {
+      const drift = drifts.find((entry) => entry.toolName === call.name);
+      const reason = `Warrant denied ${call.name}: ${drift?.reason ?? 'its advertised surface changed mid-session'}.`;
+      decisions.push({
+        kind: 'DRIFT',
+        callId: call.id,
+        toolName: call.name,
+        reason,
+      });
+      denialsByCallId.set(call.id, reason);
+      blockedTools.push(call.name);
+      continue;
+    }
+
+    let decision: GuardDecision | null;
+    try {
+      decision = evaluateToolCall({
+        mode: options.mode,
+        warrant,
+        registry,
+        toolName: call.name,
+        rawArguments: call.rawArguments,
+      });
+    } catch {
+      const reason = `Warrant blocked ${call.name}: its arguments were not valid JSON, so they could not be checked.`;
+      decisions.push({
+        kind: 'MALFORMED',
+        callId: call.id,
+        toolName: call.name,
+        reason,
+      });
+      denialsByCallId.set(call.id, reason);
+      blockedTools.push(call.name);
+      continue;
+    }
+
+    if (decision === null) {
+      continue;
+    }
+
+    if (!decision.allowed && isApprovalEligible(decision)) {
+      const choice = await options.approval.request({
+        toolName: decision.tool,
+        rawArguments: call.rawArguments,
+        code: decision.code,
+        reason: decision.reason,
+        riskTier: decision.riskTier ?? 'SENSITIVE',
+      });
+      if (choice === 'approve') {
+        intent = augmentIntentWithTool(intent, decision.tool);
+        warrant = issueWarrant(taint(intent, 'USER'), registry);
+        decision =
+          evaluateToolCall({
+            mode: options.mode,
+            warrant,
+            registry,
+            toolName: call.name,
+            rawArguments: call.rawArguments,
+          }) ?? decision;
+      }
+    }
+
+    if (decision === null) {
+      continue;
+    }
+
+    decisions.push({ kind: 'GUARD', callId: call.id, decision });
+    if (decision.allowed) {
+      continue;
+    }
+
+    denialsByCallId.set(
+      call.id,
+      `Warrant denied ${decision.tool} (${decision.code}): ${decision.reason}`,
+    );
+    blockedTools.push(decision.tool);
+  }
+
+  return {
+    response: buildFinalize(intent)(denialsByCallId),
+    decisions: Object.freeze(decisions),
+    blockedTools: Object.freeze(blockedTools),
+    wouldBlockTools: Object.freeze([]),
     classifiedTools,
     authorizedTools: Object.freeze([...intent.requestedTools]),
     drifts: Object.freeze([...drifts]),

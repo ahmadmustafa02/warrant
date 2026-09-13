@@ -1,0 +1,33 @@
+{
+  "name": "@warrant/cli",
+  "version": "0.1.0",
+  "description": "Warrant command-line interface — guard agents, init policy, run attacks, measure intent.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "warrant": "./dist/warrant.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.1",
+    "dotenv": "^17.4.2",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -95,9 +95,9 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
         </div>
       </section>
 
-      <ProductPath />
-
       <InstallPanel />
+
+      <ProductPath />
 
       <section className="reveal-section px-5 py-24 text-center">
         <div className="reveal-copy mx-auto max-w-3xl">

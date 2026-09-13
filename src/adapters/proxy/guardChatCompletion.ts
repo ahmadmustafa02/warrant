@@ -1,7 +1,21 @@
+import { resolveProxyIntent } from '@/agent/intent/resolveProxyIntent';
 import type { GuardMode } from '@/agent/guard/applyGuard';
-import { guardExchange, type ProxyExchange } from './guardExchange';
-import type { ToolOverride } from './classifyDiscoveredTool';
+import type { IntentParseMode } from '@/agent/intent/parseUserIntentLlm';
+import { buildProxyRegistry, type ToolOverride } from './classifyDiscoveredTool';
+import {
+  detectExchangeWire,
+  parseExchangeRequest,
+  requestUsesStream,
+} from './exchangeWire';
+import { guardExchangeAsync, type ProxyExchange } from './guardExchange';
+import {
+  assembleOpenAiCompletionFromSse,
+  chatCompletionToOpenAiSse,
+  openAiCompletionToChatResponse,
+} from './openAiStreamGuard';
+import type { ApprovalCoordinator } from './proxyApproval';
 import type { ProxySession } from './proxySession';
+import type { StreamingPolicy } from './proxyPolicy';
 
 export class UpstreamGuardError extends Error {
   constructor(
@@ -14,17 +28,18 @@ export class UpstreamGuardError extends Error {
   }
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/** Streaming bypasses synchronous tool-call inspection, so enforce mode rejects it. */
-export function requestUsesStream(body: unknown): boolean {
-  return isRecord(body) && body.stream === true;
+function upstreamResponseLooksLikeSse(
+  contentType: string | null,
+  rawText: string,
+): boolean {
+  if (contentType?.includes('text/event-stream') === true) {
+    return true;
+  }
+  return rawText.trimStart().startsWith('data:');
 }
 
 /**
- * Forwards one chat completion and runs the guard on the model's tool proposals.
+ * Forwards one model call and runs the guard on the model's tool proposals.
  *
  * The caller's API key travels in `upstreamHeaders`; this module never logs it.
  */
@@ -35,16 +50,26 @@ export async function guardChatCompletion(options: {
   readonly requestBody: unknown;
   readonly overrides?: Readonly<Record<string, ToolOverride>>;
   readonly session?: ProxySession;
+  readonly httpPath?: string;
+  readonly intentMode?: IntentParseMode;
+  readonly destructiveRequiresExplicitUser?: boolean;
+  readonly streaming?: StreamingPolicy;
+  readonly approval?: ApprovalCoordinator;
 }): Promise<{
   readonly status: number;
   readonly body: unknown;
   readonly exchange: ProxyExchange;
+  readonly sseBody?: string;
 }> {
-  if (options.mode === 'ENFORCE' && requestUsesStream(options.requestBody)) {
+  const wire = detectExchangeWire(options.requestBody, options.httpPath ?? '');
+  const usesStream = requestUsesStream(options.requestBody, wire);
+  const streaming = options.streaming ?? 'guard';
+
+  if (options.mode === 'ENFORCE' && usesStream && streaming === 'block') {
     throw new UpstreamGuardError(
-      'Warrant cannot guard streaming chat completions. Set stream: false or run with --detect-only.',
+      'Warrant blocks streaming in ENFORCE when proxy-policy streaming is "block". Set streaming to "guard" or use --detect-only.',
       400,
-      { error: 'streaming_not_guarded' },
+      { error: 'streaming_blocked' },
     );
   }
 
@@ -58,11 +83,18 @@ export async function guardChatCompletion(options: {
   });
 
   const rawText = await upstream.text();
+  const contentType = upstream.headers.get('content-type');
+
   let parsed: unknown;
-  try {
-    parsed = rawText === '' ? {} : JSON.parse(rawText);
-  } catch {
-    parsed = { raw: rawText };
+  if (wire === 'openai' && upstreamResponseLooksLikeSse(contentType, rawText)) {
+    const assembled = assembleOpenAiCompletionFromSse(rawText);
+    parsed = openAiCompletionToChatResponse(assembled);
+  } else {
+    try {
+      parsed = rawText === '' ? {} : JSON.parse(rawText);
+    } catch {
+      parsed = { raw: rawText };
+    }
   }
 
   if (!upstream.ok) {
@@ -73,13 +105,42 @@ export async function guardChatCompletion(options: {
     );
   }
 
-  const exchange = guardExchange({
+  const request = parseExchangeRequest(options.requestBody, wire);
+  const registry = buildProxyRegistry(request.tools, options.overrides ?? {});
+  const intentMode = options.intentMode ?? 'heuristic';
+  const intent = await resolveProxyIntent({
+    mode: intentMode,
+    userRequest: request.userRequest,
+    registry,
+    destructiveRequiresExplicitUser: options.destructiveRequiresExplicitUser ?? true,
+  });
+
+  const exchange = await guardExchangeAsync({
     mode: options.mode,
     rawRequest: options.requestBody,
     rawResponse: parsed,
     overrides: options.overrides,
     session: options.session,
+    wire,
+    httpPath: options.httpPath,
+    intent,
+    approval: options.approval,
   });
+
+  const respondAsSse =
+    usesStream &&
+    streaming === 'guard' &&
+    wire === 'openai' &&
+    options.mode === 'ENFORCE';
+
+  if (respondAsSse) {
+    return {
+      status: upstream.status,
+      body: exchange.response,
+      exchange,
+      sseBody: chatCompletionToOpenAiSse(exchange.response),
+    };
+  }
 
   return { status: upstream.status, body: exchange.response, exchange };
 }

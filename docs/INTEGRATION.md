@@ -95,8 +95,9 @@ const body = taint(emailBodyFromDoc, 'TOOL_RESULT');
 
 ## Approval escalation
 
-Hard denies are the default. A future path will surface `ApprovalRequest` rows for
-human confirm — see [APPROVAL.md](./APPROVAL.md).
+CLI proxy runs can prompt before blocking eligible denials; audit log:
+`.warrant/approvals.jsonl`. Lab `ApprovalRequest` rows are for in-app review — see
+[APPROVAL.md](./APPROVAL.md).
 
 ## Held-out evaluation
 
@@ -109,7 +110,17 @@ learns tools from each request, issues a warrant from the user turn, and strips 
 tool calls before your agent sees them.
 
 ```bash
+pnpm run warrant init --from-sandbox
 pnpm run guard:proxy -- tsx src/scripts/proxy-demo-agent.ts
+# or: pnpm run warrant -- guard -- tsx src/scripts/proxy-demo-agent.ts
+
+Policy keys in `.warrant/proxy-policy.json`:
+
+| Key | Values | Meaning |
+|-----|--------|---------|
+| `streaming` | `guard` (default), `block` | `guard` buffers OpenAI SSE, runs the guard, returns guarded SSE |
+| `approvalMode` | `prompt`, `deny` | Interactive CLI approval for eligible blocks |
+| `intentMode` | `heuristic`, `llm` | How the user turn becomes a warrant |
 # or
 pnpm run proxy:demo:guard
 ```

@@ -126,6 +126,7 @@ const AUTHORITY_PARAMETER_NAMES = new Set([
 export interface ToolOverride {
   readonly riskTier?: RiskTier;
   readonly authorityParameters?: readonly string[];
+  readonly returnsSecrets?: boolean;
 }
 
 export function tokenizeToolName(name: string): readonly string[] {
@@ -231,12 +232,15 @@ export function classifyDiscoveredTool(
     };
   }
 
+  const returnsSecrets =
+    override.returnsSecrets ?? (toolReturnsSecrets(tokens) ? true : undefined);
+
   return {
     name: tool.name,
     riskTier,
     description,
     observedParameters: Object.freeze([...tool.parameterNames]),
-    ...(toolReturnsSecrets(tokens) ? { returnsSecrets: true as const } : {}),
+    ...(returnsSecrets === true ? { returnsSecrets: true as const } : {}),
     ...(authorityParameters.length > 0
       ? { authorityParameters: Object.freeze([...authorityParameters]) }
       : {}),

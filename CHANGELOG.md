@@ -9,7 +9,9 @@
 - Parameter constraints (`stringPattern`, `numberMax`) on tool definitions.
 - Held-out attack suite (5 payloads) and `pnpm run eval:held-out`.
 - Cursor project hooks (shadow mode) and `pnpm run cursor:shadow-report`.
-- Playground: fixed eval templates and seeded lab traces.
+- Playground: recorded terminal (allowlisted install/init/doctor/attack/guard demos).
+- CLI: `warrant init|guard|doctor|eval intent|attack` (`@warrant/cli`).
+- Proxy: Anthropic Messages wire, OpenAI SSE guard, pinned policy, interactive approval.
 - Lab dashboard: held-out comparison and DETECT_ONLY summary panels.
 
 ### Measured (tuned corpus, sandbox agent)

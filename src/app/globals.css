@@ -158,6 +158,19 @@ html.dark .glass {
   }
 }
 
+.warrant-term {
+  color-scheme: dark;
+}
+
+.warrant-term-scan {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.015) 1px,
+    transparent 1px
+  );
+  background-size: 100% 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

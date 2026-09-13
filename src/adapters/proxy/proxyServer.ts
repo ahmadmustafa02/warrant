@@ -1,8 +1,11 @@
 import http from 'node:http';
 import type { GuardMode } from '@/agent/guard/applyGuard';
+import type { IntentParseMode } from '@/agent/intent/parseUserIntentLlm';
 import type { ToolOverride } from './classifyDiscoveredTool';
 import { guardChatCompletion, UpstreamGuardError } from './guardChatCompletion';
 import { ProxyGuardError } from './guardExchange';
+import type { ApprovalCoordinator } from './proxyApproval';
+import type { ApprovalMode, StreamingPolicy } from './proxyPolicy';
 import { ProxySession } from './proxySession';
 import type { AdvertisedTool, ToolDrift } from '@/core/tools/toolSetDrift';
 
@@ -19,6 +22,11 @@ export interface ProxyServerOptions {
    * which matters because an agent's opening request can already be poisoned.
    */
   readonly pinnedTools?: readonly AdvertisedTool[];
+  readonly intentMode?: IntentParseMode;
+  readonly destructiveRequiresExplicitUser?: boolean;
+  readonly streaming?: StreamingPolicy;
+  readonly approvalMode?: ApprovalMode;
+  readonly approval?: ApprovalCoordinator;
   readonly onExchange?: (summary: {
     readonly blockedTools: readonly string[];
     readonly wouldBlockTools: readonly string[];
@@ -85,20 +93,29 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
         return;
       }
 
-      if (req.method !== 'POST' || req.url !== '/v1/chat/completions') {
+      const path = req.url?.split('?')[0] ?? '';
+      const isOpenAi = path === '/v1/chat/completions';
+      const isAnthropic = path === '/v1/messages';
+      if (req.method !== 'POST' || (!isOpenAi && !isAnthropic)) {
         writeJson(res, 404, { error: 'not_found' });
         return;
       }
 
       try {
         const requestBody = await readJsonBody(req);
+        const upstreamPath = isAnthropic ? '/messages' : '/chat/completions';
         const result = await guardChatCompletion({
           mode: options.mode,
-          upstreamUrl: joinUrl(options.upstreamBaseUrl, '/chat/completions'),
+          upstreamUrl: joinUrl(options.upstreamBaseUrl, upstreamPath),
           upstreamHeaders: resolveUpstreamHeaders(req, options.upstreamHeaders),
           requestBody,
           overrides: options.overrides,
           session,
+          httpPath: path,
+          intentMode: options.intentMode,
+          destructiveRequiresExplicitUser: options.destructiveRequiresExplicitUser,
+          streaming: options.streaming,
+          approval: options.approvalMode === 'prompt' ? options.approval : undefined,
         });
 
         options.onExchange?.({
@@ -106,6 +123,16 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
           wouldBlockTools: result.exchange.wouldBlockTools,
           drifts: result.exchange.drifts,
         });
+
+        if (result.sseBody !== undefined) {
+          res.writeHead(200, {
+            'content-type': 'text/event-stream; charset=utf-8',
+            'cache-control': 'no-cache',
+            connection: 'keep-alive',
+          });
+          res.end(result.sseBody);
+          return;
+        }
 
         writeJson(res, result.status, result.body);
       } catch (error) {

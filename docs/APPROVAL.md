@@ -1,11 +1,36 @@
-# Approval escalation (planned)
+# Approval escalation
 
-Today Warrant **denies** or **allows** tool calls. Cursor hooks also support `permission: ask`, but the product path for in-app approval is not wired yet.
+Warrant **denies** or **allows** tool calls by default. In the CLI proxy, eligible
+ENFORCE denials can become an **interactive approval** instead of an immediate block.
 
-The Prisma model `ApprovalRequest` stores pending human decisions. A future release will:
+## CLI behavior (`warrant guard`)
 
-1. Convert selected `ENFORCE` denials into `PENDING` approval rows instead of hard blocks.
-2. Resume the agent only after `APPROVED`, with the warrant unchanged.
-3. Never auto-approve authority-parameter escalations from untrusted content.
+When `.warrant/proxy-policy.json` has `"approvalMode": "prompt"` (default) and
+stdin is a TTY:
 
-Until then, integrators should use **explicit warrants** from their own UI (`issueWarrantFromExplicit`) rather than expecting Warrant to parse free-text intent.
+1. Selected denials pause the proxy and show a structured prompt (tool, risk tier, code, args).
+2. **Approve once** adds that tool to the **current turn’s warrant** and re-evaluates the call.
+3. **Deny** keeps the block; the model response is rewritten like any other denial.
+
+Every decision is appended to `.warrant/approvals.jsonl` for audit.
+
+Use `--no-approval` or `"approvalMode": "deny"` for CI and non-interactive runs.
+
+### Never approvable
+
+These stay hard denies — untrusted content must not unlock them via a click-through:
+
+- `AUTHORITY_PARAMETER_FROM_CONTENT`
+- `AUTHORITY_PARAMETER_MISSING`
+- `PINNED_PARAMETER_CONFLICT`
+- `UNKNOWN_TOOL`
+- Tool-set **drift** (capability appeared after baseline)
+
+### Lab / Prisma
+
+The playground database model `ApprovalRequest` is for durable, multi-user review on
+[warrant-lab](https://warrant-lab.vercel.app/). The CLI uses the local JSONL audit log;
+wire the same events into Prisma when building in-app approval UX.
+
+Integrators with structured UX should prefer **`issueWarrantFromExplicit`** from
+`@warrant/guard` rather than relying on terminal prompts.

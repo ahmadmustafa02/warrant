@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { guardChatCompletion, requestUsesStream } from './guardChatCompletion';
+import { requestUsesStream } from './exchangeWire';
+import { guardChatCompletion } from './guardChatCompletion';
 
 describe('requestUsesStream', () => {
   it('detects stream: true', () => {
-    expect(requestUsesStream({ model: 'x', messages: [], stream: true })).toBe(true);
+    expect(
+      requestUsesStream({ model: 'x', messages: [], stream: true }, 'openai'),
+    ).toBe(true);
   });
 });
 
@@ -12,6 +15,7 @@ describe('guardChatCompletion', () => {
     await expect(
       guardChatCompletion({
         mode: 'ENFORCE',
+        streaming: 'block',
         upstreamUrl: 'http://127.0.0.1:9/chat/completions',
         upstreamHeaders: {},
         requestBody: {

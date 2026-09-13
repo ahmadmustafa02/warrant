@@ -108,9 +108,13 @@ tool-description injection.
 
 ## Product surface
 
-The site is a measured lab, not a marketing template:
+The site is a measured lab, not a marketing template. Live demo:
+[warrant-lab.vercel.app](https://warrant-lab.vercel.app/).
 
 - `/` — the thesis and the dual-metric claim
+- `/playground` — **recorded terminal**: allowlisted `npm install` / `warrant init` /
+  `doctor` / `attack` / `guard` demos. Outcomes are seeded lab traces. No custom prompt,
+  no live model, no real install.
 - `/method` — how a warrant is issued and frozen
 - `/dashboard` — every stored run, always with both rates
 - `/runs/[id]` — cases, tools, scorecard
@@ -140,21 +144,51 @@ pnpm run eval:full -- --guard OFF       # naive agent baseline (hijack rate)
 pnpm run eval:full -- --guard ENFORCE   # both suites, dual-metric scorecard
 pnpm run eval:attack-repeat -- --recipient realistic --repeats 5 --guard OFF
 pnpm run eval:attack-repeat -- --recipient realistic --repeats 5 --guard ENFORCE
-pnpm run dev                         # /playground — template replays from the lab
-pnpm run build:guard                 # compile @warrant/guard for npm publish
+pnpm run eval:drift                  # tool-set drift: OFF vs ENFORCE vs control
+pnpm run eval:proxy-intent           # heuristic vs LLM intent on fixed fixtures
+pnpm run dev                         # /playground — recorded terminal (seeded only)
+pnpm run build:guard                 # compile @warrant/guard
+pnpm run build:cli                   # compile @warrant/cli (`warrant` bin)
 ```
+
+## CLI (`warrant`)
+
+Local wrapper around the same product. Run from this repo with `pnpm run warrant`, or
+build `@warrant/cli`.
+
+```bash
+pnpm run warrant init --from-sandbox   # writes .warrant/proxy-policy.json
+pnpm run warrant doctor
+pnpm run warrant eval intent
+pnpm run warrant attack --payload authority_urgency --guard ENFORCE
+pnpm run warrant guard -- node your-agent.js
+```
+
+`warrant guard` starts a local proxy, sets `OPENAI_BASE_URL` and `ANTHROPIC_BASE_URL` on
+the child, and evaluates tool calls on OpenAI `/v1/chat/completions` and Anthropic
+`/v1/messages`.
+
+Policy (`.warrant/proxy-policy.json`):
+
+| Key | Default | Meaning |
+| --- | ------- | ------- |
+| `intentMode` | `heuristic` | `llm` reads **only** the user turn; falls back to heuristic on error |
+| `approvalMode` | `prompt` | Interactive approve/deny for eligible ENFORCE blocks (TTY). Never for authority smuggled from content or tool-set drift. Use `--no-approval` in CI. |
+| `streaming` | `guard` | Buffer OpenAI SSE, run the guard, return guarded SSE. `block` rejects `stream: true` in ENFORCE. |
+
+Audit log for human decisions: `.warrant/approvals.jsonl`. See
+[`docs/APPROVAL.md`](docs/APPROVAL.md).
 
 ## Using Warrant in your agent
 
-Install the core guard (from this monorepo until published):
-
 ```bash
 pnpm run build:guard
+pnpm run build:cli
 ```
 
-See **`docs/INTEGRATION.md`** for the explicit-warrant tool-loop pattern and
-**`packages/guard/README.md`** for the npm package entrypoints (`@warrant/guard` and
-`@warrant/guard/agent`).
+See **`docs/INTEGRATION.md`** for the explicit-warrant tool-loop and HTTP proxy,
+**`packages/guard/README.md`** for `@warrant/guard`, and **`packages/cli/README.md`**
+for the `warrant` binary.
 
 Deploy the demo app: **`docs/DEPLOY.md`**.
 

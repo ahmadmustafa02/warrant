@@ -29,11 +29,11 @@ Optional: `OPENAI_*` for analysis features if enabled later.
 3. Build command: `pnpm run build` (default).
 4. After first deploy, run migrations against production `DATABASE_URL` from CI or locally.
 
-The **playground** serves **fixed templates** and **seeded lab traces** from Postgres
-(fallback summaries when no eval run exists).
+The **playground** is a recorded terminal: allowlisted demo commands and seeded lab
+traces from Postgres (fallback summaries when the database is unreachable).
 
 ## Post-deploy checklist
 
-- [ ] `/playground` — template preset, guard off then on (recorded results)
+- [ ] `/playground` — terminal chips: install, attack off, attack enforce (recorded)
 - [ ] `/dashboard` — at least one completed `eval:full` run
 - [ ] Landing numbers match latest measured runs (or wire live comparison)

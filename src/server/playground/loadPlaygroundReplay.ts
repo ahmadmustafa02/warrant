@@ -40,20 +40,24 @@ export async function loadPlaygroundReplay(
   }
 
   const externalRef = PRESET_TO_EXTERNAL_REF[presetId];
-  const fromDb =
-    externalRef !== undefined
-      ? await prisma.evalCase.findFirst({
-          where: {
-            run: { guardMode, status: 'COMPLETED' },
-            payload: { externalRef },
-          },
-          orderBy: { createdAt: 'desc' },
-          include: {
-            decisions: true,
-            payload: true,
-          },
-        })
-      : null;
+  let fromDb = null;
+  if (externalRef !== undefined) {
+    try {
+      fromDb = await prisma.evalCase.findFirst({
+        where: {
+          run: { guardMode, status: 'COMPLETED' },
+          payload: { externalRef },
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          decisions: true,
+          payload: true,
+        },
+      });
+    } catch {
+      fromDb = null;
+    }
+  }
 
   if (fromDb) {
     const outcome = playgroundOutcome({

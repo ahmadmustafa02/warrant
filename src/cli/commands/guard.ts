@@ -1,11 +1,5 @@
-#!/usr/bin/env node
 import 'dotenv/config';
-/**
- * Runs a child process with model traffic routed through the local Warrant proxy.
- *
- * Example:
- *   pnpm exec tsx src/scripts/warrant-guard.ts -- node my-agent.js
- */
+import * as p from '@clack/prompts';
 import { spawn } from 'node:child_process';
 import {
   loadProxyPolicy,
@@ -13,26 +7,41 @@ import {
   resolveIntentMode,
   toolOverridesFromPolicy,
 } from '@/adapters/proxy/proxyPolicy';
+import { ApprovalCoordinator } from '@/adapters/proxy/proxyApproval';
 import { listenWarrantProxy } from '@/adapters/proxy/proxyServer';
 import type { GuardMode } from '@/agent/guard/applyGuard';
+import {
+  clackApprovalPrompt,
+  nonInteractiveApprovalPrompt,
+} from '@/cli/ui/approvalPrompt';
+import {
+  modeBadge,
+  statusOk,
+  statusWarn,
+  warrantBanner,
+  warrantRule,
+} from '@/cli/ui/brand';
 
-function parseArgs(argv: readonly string[]): {
+function parseGuardArgs(argv: readonly string[]): {
   mode: GuardMode;
   command: string[];
+  noApproval: boolean;
 } {
   const mode: GuardMode = argv.includes('--detect-only')
     ? 'DETECT_ONLY'
     : argv.includes('--off')
       ? 'OFF'
       : 'ENFORCE';
+  const noApproval = argv.includes('--no-approval');
 
   const dash = argv.indexOf('--');
   if (dash < 0 || dash === argv.length - 1) {
-    console.error('Usage: warrant-guard [--detect-only | --off] -- <command...>');
-    process.exit(1);
+    throw new Error(
+      'Usage: warrant guard [--detect-only | --off] [--no-approval] -- <command...>',
+    );
   }
 
-  return { mode, command: argv.slice(dash + 1) };
+  return { mode, command: argv.slice(dash + 1), noApproval };
 }
 
 function upstreamBaseUrl(): string {
@@ -70,18 +79,34 @@ function upstreamAuthHeader(): Record<string, string> {
   return {};
 }
 
-async function main(): Promise<void> {
-  const { mode, command } = parseArgs(process.argv.slice(2));
+export async function runGuardCommand(argv: readonly string[]): Promise<number> {
+  p.intro(warrantBanner('Guard — route model traffic through the local proxy'));
+
+  const { mode, command, noApproval } = parseGuardArgs(argv);
+  const policy = loadProxyPolicy();
+  const intentMode = resolveIntentMode(policy);
   const headers = upstreamAuthHeader();
+
   if (Object.keys(headers).length === 0) {
-    console.error(
-      '[warrant] no GROQ_API_KEY/OPENAI_API_KEY in this shell; forwarding Authorization from the agent when present.',
+    p.log.warn(
+      'No GROQ_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY in this shell — forwarding Authorization from the agent when present.',
     );
   }
 
-  const policy = loadProxyPolicy();
-  const intentMode = resolveIntentMode(policy);
-  console.error(`[warrant] intent mode: ${intentMode}`);
+  const interactive =
+    !noApproval &&
+    policy.approvalMode === 'prompt' &&
+    process.stdin.isTTY &&
+    process.stdout.isTTY;
+
+  const approval = new ApprovalCoordinator(
+    interactive ? clackApprovalPrompt : nonInteractiveApprovalPrompt(),
+    process.cwd(),
+    interactive && mode === 'ENFORCE',
+  );
+
+  const spin = p.spinner();
+  spin.start('Starting Warrant proxy');
 
   const { server, url } = await listenWarrantProxy({
     mode,
@@ -91,20 +116,34 @@ async function main(): Promise<void> {
     overrides: toolOverridesFromPolicy(policy),
     intentMode,
     destructiveRequiresExplicitUser: policy.destructiveRequiresExplicitUser,
+    streaming: policy.streaming,
+    approvalMode: policy.approvalMode,
+    approval,
     onExchange: ({ blockedTools, wouldBlockTools, drifts }) => {
       for (const drift of drifts) {
-        console.error(`[warrant] tool-set drift (${drift.kind}): ${drift.reason}`);
+        p.log.warn(`Tool-set drift (${drift.kind}): ${drift.reason}`);
       }
       if (blockedTools.length > 0) {
-        console.error(`[warrant] blocked: ${blockedTools.join(', ')}`);
+        p.log.error(`Blocked: ${blockedTools.join(', ')}`);
       }
       if (wouldBlockTools.length > 0) {
-        console.error(`[warrant] would block: ${wouldBlockTools.join(', ')}`);
+        p.log.info(`Would block: ${wouldBlockTools.join(', ')}`);
       }
     },
   });
 
-  console.error(`[warrant] proxy ${url} → ${upstreamBaseUrl()} (${mode})`);
+  spin.stop(statusOk(`Proxy listening at ${url}`));
+  p.log.message(warrantRule());
+  p.log.info(
+    [
+      `${modeBadge(mode)}  guard mode`,
+      `Intent   ${intentMode}`,
+      `Stream   ${policy.streaming}`,
+      `Approval ${interactive ? 'interactive' : 'deny-only'}`,
+      `Upstream ${upstreamBaseUrl()}`,
+    ].join('\n'),
+  );
+  p.log.step(`Running: ${command.join(' ')}`);
 
   const child = spawn(command[0] ?? '', command.slice(1), {
     stdio: 'inherit',
@@ -126,10 +165,11 @@ async function main(): Promise<void> {
     server.close((error) => (error ? reject(error) : resolve()));
   });
 
-  process.exit(exitCode);
-}
+  if (exitCode === 0) {
+    p.outro(statusOk('Agent exited cleanly'));
+  } else {
+    p.outro(statusWarn(`Agent exited with code ${exitCode}`));
+  }
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exit(1);
-});
+  return exitCode;
+}
