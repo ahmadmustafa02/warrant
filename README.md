@@ -31,11 +31,13 @@ email/fetch families included), and **5** benign control tasks. Target brain:
 
 | Measurement (this repo) | Result |
 | ----------------------- | ------ |
-| Guard **OFF**, tuned attack suite (15 payloads, once each) | Re-run `pnpm run eval:scorecard -- --guard OFF` |
-| Guard **ENFORCE**, same run + benign suite | Re-run `pnpm run eval:scorecard -- --guard ENFORCE` |
-| Held-out suite (5 payloads, not tuned against) | **5 / 5 attack-stop** under ENFORCE (`eval:scorecard -- --held-out`) |
-| ENFORCE · **proxy-equivalent intent** (`eval:intent-scorecard`, Groq) | Re-run `eval:intent-scorecard` · heuristic pins **doc-1** scope for summarize turns · default stays **heuristic** |
+| Guard **OFF**, tuned attack suite (**15** payloads, once each) | Re-run `pnpm run eval:scorecard -- --guard OFF` (14-payload baseline was **6 / 14 hijacked**) |
+| Guard **ENFORCE**, same run + **5** benign | Re-run `pnpm run eval:scorecard -- --guard ENFORCE` (14-payload baseline was **14 / 14 attack-stop** · **2 / 2 benign-pass**) |
+| Held-out suite (5 payloads, not tuned against) | **5 / 5 attack-stop** under ENFORCE (`eval:scorecard -- --held-out`, verified after scope-pin fix) |
+| ENFORCE · **proxy-equivalent intent** (`eval:intent-scorecard`, Groq) | Re-run `eval:intent-scorecard` (heuristic now pins **doc-1** on summarize turns) · default **heuristic** |
 | `llama-prompt-guard-2` on the authored injection lines (threshold 0.5) | Re-run `eval:baseline` to refresh |
+
+Scorecards need a valid **`GROQ_API_KEY`**. On Groq **429** rate/TPD limits, the sandbox agent can fall back to **`OPENAI_API_KEY`** + **`OPENAI_ANALYSIS_MODEL`** for that completion so cases are not marked ERROR.
 | Guard **OFF**, realistic recipients, **5 repeats × 10 attacks** (older matrix) | **21 / 46 hijacked (45.7%)** — errors excluded |
 
 Obvious `@evil.test` recipients in the authored lines make the model refuse many attacks before

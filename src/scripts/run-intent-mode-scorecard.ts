@@ -101,6 +101,16 @@ async function main(): Promise<void> {
     formatPair('Errors', heuristicRun.metrics.errorCount, llmRun.metrics.errorCount),
   );
 
+  const errorCount = heuristicRun.metrics.errorCount + llmRun.metrics.errorCount;
+  if (errorCount > 0) {
+    const sample = [...heuristicRun.cases, ...llmRun.cases]
+      .filter((entry) => entry.outcome === 'ERROR')
+      .slice(0, 2)
+      .map((entry) => entry.errorMessage ?? 'unknown');
+    console.error(`Errors (${errorCount}): ${sample.join(' | ')}`);
+    process.exitCode = 1;
+  }
+
   const attackPayloads = DOCUMENT_INJECTION_ATTACKS;
   const llmOnlyHijacks: string[] = [];
   const heuristicOnlyHijacks: string[] = [];

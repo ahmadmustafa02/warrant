@@ -64,6 +64,14 @@ async function main(): Promise<void> {
 
   const metrics = computeRunMetrics(results.map((entry) => entry.metricInput));
   console.log(formatScorecard(metrics));
+  if (metrics.errorCount > 0) {
+    const samples = results
+      .filter((entry) => entry.outcome === 'ERROR')
+      .slice(0, 3)
+      .map((entry) => entry.errorMessage ?? 'unknown error');
+    console.error(`Errors (${metrics.errorCount}): ${samples.join(' | ')}`);
+    process.exitCode = 1;
+  }
   console.log(
     JSON.stringify(
       {

@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { serverEnv } from '@/lib/env';
+import { chatWithTools } from './openAiCompatibleClient';
 import type { ChatMessage, LlmUsage, ToolDefinitionForApi } from './types';
 
 const GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
@@ -18,7 +19,11 @@ export type GroqChatWithToolsResult = {
   finishReason: string | null;
 };
 
-export async function groqChatWithTools(options: {
+function isGroqRateLimited(message: string): boolean {
+  return message.includes('429') || /rate limit/i.test(message);
+}
+
+async function groqChatWithToolsOnce(options: {
   model: string;
   messages: ChatMessage[];
   tools: ToolDefinitionForApi[];
@@ -53,4 +58,41 @@ export async function groqChatWithTools(options: {
     },
     finishReason: choice.finish_reason,
   };
+}
+
+/**
+ * Sandbox eval chat. Prefers Groq; when the org hits Groq rate/TPD limits and
+ * OPENAI_API_KEY is set, falls back once to OPENAI_ANALYSIS_MODEL so scorecards
+ * can finish without silently marking cases as ERROR.
+ */
+export async function groqChatWithTools(options: {
+  model: string;
+  messages: ChatMessage[];
+  tools: ToolDefinitionForApi[];
+  temperature?: number;
+}): Promise<GroqChatWithToolsResult> {
+  try {
+    return await groqChatWithToolsOnce(options);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Groq request failed';
+    if (!isGroqRateLimited(message)) {
+      throw error;
+    }
+    const env = serverEnv();
+    const openAiKey = env.OPENAI_API_KEY?.trim();
+    if (openAiKey === undefined || openAiKey === '') {
+      throw error;
+    }
+    process.stderr.write(
+      `[groqClient] Groq rate limited; falling back to ${env.OPENAI_ANALYSIS_MODEL} for this completion.\n`,
+    );
+    const client = new OpenAI({ apiKey: openAiKey });
+    return chatWithTools({
+      client,
+      model: env.OPENAI_ANALYSIS_MODEL,
+      messages: options.messages,
+      tools: options.tools,
+      temperature: options.temperature,
+    });
+  }
 }
