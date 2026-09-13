@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 ## 0.1.0 — 2026-09-13
 
 First public release: provenance-based tool authorization, measured adversarial harness,
-lab site, HTTP proxy CLI, and `@warrant/guard` / `@warrant/cli` packages.
+lab site, HTTP proxy CLI, and `@warrant-lab/guard` / `@warrant-lab/cli` packages.
 
 ### Added
 
@@ -16,7 +16,7 @@ lab site, HTTP proxy CLI, and `@warrant/guard` / `@warrant/cli` packages.
 - Outcome detection for pinned `send_email.to` / `fetch_url.url` and canary in side channels.
 - Cursor project hooks (shadow mode) and `pnpm run cursor:shadow-report`.
 - Playground: recorded terminal (allowlisted install/init/doctor/attack/guard demos).
-- CLI: `warrant init|guard|doctor|red-team|eval intent|attack` (`@warrant/cli`).
+- CLI: `warrant init|guard|doctor|red-team|eval intent|attack` (`@warrant-lab/cli`).
 - Proxy: Anthropic Messages wire, OpenAI SSE guard, pinned policy, interactive approval.
 - Lab dashboard: held-out comparison, PromptGuard baseline panel, DETECT_ONLY summary.
 - Landing metrics aligned with README scorecards.

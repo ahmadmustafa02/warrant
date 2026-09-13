@@ -1,5 +1,5 @@
 {
-  "name": "@warrant/guard",
+  "name": "@warrant-lab/guard",
   "version": "0.1.0",
   "description": "Provenance-based tool authorization for AI agents — freeze user intent, enforce on every sensitive tool call.",
   "license": "MIT",

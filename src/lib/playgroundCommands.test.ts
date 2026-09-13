@@ -4,7 +4,7 @@ import { parsePlaygroundCommand, suggestPlaygroundCommand } from './playgroundCo
 describe('parsePlaygroundCommand', () => {
   it('parses help and install aliases', () => {
     expect(parsePlaygroundCommand('help').kind).toBe('help');
-    expect(parsePlaygroundCommand('npm i -g @warrant/cli').kind).toBe('install');
+    expect(parsePlaygroundCommand('npm i -g @warrant-lab/cli').kind).toBe('install');
   });
 
   it('parses attack with preset and guard', () => {

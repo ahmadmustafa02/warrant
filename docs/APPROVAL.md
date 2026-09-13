@@ -33,4 +33,4 @@ The playground database model `ApprovalRequest` is for durable, multi-user revie
 wire the same events into Prisma when building in-app approval UX.
 
 Integrators with structured UX should prefer **`issueWarrantFromExplicit`** from
-`@warrant/guard` rather than relying on terminal prompts.
+`@warrant-lab/guard` rather than relying on terminal prompts.

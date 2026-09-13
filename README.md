@@ -169,14 +169,14 @@ pnpm run eval:attack-repeat -- --recipient realistic --repeats 5 --guard ENFORCE
 pnpm run eval:drift                  # tool-set drift: OFF vs ENFORCE vs control
 pnpm run eval:proxy-intent           # heuristic vs LLM intent on fixed fixtures
 pnpm run dev                         # /playground — recorded terminal (seeded only)
-pnpm run build:guard                 # compile @warrant/guard
-pnpm run build:cli                   # compile @warrant/cli (`warrant` bin)
+pnpm run build:guard                 # compile @warrant-lab/guard
+pnpm run build:cli                   # compile @warrant-lab/cli (`warrant` bin)
 ```
 
 ## CLI (`warrant`)
 
 Local wrapper around the same product. Run from this repo with `pnpm run warrant`, or
-build `@warrant/cli`. **Postgres is not required** for `doctor`, `guard`, or `red-team`.
+build `@warrant-lab/cli`. **Postgres is not required** for `doctor`, `guard`, or `red-team`.
 
 Use **your agent’s existing provider setup** (e.g. Groq/OpenAI keys in the agent’s `.env`).
 Warrant does not issue a separate API key — it wraps your process and points
@@ -213,7 +213,7 @@ pnpm run build:cli
 ```
 
 See **`docs/INTEGRATION.md`** for the explicit-warrant tool-loop and HTTP proxy,
-**`packages/guard/README.md`** for `@warrant/guard`, and **`packages/cli/README.md`**
+**`packages/guard/README.md`** for `@warrant-lab/guard`, and **`packages/cli/README.md`**
 for the `warrant` binary.
 
 Deploy the demo app: **`docs/DEPLOY.md`**.
@@ -252,4 +252,4 @@ cd packages/guard && npm pack && npm publish --access public
 cd ../cli && npm pack && npm publish --access public
 ```
 
-Requires npm login with permission to publish `@warrant/*`.
+Requires npm login with permission to publish `@warrant-lab/*`.

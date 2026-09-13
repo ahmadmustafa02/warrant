@@ -5,7 +5,7 @@ Use this to confirm the internship / demo deliverable is closed.
 ## Code & CI
 
 - [x] `pnpm run verify` green (format, lint, typecheck, tests + coverage thresholds)
-- [x] `src/core/` framework-agnostic; guard extractable as `@warrant/guard`
+- [x] `src/core/` framework-agnostic; guard extractable as `@warrant-lab/guard`
 - [x] CLI proxy path: `warrant guard`, `init`, `doctor`, `red-team`
 
 ## Measurement
@@ -13,7 +13,7 @@ Use this to confirm the internship / demo deliverable is closed.
 - [x] Corpus: 60 tuned / 24 benign / 15 held-out (`corpusIntegrity.test.ts`)
 - [x] Scorecards documented in README (OFF, ENFORCE, held-out, intent)
 - [ ] Optional live lab DB: `pnpm run db:up` → `eval:seed` → `eval:full` → `eval:baseline`
-- [ ] Optional npm publish: `@warrant/guard` and `@warrant/cli` (see root README)
+- [x] npm publish: `@warrant-lab/guard` and `@warrant-lab/cli` (see root README)
 
 ## Product surface
 

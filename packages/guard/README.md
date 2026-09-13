@@ -1,4 +1,4 @@
-# @warrant/guard
+# @warrant-lab/guard
 
 Freeze what the **user** authorized, then enforce it on every sensitive tool call. Untrusted
 document text may fill ordinary fields; it may not add tools or choose authority parameters
@@ -9,7 +9,7 @@ Zero runtime dependencies.
 ## Install
 
 ```bash
-npm install @warrant/guard
+npm install @warrant-lab/guard
 ```
 
 (Pre-publish: build from the monorepo with `pnpm run build:guard`.)
@@ -21,8 +21,8 @@ import {
   ToolRegistry,
   issueWarrantFromExplicit,
   taint,
-} from '@warrant/guard';
-import { evaluateToolCall } from '@warrant/guard/agent';
+} from '@warrant-lab/guard';
+import { evaluateToolCall } from '@warrant-lab/guard/agent';
 
 const registry = new ToolRegistry([
   {
@@ -59,7 +59,7 @@ if (decision && !decision.allowed) {
 Mark tool **results** as untrusted when they re-enter context:
 
 ```typescript
-import { taint } from '@warrant/guard';
+import { taint } from '@warrant-lab/guard';
 
 const docText = taint(readDocumentResult, 'TOOL_RESULT');
 ```

@@ -1,5 +1,5 @@
 {
-  "name": "@warrant/cli",
+  "name": "@warrant-lab/cli",
   "version": "0.1.0",
   "description": "Warrant command-line interface — guard agents, init policy, run attacks, measure intent.",
   "license": "MIT",

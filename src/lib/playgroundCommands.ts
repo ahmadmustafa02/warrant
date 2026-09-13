@@ -28,7 +28,7 @@ export const COMMAND_CHIPS: readonly CommandChip[] = [
   {
     id: 'install',
     label: 'install',
-    command: 'npm install -g @warrant/cli',
+    command: 'npm install -g @warrant-lab/cli',
     hint: 'Demo install log',
   },
   {
@@ -120,9 +120,9 @@ export function parsePlaygroundCommand(raw: string): ParsedPlaygroundCommand {
     return { kind: 'clear' };
   }
   if (
-    lower === 'npm install -g @warrant/cli' ||
-    lower === 'npm i -g @warrant/cli' ||
-    lower === 'npx @warrant/cli'
+    lower === 'npm install -g @warrant-lab/cli' ||
+    lower === 'npm i -g @warrant-lab/cli' ||
+    lower === 'npx @warrant-lab/cli'
   ) {
     return { kind: 'install' };
   }
@@ -172,7 +172,7 @@ export function suggestPlaygroundCommand(partial: string): string | undefined {
 export const HELP_LINES: readonly string[] = [
   'Warrant playground — recorded demos only. No live install, no live model.',
   '',
-  '  npm install -g @warrant/cli',
+  '  npm install -g @warrant-lab/cli',
   '  warrant init --from-sandbox',
   '  warrant doctor',
   '  warrant eval intent',
@@ -186,7 +186,7 @@ export const HELP_LINES: readonly string[] = [
 export const INSTALL_LINES: readonly string[] = [
   'added 1 package in 1.2s',
   '',
-  '  @warrant/cli@0.1.0',
+  '  @warrant-lab/cli@0.1.0',
   '  bin: warrant',
   '',
   'Demo complete. This page never runs npm on your machine.',

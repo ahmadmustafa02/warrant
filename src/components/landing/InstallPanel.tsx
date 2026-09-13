@@ -5,7 +5,7 @@ const STEPS = [
     n: '01',
     title: 'Install',
     body: 'Run the demo install. Nothing is installed on your machine — the terminal prints a recorded log.',
-    command: 'npm install -g @warrant/cli',
+    command: 'npm install -g @warrant-lab/cli',
   },
   {
     n: '02',

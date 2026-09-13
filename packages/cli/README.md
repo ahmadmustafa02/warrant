@@ -1,11 +1,11 @@
-# @warrant/cli
+# @warrant-lab/cli
 
 Command-line interface for [Warrant](https://github.com/ahmadmustafa02/warrant) — provenance-based tool authorization on agent model traffic.
 
 ## Install
 
 ```bash
-npm install -g @warrant/cli
+npm install -g @warrant-lab/cli
 ```
 
 Configure **your agent the way you already do** (e.g. `GROQ_API_KEY` / `OPENAI_API_KEY` in the agent’s `.env`). Warrant runs that agent and routes model traffic through a local proxy. No Warrant-hosted models, no separate Warrant API key. Postgres is **not** required.
@@ -32,7 +32,7 @@ Optional: `warrant doctor` (sanity check), `warrant red-team -- node my-agent.js
 ## Build from monorepo
 
 ```bash
-pnpm --filter @warrant/cli build
+pnpm --filter @warrant-lab/cli build
 node packages/cli/dist/warrant.js doctor
 ```
 

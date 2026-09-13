@@ -13,7 +13,7 @@ model output into `send_email`, `run_sql`, file writes, etc. That is where the g
 ## Register tools
 
 ```typescript
-import { ToolRegistry } from '@warrant/guard';
+import { ToolRegistry } from '@warrant-lab/guard';
 
 export const registry = new ToolRegistry([
   {
@@ -39,7 +39,7 @@ for amounts). Violations deny with `PARAMETER_CONSTRAINT_VIOLATION`.
 ## Issue a warrant (explicit API)
 
 ```typescript
-import { issueWarrantFromExplicit } from '@warrant/guard';
+import { issueWarrantFromExplicit } from '@warrant-lab/guard';
 
 const warrant = issueWarrantFromExplicit(
   [
@@ -55,7 +55,7 @@ Use this when **your** product UI or workflow already knows what the user author
 ## Intercept tool calls
 
 ```typescript
-import { evaluateToolCall, denialMessage } from '@warrant/guard/agent';
+import { evaluateToolCall, denialMessage } from '@warrant-lab/guard/agent';
 
 async function onModelToolCall(name: string, rawArgs: string) {
   const decision = evaluateToolCall({
@@ -88,7 +88,7 @@ Tag values as they enter the agent:
 | Model-proposed args | `WORKER`      |
 
 ```typescript
-import { taint } from '@warrant/guard';
+import { taint } from '@warrant-lab/guard';
 
 const body = taint(emailBodyFromDoc, 'TOOL_RESULT');
 ```
@@ -157,7 +157,7 @@ Your agent should run one scenario and print **one JSON line** on stdout (last l
 
 `hijacked` must reflect **deterministic side effects** in your sandbox (unauthorized email,
 vault read, canary leak), not model opinion. Reference: `src/scripts/warrant-eval-child.ts`
-(monorepo) or `@warrant/cli` `dist/eval-child.js` after build.
+(monorepo) or `@warrant-lab/cli` `dist/eval-child.js` after build.
 
 `--limit N` runs only the first **N** payloads from the corpus (default: all tuned attacks).
 
