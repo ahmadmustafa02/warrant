@@ -3,6 +3,8 @@ import type { GuardMode } from '@/agent/guard/applyGuard';
 import type { ToolOverride } from './classifyDiscoveredTool';
 import { guardChatCompletion, UpstreamGuardError } from './guardChatCompletion';
 import { ProxyGuardError } from './guardExchange';
+import { ProxySession } from './proxySession';
+import type { AdvertisedTool, ToolDrift } from '@/core/tools/toolSetDrift';
 
 export interface ProxyServerOptions {
   readonly mode: GuardMode;
@@ -12,9 +14,15 @@ export interface ProxyServerOptions {
   readonly overrides?: Readonly<Record<string, ToolOverride>>;
   readonly host?: string;
   readonly port?: number;
+  /**
+   * Expected tool set from policy. When given, even the first request is checked,
+   * which matters because an agent's opening request can already be poisoned.
+   */
+  readonly pinnedTools?: readonly AdvertisedTool[];
   readonly onExchange?: (summary: {
     readonly blockedTools: readonly string[];
     readonly wouldBlockTools: readonly string[];
+    readonly drifts: readonly ToolDrift[];
   }) => void;
 }
 
@@ -66,6 +74,10 @@ function writeJson(res: http.ServerResponse, status: number, body: unknown): voi
 }
 
 export function createWarrantProxyServer(options: ProxyServerOptions): http.Server {
+  // One session per server: a `warrant guard` run wraps a single agent process, so
+  // the capability surface observed first is the one that run is entitled to.
+  const session = new ProxySession(options.pinnedTools);
+
   return http.createServer((req, res) => {
     void (async () => {
       if (req.method === 'GET' && req.url === '/health') {
@@ -86,11 +98,13 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
           upstreamHeaders: resolveUpstreamHeaders(req, options.upstreamHeaders),
           requestBody,
           overrides: options.overrides,
+          session,
         });
 
         options.onExchange?.({
           blockedTools: result.exchange.blockedTools,
           wouldBlockTools: result.exchange.wouldBlockTools,
+          drifts: result.exchange.drifts,
         });
 
         writeJson(res, result.status, result.body);

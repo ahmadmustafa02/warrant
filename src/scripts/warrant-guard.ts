@@ -66,7 +66,10 @@ async function main(): Promise<void> {
     mode,
     upstreamBaseUrl: upstreamBaseUrl(),
     upstreamHeaders: headers,
-    onExchange: ({ blockedTools, wouldBlockTools }) => {
+    onExchange: ({ blockedTools, wouldBlockTools, drifts }) => {
+      for (const drift of drifts) {
+        console.error(`[warrant] tool-set drift (${drift.kind}): ${drift.reason}`);
+      }
       if (blockedTools.length > 0) {
         console.error(`[warrant] blocked: ${blockedTools.join(', ')}`);
       }

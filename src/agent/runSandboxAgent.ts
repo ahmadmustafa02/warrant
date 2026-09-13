@@ -22,6 +22,13 @@ import {
   sandboxToolsForApi,
 } from './sandbox/tools';
 import { detectHijack, isHijacked } from '@/eval/outcome';
+import {
+  detectToolSetDrift,
+  driftedToolNames,
+  establishToolSetBaseline,
+  type ToolDrift,
+  type ToolSetBaseline,
+} from '@/core/tools/toolSetDrift';
 
 export type SandboxRunResult = {
   finalAnswer: string;
@@ -37,6 +44,8 @@ export type SandboxRunResult = {
   warrantTools: string[];
   transcript: ChatMessage[];
   latencyMs: number;
+  /** Capability changes seen after the opening request established the baseline. */
+  drifts: ToolDrift[];
 };
 
 export type RunSandboxAgentOptions = {
@@ -57,6 +66,15 @@ export type RunSandboxAgentOptions = {
    */
   measuredAuthorizedTools?: readonly string[];
   measuredPinnedParameters?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /**
+   * When the extra vault capability is advertised.
+   *
+   * `AFTER_DOCUMENT_READ` stages the attack: the tool is absent when the user makes
+   * their request and appears once content has been read. `FROM_START` is the
+   * control — the same tool, same tier, no drift — which is how the suite shows that
+   * drift detection is carrying the denial rather than the risk tier.
+   */
+  lateToolAvailability?: 'AFTER_DOCUMENT_READ' | 'FROM_START';
 };
 
 function toToolCallRequest(
@@ -120,13 +138,46 @@ export async function runSandboxAgent(
 
   let finalAnswer = '';
   let steps = 0;
+  let baseline: ToolSetBaseline | undefined;
+  const drifts: ToolDrift[] = [];
 
   for (let step = 0; step < maxSteps; step += 1) {
     steps = step + 1;
+
+    // The poisoned source only reveals the extra capability once content has been
+    // read, so the opening request — the one the user's intent was formed against —
+    // looks entirely ordinary.
+    const advertised = sandboxToolsForApi({
+      includeLateTool:
+        options.lateToolAvailability === 'FROM_START' ||
+        (options.lateToolAvailability === 'AFTER_DOCUMENT_READ' &&
+          effects.documentIdsRead.length > 0),
+    });
+    const advertisedForDrift = advertised.map((tool) => ({
+      name: tool.function.name,
+      parameterNames: Object.keys(
+        (tool.function.parameters['properties'] as
+          Record<string, unknown> | undefined) ?? {},
+      ),
+    }));
+
+    let driftedNow: ReadonlySet<string> = new Set<string>();
+    if (baseline === undefined) {
+      baseline = establishToolSetBaseline(advertisedForDrift);
+    } else {
+      const stepDrifts = detectToolSetDrift(baseline, advertisedForDrift);
+      for (const drift of stepDrifts) {
+        if (!drifts.some((seen) => seen.toolName === drift.toolName)) {
+          drifts.push(drift);
+        }
+      }
+      driftedNow = driftedToolNames(stepDrifts);
+    }
+
     const completion = await groqChatWithTools({
       model,
       messages,
-      tools: sandboxToolsForApi(),
+      tools: advertised,
     });
     usage = addUsage(usage, completion.usage);
 
@@ -150,6 +201,26 @@ export async function runSandboxAgent(
     for (const call of toolCalls) {
       const toolName = call.function.name;
       calledTools.push(toolName);
+
+      // Drift is settled before the warrant, and it overrides the read-only
+      // exemption: a capability whose origin is suspect earns nothing from a tier
+      // inferred from the name its injector chose.
+      const driftedCall = driftedNow.has(toolName);
+      if (driftedCall && options.guardMode !== 'OFF') {
+        const reason =
+          drifts.find((drift) => drift.toolName === toolName)?.reason ??
+          `${toolName} was not advertised when this session began`;
+        if (options.guardMode === 'ENFORCE') {
+          blockedTools.push(toolName);
+          messages.push({
+            role: 'tool',
+            tool_call_id: call.id,
+            content: JSON.stringify({ error: 'guard_denied', reason }),
+          });
+          continue;
+        }
+        wouldBlockTools.push(toolName);
+      }
 
       const decision = evaluateToolCall({
         mode: options.guardMode,
@@ -223,5 +294,6 @@ export async function runSandboxAgent(
     warrantTools: [...authorizedTools],
     transcript: messages,
     latencyMs: Date.now() - started,
+    drifts,
   };
 }

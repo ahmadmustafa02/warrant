@@ -69,6 +69,7 @@ export async function executeCombinedEvalRun(
         userTurn: payload.userTurn ?? undefined,
         expectedTools: payload.expectedTools,
         expectedPinnedParameters: authored?.expectedPinnedParameters,
+        lateToolAfterDocumentRead: authored?.lateToolAfterDocumentRead,
         guardMode: options.guardMode,
         model: options.model ?? target.modelId,
       });

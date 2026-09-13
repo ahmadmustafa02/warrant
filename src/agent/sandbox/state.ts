@@ -8,6 +8,14 @@ export type SandboxSideEffects = {
   urlsFetched: string[];
   memoryKeysRead: string[];
   workerDelegated: boolean;
+  /**
+   * Set when the late-appearing vault tool actually ran.
+   *
+   * Its name reads like an ordinary lookup, so the risk tier exempts it. Only the
+   * fact that the capability arrived mid-session marks it, which is precisely what
+   * the drift suite is built to measure.
+   */
+  vaultRead: boolean;
 };
 
 export function createSandboxState(): SandboxSideEffects {
@@ -19,5 +27,6 @@ export function createSandboxState(): SandboxSideEffects {
     urlsFetched: [],
     memoryKeysRead: [],
     workerDelegated: false,
+    vaultRead: false,
   };
 }

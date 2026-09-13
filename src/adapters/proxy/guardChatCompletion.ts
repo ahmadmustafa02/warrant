@@ -1,6 +1,7 @@
 import type { GuardMode } from '@/agent/guard/applyGuard';
 import { guardExchange, type ProxyExchange } from './guardExchange';
 import type { ToolOverride } from './classifyDiscoveredTool';
+import type { ProxySession } from './proxySession';
 
 export class UpstreamGuardError extends Error {
   constructor(
@@ -33,6 +34,7 @@ export async function guardChatCompletion(options: {
   readonly upstreamHeaders: Readonly<Record<string, string>>;
   readonly requestBody: unknown;
   readonly overrides?: Readonly<Record<string, ToolOverride>>;
+  readonly session?: ProxySession;
 }): Promise<{
   readonly status: number;
   readonly body: unknown;
@@ -76,6 +78,7 @@ export async function guardChatCompletion(options: {
     rawRequest: options.requestBody,
     rawResponse: parsed,
     overrides: options.overrides,
+    session: options.session,
   });
 
   return { status: upstream.status, body: exchange.response, exchange };

@@ -3,7 +3,9 @@ import type { GuardDecision } from '@/core/authorization/decide';
 import { issueWarrant } from '@/core/authorization/warrant';
 import { taint } from '@/core/provenance/tainted';
 import type { ToolDefinition } from '@/core/tools/registry';
+import { driftedToolNames, type ToolDrift } from '@/core/tools/toolSetDrift';
 import { buildProxyRegistry, type ToolOverride } from './classifyDiscoveredTool';
+import type { ProxySession } from './proxySession';
 import { deriveProxyIntent } from './deriveProxyIntent';
 import {
   parseOpenAiRequest,
@@ -30,6 +32,12 @@ export type ProxyDecision =
       readonly callId: string;
       readonly toolName: string;
       readonly reason: string;
+    }
+  | {
+      readonly kind: 'DRIFT';
+      readonly callId: string;
+      readonly toolName: string;
+      readonly reason: string;
     };
 
 export interface ProxyExchange {
@@ -43,6 +51,8 @@ export interface ProxyExchange {
   /** Tiers assigned to observed tools, so the CLI can show what it inferred. */
   readonly classifiedTools: readonly ToolDefinition[];
   readonly authorizedTools: readonly string[];
+  /** Capabilities that changed after the session established its baseline. */
+  readonly drifts: readonly ToolDrift[];
 }
 
 /**
@@ -66,6 +76,7 @@ const EMPTY_EXCHANGE = {
   wouldBlockTools: Object.freeze([]),
   classifiedTools: Object.freeze([]),
   authorizedTools: Object.freeze([]),
+  drifts: Object.freeze([]),
 } as const;
 
 export function guardExchange(options: {
@@ -73,6 +84,8 @@ export function guardExchange(options: {
   readonly rawRequest: unknown;
   readonly rawResponse: unknown;
   readonly overrides?: Readonly<Record<string, ToolOverride>>;
+  /** Supplies the per-run tool-set baseline; omitted when drift is not tracked. */
+  readonly session?: ProxySession;
 }): ProxyExchange {
   if (options.mode === 'OFF') {
     return { ...EMPTY_EXCHANGE, response: options.rawResponse };
@@ -96,11 +109,17 @@ export function guardExchange(options: {
   const registry = buildProxyRegistry(request.tools, options.overrides ?? {});
   const classifiedTools = registry.list();
 
+  // Observed on every exchange, not only those that propose calls, so a capability
+  // advertised on a quiet turn is still measured against the original baseline.
+  const drifts = options.session?.observeTools(request.tools) ?? [];
+  const drifted = driftedToolNames(drifts);
+
   if (toolCalls.length === 0) {
     return {
       ...EMPTY_EXCHANGE,
       response: options.rawResponse,
       classifiedTools,
+      drifts: Object.freeze([...drifts]),
     };
   }
 
@@ -115,6 +134,27 @@ export function guardExchange(options: {
   const wouldBlockTools: string[] = [];
 
   for (const call of toolCalls) {
+    // Drift is checked before the warrant, and it overrides the read-only exemption.
+    // A tool whose origin is suspect gets no benefit from its own risk tier, because
+    // that tier was inferred from a name the injector chose.
+    if (drifted.has(call.name)) {
+      const drift = drifts.find((entry) => entry.toolName === call.name);
+      const reason = `Warrant denied ${call.name}: ${drift?.reason ?? 'its advertised surface changed mid-session'}.`;
+      decisions.push({
+        kind: 'DRIFT',
+        callId: call.id,
+        toolName: call.name,
+        reason,
+      });
+      if (options.mode === 'ENFORCE') {
+        denialsByCallId.set(call.id, reason);
+        blockedTools.push(call.name);
+      } else {
+        wouldBlockTools.push(call.name);
+      }
+      continue;
+    }
+
     let decision: GuardDecision | null;
     try {
       decision = evaluateToolCall({
@@ -168,5 +208,6 @@ export function guardExchange(options: {
     wouldBlockTools: Object.freeze(wouldBlockTools),
     classifiedTools,
     authorizedTools: Object.freeze([...intent.requestedTools]),
+    drifts: Object.freeze([...drifts]),
   };
 }

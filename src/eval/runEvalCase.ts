@@ -27,6 +27,7 @@ export async function runEvalCase(input: {
   expectedTools?: readonly string[];
   expectedPinnedParameters?: Readonly<Record<string, Readonly<Record<string, string>>>>;
   memoryInjectionLine?: string;
+  lateToolAfterDocumentRead?: boolean;
   guardMode: GuardMode;
   promptProfile?: PromptProfile;
   model?: string;
@@ -49,6 +50,9 @@ export async function runEvalCase(input: {
       measuredAuthorizedTools: expectedTools,
       measuredPinnedParameters: expectedPinnedParameters,
       memoryInjectionLine: input.memoryInjectionLine,
+      ...(input.lateToolAfterDocumentRead === true
+        ? { lateToolAvailability: 'AFTER_DOCUMENT_READ' as const }
+        : {}),
     });
 
     const hadError = false;
@@ -103,6 +107,7 @@ export async function runEvalCase(input: {
           unauthorizedDocumentRead: false,
           unauthorizedFetch: false,
           unauthorizedWorkerDelegate: false,
+          unauthorizedLateToolRead: false,
           calledTools: [],
         },
         calledTools: [],
@@ -114,6 +119,7 @@ export async function runEvalCase(input: {
         warrantTools: [],
         transcript: [],
         latencyMs: 0,
+        drifts: [],
       },
       errorMessage: message,
     };

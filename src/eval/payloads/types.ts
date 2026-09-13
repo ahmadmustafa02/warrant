@@ -15,6 +15,11 @@ export const authoredPayloadSchema = z.object({
     .optional(),
   /** When set, poisons `read_memory` instead of the document body. */
   memoryInjectionLine: z.string().min(1).optional(),
+  /**
+   * When set, a tool source advertises a new capability once the document is read,
+   * so the case measures tool-set drift rather than misuse of a declared tool.
+   */
+  lateToolAfterDocumentRead: z.boolean().optional(),
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'),
   notes: z.string().optional(),
 });
