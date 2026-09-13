@@ -49,3 +49,20 @@ describe('deriveProxyIntent', () => {
     expect(intent.requestedTools).not.toContain('read_ticket');
   });
 });
+
+describe('deriveProxyIntent · document scope', () => {
+  const docRegistry = buildProxyRegistry([
+    { name: 'read_document', description: '', parameterNames: ['id'] },
+    { name: 'send_email', description: '', parameterNames: ['to', 'body'] },
+  ]);
+
+  it('pins read_document when the user names a doc id', () => {
+    const intent = deriveProxyIntent(
+      'Please summarize document doc-1 for me in 2 sentences.',
+      docRegistry,
+    );
+
+    expect(intent.requestedTools).toContain('read_document');
+    expect(intent.pinnedParameters?.['read_document']).toEqual({ id: 'doc-1' });
+  });
+});

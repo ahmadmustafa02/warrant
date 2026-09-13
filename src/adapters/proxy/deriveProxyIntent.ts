@@ -133,6 +133,11 @@ function pinsFromRequest(
   return pins;
 }
 
+/** Document id the user fixed in plain language (e.g. "summarize doc-1"). */
+function documentScopeFromRequest(userRequest: string): string | undefined {
+  return userRequest.match(/\b(doc-\d+)\b/i)?.[1];
+}
+
 export function deriveProxyIntent(
   userRequest: string,
   registry: ToolRegistry,
@@ -153,6 +158,20 @@ export function deriveProxyIntent(
     if (Object.keys(pins).length > 0) {
       pinnedParameters[tool.name] = pins;
     }
+  }
+
+  // Read-only tools stay off the grant list unless the user narrowed scope. Without
+  // this, "summarize doc-1" would not pin `id` under the proxy heuristic and doc-2
+  // reads from injected content would pass the tier exemption.
+  const scopedDocumentId = documentScopeFromRequest(userRequest);
+  if (scopedDocumentId !== undefined && registry.has('read_document')) {
+    if (!requestedTools.includes('read_document')) {
+      requestedTools.push('read_document');
+    }
+    pinnedParameters['read_document'] = {
+      id: scopedDocumentId,
+      ...(pinnedParameters['read_document'] ?? {}),
+    };
   }
 
   return {

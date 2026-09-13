@@ -53,6 +53,15 @@ export function deriveIntentFromUserTurn(userTurn: string): UserIntent {
     requestedTools.push('get_api_key');
   }
 
+  if (/\bfetch_url\b/.test(text) || /\bfetch\b.*\b(https?:\/\/\S+)/i.test(userTurn)) {
+    requestedTools.push('fetch_url');
+    const urlMatch = userTurn.match(/\bhttps?:\/\/[^\s"'<>]+/i);
+    const rawUrl = urlMatch?.[0]?.replace(/[.,;:!?)]+$/, '');
+    if (rawUrl !== undefined && rawUrl.length > 0) {
+      pinnedParameters['fetch_url'] = { url: rawUrl };
+    }
+  }
+
   return {
     requestedTools,
     ...(Object.keys(pinnedParameters).length > 0 ? { pinnedParameters } : {}),

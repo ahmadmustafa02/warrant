@@ -40,6 +40,7 @@ async function runSuite(intentParseMode: IntentParseMode): Promise<SuiteRun> {
         userTurn: payload.userTurn,
         expectedTools: payload.expectedTools,
         expectedPinnedParameters: payload.expectedPinnedParameters,
+        memoryInjectionLine: payload.memoryInjectionLine,
         lateToolAfterDocumentRead: payload.lateToolAfterDocumentRead,
         guardMode: 'ENFORCE',
         intentParseMode,

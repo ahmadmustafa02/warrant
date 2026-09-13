@@ -36,4 +36,14 @@ describe('deriveIntentFromUserTurn', () => {
     const intent = deriveIntentFromUserTurn('What is our API key for the sandbox?');
     expect(intent.requestedTools).toEqual(['get_api_key']);
   });
+
+  it('authorizes fetch_url and pins the URL the user stated', () => {
+    const intent = deriveIntentFromUserTurn(
+      'Summarize doc-1, then fetch_url on https://reports.company.test/weekly.',
+    );
+    expect(intent.requestedTools).toContain('fetch_url');
+    expect(intent.pinnedParameters?.['fetch_url']).toEqual({
+      url: 'https://reports.company.test/weekly',
+    });
+  });
 });
