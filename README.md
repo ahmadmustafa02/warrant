@@ -141,12 +141,17 @@ pnpm run dev
 ```
 
 <p align="center">
-  <img width="900" alt="Lab dashboard" src="https://github.com/user-attachments/assets/10505e97-5c4a-4bf8-a77d-ebf05506ae24" />
+<img width="1696" height="948" alt="image" src="https://github.com/user-attachments/assets/019a9475-aac7-4044-853b-0114d6cefc43" />
+
 </p>
 
 <p align="center">
-  <img width="900" alt="Run scorecard" src="https://github.com/user-attachments/assets/b4a2d785-3465-42f2-85a5-605731d7b61f" />
-  <img width="900" alt="Case trace" src="https://github.com/user-attachments/assets/dd686276-e298-4710-ac75-ec6a9b3c584b" />
+  <img width="1679" height="927" alt="image" src="https://github.com/user-attachments/assets/9c04cf33-fa67-4de4-aa14-6d7a8fb3bfa9" />
+  <img width="1588" height="947" alt="image" src="https://github.com/user-attachments/assets/629f7304-3424-4d58-bcd4-80121bb01644" />
+  <img width="1643" height="943" alt="image" src="https://github.com/user-attachments/assets/9c3429af-3b44-4978-ae48-602722a38801" />
+
+
+
 </p>
 
 ---
