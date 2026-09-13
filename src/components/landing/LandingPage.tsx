@@ -7,6 +7,7 @@ import type { MeasuredComparison } from '@/server/eval/baselineComparison';
 import { EvidencePanel } from './EvidencePanel';
 import { InstallPanel } from './InstallPanel';
 import { LandingMotion } from './LandingMotion';
+import { ProductPath } from './ProductPath';
 
 export function LandingPage({ comparison }: { comparison: MeasuredComparison | null }) {
   return (
@@ -94,52 +95,7 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
         </div>
       </section>
 
-      <section className="stage reveal-section py-20">
-        <div className="mx-auto w-full max-w-6xl px-5">
-          <div className="reveal-copy">
-            <h2 className="display max-w-3xl text-4xl sm:text-6xl">
-              Red-team it. Measure it. Ship the guard.
-            </h2>
-            <p className="mt-4 max-w-2xl text-lg text-[var(--muted)]">
-              Attack an agent, watch the hijack land with the guard off, then prove the
-              guard stops it without breaking legitimate work.
-            </p>
-          </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                title: 'Playground',
-                body: 'Replay a recorded hijack, then the same scenario with the guard on.',
-                href: '/playground',
-              },
-              {
-                title: 'Lab',
-                body: 'Stored runs with attack-stop and benign-pass on every scorecard.',
-                href: '/dashboard',
-              },
-              {
-                title: 'Suites',
-                body: 'Hijack payloads next to the ordinary tasks that must still work.',
-                href: '/suites',
-              },
-              {
-                title: 'Method',
-                body: 'Why a hijack is decided by what happened, not by a model verdict.',
-                href: '/method',
-              },
-            ].map((card) => (
-              <Link
-                key={card.title}
-                href={card.href}
-                className="pressable lift reveal-card surface block rounded-[28px] p-6"
-              >
-                <h3 className="text-2xl font-bold tracking-tight">{card.title}</h3>
-                <p className="mt-2 text-[var(--muted)]">{card.body}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ProductPath />
 
       <InstallPanel />
 
