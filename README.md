@@ -143,10 +143,7 @@ pnpm run db:up && pnpm run db:migrate   # optional, for dashboard DB
 pnpm run dev
 ```
 
-<p align="center">
-<img width="1696" height="948" alt="image" src="https://github.com/user-attachments/assets/019a9475-aac7-4044-853b-0114d6cefc43" />
 
-</p>
 
 <p align="center">
   <img width="1679" height="927" alt="image" src="https://github.com/user-attachments/assets/9c04cf33-fa67-4de4-aa14-6d7a8fb3bfa9" />
