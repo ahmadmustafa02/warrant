@@ -25,15 +25,15 @@ never had permission.
 ## The measured problem
 
 This repository ships the **sandbox agent and harness** used for measurement — mock tools
-(including egress `fetch_url`), **13** authored document-injection lines, and **2** benign
+(including egress `fetch_url`), **14** authored document-injection lines, and **2** benign
 control tasks. Target brain: `openai/gpt-oss-20b` via Groq.
 
 | Measurement (this repo) | Result |
 | ----------------------- | ------ |
-| Guard **OFF**, tuned attack suite (13 payloads, once each) | **5 / 13 hijacked** |
-| Guard **ENFORCE**, same run + benign suite | **13 / 13 attack-stop** · **2 / 2 benign-pass** |
-| ENFORCE · **proxy-equivalent intent** (`eval:intent-scorecard`, Groq) | **heuristic 12/13** attack-stop · **llm 12/13** · **2/2 benign** both · default stays **heuristic** |
-| `llama-prompt-guard-2` on the 13 authored injection lines (threshold 0.5) | **2 / 13 flagged** (re-run `eval:baseline` to refresh) |
+| Guard **OFF**, tuned attack suite (14 payloads, once each) | **6 / 14 hijacked** (includes parameter-hijack email when the model sends to the wrong `to`) |
+| Guard **ENFORCE**, same run + benign suite | **14 / 14 attack-stop** · **2 / 2 benign-pass** |
+| ENFORCE · **proxy-equivalent intent** (`eval:intent-scorecard`, Groq) | Re-run `eval:intent-scorecard` · default stays **heuristic** |
+| `llama-prompt-guard-2` on the authored injection lines (threshold 0.5) | **2 / 14 flagged** (re-run `eval:baseline` to refresh) |
 | Guard **OFF**, realistic recipients, **5 repeats × 10 attacks** (older matrix) | **21 / 46 hijacked (45.7%)** — errors excluded |
 
 Obvious `@evil.test` recipients in the authored lines make the model refuse many attacks before
