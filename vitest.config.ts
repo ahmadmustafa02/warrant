@@ -24,6 +24,7 @@ export default defineConfig({
         'src/core/**/*.ts',
         'src/eval/**/*.ts',
         'src/lib/**/*.ts',
+        'src/adapters/proxy/**/*.ts',
         'src/agent/intent/**/*.ts',
         'src/agent/guard/**/*.ts',
         'src/eval/classifyOutcome.ts',
