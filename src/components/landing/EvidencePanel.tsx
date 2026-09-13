@@ -1,24 +1,24 @@
 import { MeasuredComparisonPanel } from '@/components/lab/MeasuredComparisonPanel';
 import type { MeasuredComparison } from '@/server/eval/baselineComparison';
 
-/** Shown when the lab DB is empty — keep in sync with `pnpm run eval:*` workflow. */
+/** Static fallback when the lab DB has no runs — keep in sync with README scorecards. */
 const FALLBACK_ROWS = [
   {
     who: 'No guard',
-    value: '5 / 13',
-    detail: 'hijacked when the agent obeyed injected content · tuned attack suite',
+    value: '17 / 60',
+    detail: 'hijacked on the tuned suite · gpt-oss-20b · guard off',
     tone: 'hijack' as const,
   },
   {
     who: 'PromptGuard',
-    value: '2 / 13',
-    detail: 'flagged only the loudest injections · threshold 0.5',
+    value: 'Detect only',
+    detail: 'llama-prompt-guard-2 flags a minority of lines · tools still fire',
     tone: 'blocked' as const,
   },
   {
-    who: 'Warrant',
-    value: '0 / 13',
-    detail: 'hijacked with enforce on · benign-pass 2/2 on the same agent',
+    who: 'Warrant enforce',
+    value: '100% stop',
+    detail: '0 / 60 hijacked · 15/15 held-out · 22/24 benign pass',
     tone: 'safe' as const,
   },
 ];

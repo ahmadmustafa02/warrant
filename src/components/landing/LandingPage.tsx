@@ -25,6 +25,29 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
           your tool loop, locks in what the user actually authorized, and denies any
           action the hijacked content tries to add.
         </p>
+        <dl className="hero-line mx-auto mt-10 grid max-w-3xl grid-cols-3 gap-4 sm:gap-6">
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 sm:px-5">
+            <dt className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+              Attack-stop
+            </dt>
+            <dd className="display mt-1 text-3xl sm:text-4xl">60/60</dd>
+          </div>
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 sm:px-5">
+            <dt className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+              Benign-pass
+            </dt>
+            <dd className="display mt-1 text-3xl sm:text-4xl">22/24</dd>
+          </div>
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 sm:px-5">
+            <dt className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+              Held-out
+            </dt>
+            <dd className="display mt-1 text-3xl sm:text-4xl">15/15</dd>
+          </div>
+        </dl>
+        <p className="hero-line mt-3 text-center text-xs text-[var(--muted)]">
+          Tuned suite · gpt-oss-20b · ENFORCE · local scorecards in README
+        </p>
         <div className="hero-line mt-8 flex flex-wrap justify-center gap-3">
           <Link
             href="/playground"

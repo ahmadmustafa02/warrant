@@ -25,6 +25,8 @@ packages/**/node_modules
 eval-refresh-*.log
 eval-intent-scorecard.log
 packages/cli/*.tgz
+packages/cli/dist/
+packages/guard/dist/
 .DS_Store
 *.pem
 

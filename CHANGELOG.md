@@ -1,28 +1,37 @@
 # Changelog
 
-## Unreleased
+All notable changes to this project are documented here.
+
+## 0.1.0 — 2026-09-13
+
+First public release: provenance-based tool authorization, measured adversarial harness,
+lab site, HTTP proxy CLI, and `@warrant/guard` / `@warrant/cli` packages.
 
 ### Added
 
+- v1 eval corpus: **60** tuned attacks (families A–F), **24** benign tasks, **15** held-out attacks.
 - Read-scope enforcement on read-only tools (pinned document ids).
 - Egress-aware `fetch_url` and `guard:doctor` registry audit.
 - Parameter constraints (`stringPattern`, `numberMax`) on tool definitions.
-- Held-out attack suite (5 payloads) and `pnpm run eval:held-out`.
+- Outcome detection for pinned `send_email.to` / `fetch_url.url` and canary in side channels.
 - Cursor project hooks (shadow mode) and `pnpm run cursor:shadow-report`.
 - Playground: recorded terminal (allowlisted install/init/doctor/attack/guard demos).
-- CLI: `warrant init|guard|doctor|eval intent|attack` (`@warrant/cli`).
+- CLI: `warrant init|guard|doctor|red-team|eval intent|attack` (`@warrant/cli`).
 - Proxy: Anthropic Messages wire, OpenAI SSE guard, pinned policy, interactive approval.
-- Lab dashboard: held-out comparison and DETECT_ONLY summary panels.
+- Lab dashboard: held-out comparison, PromptGuard baseline panel, DETECT_ONLY summary.
+- Landing metrics aligned with README scorecards.
 
-### Measured (tuned corpus, sandbox agent)
+### Measured (tuned corpus, `openai/gpt-oss-20b`, sandbox agent)
 
-- Guard OFF: 8/12 hijacked · Guard ENFORCE: 12/12 attack-stop, 2/2 benign-pass.
-- PromptGuard baseline: 2/12 flagged (threshold 0.5).
+- Guard **OFF**: **17 / 60** hijacked · **23 / 24** benign-pass (1 Groq tool-JSON error).
+- Guard **ENFORCE**: **60 / 60** attack-stop · **22 / 24** benign-pass (1 error).
+- Proxy-equivalent intent (`eval:intent-scorecard`): **59 / 60** attack-stop (heuristic & LLM).
+- PromptGuard (`llama-prompt-guard-2`, threshold 0.5): run `pnpm run eval:baseline` to refresh on 60 lines.
 
-### Measured (held-out suite)
+### Measured (held-out suite, 15 payloads)
 
-- Guard OFF: 3/5 hijacked · Guard ENFORCE: 5/5 attack-stop.
+- Guard **ENFORCE**: **15 / 15** attack-stop (latest local scorecard).
 
-### Measured (DETECT_ONLY, tuned)
+### Docs
 
-- Tools still execute; see lab dashboard for would-deny vs hijacked split on the latest run.
+- `docs/THREAT_MODEL.md`, `docs/HELD_OUT.md`, `docs/INTEGRATION.md`, `docs/DEPLOY.md`.

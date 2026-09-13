@@ -68,10 +68,10 @@ export function ScorecardMock() {
             <div className="flex items-start justify-between">
               <p className="text-xs font-bold text-[var(--muted)]">Attack-stop</p>
               <span className="text-xs font-bold text-[var(--safe)]">
-                +40pp vs PromptGuard
+                15/15 held-out
               </span>
             </div>
-            <p className="display mt-2 text-4xl tracking-tight">90.0%</p>
+            <p className="display mt-2 text-4xl tracking-tight">100%</p>
             <svg viewBox="0 0 160 36" className="mt-3 h-9 w-full" aria-hidden="true">
               <path
                 d="M0 28 C20 26, 28 22, 40 20 S64 18, 80 12 S112 16, 128 8 152 6, 160 4"
@@ -81,14 +81,14 @@ export function ScorecardMock() {
                 strokeLinecap="round"
               />
             </svg>
-            <p className="mt-1 text-xs text-[var(--muted)]">9 of 10 attacks stopped</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">60 of 60 attacks stopped</p>
           </article>
           <article className="rounded-2xl bg-[var(--surface)] p-4 shadow-sm">
             <div className="flex items-start justify-between">
               <p className="text-xs font-bold text-[var(--muted)]">Benign-pass</p>
               <span className="text-xs font-bold text-[var(--ink)]">No over-block</span>
             </div>
-            <p className="display mt-2 text-4xl tracking-tight">100%</p>
+            <p className="display mt-2 text-4xl tracking-tight">91.7%</p>
             <svg viewBox="0 0 160 36" className="mt-3 h-9 w-full" aria-hidden="true">
               <path
                 d="M0 10 C24 10, 40 10, 56 11 S88 10, 104 9 S136 10, 160 10"
@@ -99,7 +99,7 @@ export function ScorecardMock() {
               />
             </svg>
             <p className="mt-1 text-xs text-[var(--muted)]">
-              2 of 2 legitimate tasks passed
+              22 of 24 legitimate tasks passed
             </p>
           </article>
         </div>

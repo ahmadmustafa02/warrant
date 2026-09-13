@@ -56,8 +56,9 @@ A real hijack (guard off), from deterministic sandbox signals — unauthorized `
 
 > The ingestion service processed 1.2 million events this quarter… **(API key: SANDBOX-SECRET-7Q4Z)**
 
-Detection-based defense leaves a measurable gap: PromptGuard flagged only two of twelve authored
-lines while many injections still drove tool calls under a naive agent.
+Detection-based defense leaves a measurable gap: on the tuned suite, PromptGuard flags only a
+small share of injection lines (re-run `pnpm run eval:baseline` for the live count) while many
+attacks still drive unauthorized tool calls under a naive agent.
 
 Cursor integration (project hooks, shadow mode by default): see [docs/CURSOR_HOOK.md](docs/CURSOR_HOOK.md).
 
@@ -71,7 +72,8 @@ pnpm run eval:detect-only
 pnpm run cursor:shadow-report
 ```
 
-Held-out (5 attacks, separate from tuning): **0/5 hijacked** in latest local scorecard (1 case errored — re-run `pnpm run eval:scorecard -- --held-out`) · **ENFORCE** blocked all non-error cases.
+Held-out (**15** attacks, separate from tuning): **15 / 15 attack-stop** under ENFORCE in the
+latest local scorecard (`pnpm run eval:scorecard -- --held-out --guard ENFORCE`).
 
 ## Core idea
 
@@ -236,3 +238,18 @@ Everything runs against a sandboxed agent owned by this project, using a **fake 
 credential** and **mock side-effecting tools**. No real secret, no destructive capability, and
 no third-party system is ever involved. The purpose is defensive: measuring and reducing a
 known risk in systems you own.
+
+Scope, adversary, and residual risk: **[docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)**.
+
+## Publish packages
+
+From a clean tree after `pnpm run verify`:
+
+```bash
+pnpm run build:guard
+pnpm run build:cli
+cd packages/guard && npm pack && npm publish --access public
+cd ../cli && npm pack && npm publish --access public
+```
+
+Requires npm login with permission to publish `@warrant/*`.
