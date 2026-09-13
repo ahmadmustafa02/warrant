@@ -102,9 +102,29 @@ human confirm — see [APPROVAL.md](./APPROVAL.md).
 
 Do not tune against suites marked `isHeldOut`. See [HELD_OUT.md](./HELD_OUT.md).
 
+## HTTP proxy (zero-config path)
+
+For OpenAI-compatible agents, route model traffic through the local proxy. The guard
+learns tools from each request, issues a warrant from the user turn, and strips denied
+tool calls before your agent sees them.
+
+```bash
+pnpm run guard:proxy -- tsx src/scripts/proxy-demo-agent.ts
+# or
+pnpm run proxy:demo:guard
+```
+
+The demo agent has **no in-process guard** — only the proxy protects it. Deterministic
+proof lives in `src/adapters/proxy/proxyE2E.test.ts` (mock upstream, multi-turn hijack).
+
+Set `GROQ_API_KEY` or `OPENAI_API_KEY`. The child agent’s `Authorization` header is
+forwarded upstream. Use `--detect-only` or `--off` on `guard:proxy` to compare behavior.
+
 ## What Warrant does not do
 
 - It does not wrap ChatGPT, Claude.ai, or Cursor internals.
+- It does not verify that first-party tool **implementations** match their descriptions
+  (supply chain). Use least-privilege credentials on databases and egress.
 - It is not a jailbreak detector — pair with PromptGuard or similar if you want both.
 - It does not parse natural language intent for you (yet); explicit grants are the supported
   integration path today.

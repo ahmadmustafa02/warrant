@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 /**
  * Runs a child process with model traffic routed through the local Warrant proxy.
  *
@@ -57,9 +58,8 @@ async function main(): Promise<void> {
   const headers = upstreamAuthHeader();
   if (Object.keys(headers).length === 0) {
     console.error(
-      'Set GROQ_API_KEY or OPENAI_API_KEY (or pass Authorization via the agent).',
+      '[warrant] no GROQ_API_KEY/OPENAI_API_KEY in this shell; forwarding Authorization from the agent when present.',
     );
-    process.exit(1);
   }
 
   const { server, url } = await listenWarrantProxy({

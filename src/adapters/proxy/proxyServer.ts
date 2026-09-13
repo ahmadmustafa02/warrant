@@ -44,6 +44,18 @@ async function readJsonBody(req: http.IncomingMessage): Promise<unknown> {
   return JSON.parse(text) as unknown;
 }
 
+/** Prefer the agent's Authorization header so the child can supply the key from dotenv. */
+function resolveUpstreamHeaders(
+  req: http.IncomingMessage,
+  defaults: Readonly<Record<string, string>>,
+): Record<string, string> {
+  const incomingAuth = req.headers.authorization;
+  if (typeof incomingAuth === 'string' && incomingAuth.trim() !== '') {
+    return { ...defaults, authorization: incomingAuth };
+  }
+  return { ...defaults };
+}
+
 function writeJson(res: http.ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body);
   res.writeHead(status, {
@@ -71,7 +83,7 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
         const result = await guardChatCompletion({
           mode: options.mode,
           upstreamUrl: joinUrl(options.upstreamBaseUrl, '/chat/completions'),
-          upstreamHeaders: options.upstreamHeaders,
+          upstreamHeaders: resolveUpstreamHeaders(req, options.upstreamHeaders),
           requestBody,
           overrides: options.overrides,
         });
