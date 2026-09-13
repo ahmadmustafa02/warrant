@@ -1,4 +1,5 @@
 import { PlaygroundTerminal } from '@/components/playground/PlaygroundTerminal';
+import { CopyCommand } from '@/components/ui/CopyCommand';
 
 const STEPS = [
   {
@@ -25,10 +26,10 @@ export function InstallPanel() {
   return (
     <section
       id="install"
-      className="reveal-section mx-auto w-full max-w-6xl scroll-mt-24 px-5 py-20"
+      className="reveal-section mx-auto w-full max-w-7xl scroll-mt-24 px-5 py-20"
     >
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
-        <div className="reveal-copy">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,0.68fr)_minmax(0,1.32fr)] lg:items-start lg:gap-12">
+        <div className="reveal-copy lg:max-w-md xl:max-w-lg">
           <p className="text-sm font-bold text-[var(--mark)]">Drop it in</p>
           <h2 className="display mt-3 text-4xl sm:text-5xl">Install. Attack. Guard.</h2>
           <p className="mt-4 text-[var(--muted)]">
@@ -47,16 +48,14 @@ export function InstallPanel() {
                   <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
                     {step.body}
                   </p>
-                  <code className="mt-2 block font-mono text-xs text-[var(--ink)]">
-                    {step.command}
-                  </code>
+                  <CopyCommand command={step.command} />
                 </div>
               </li>
             ))}
           </ol>
         </div>
 
-        <div className="reveal-visual min-w-0">
+        <div className="reveal-visual min-w-0 lg:translate-x-2 xl:translate-x-4">
           <PlaygroundTerminal />
         </div>
       </div>
