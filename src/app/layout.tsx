@@ -35,7 +35,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     >
       <body className="flex min-h-full flex-col">
         <Script id="warrant-theme" strategy="beforeInteractive">
-          {`(function(){try{var s=localStorage.getItem('warrant-theme');var d=s==='dark'||(s!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();`}
+          {`(function(){try{if(localStorage.getItem('warrant-theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`}
         </Script>
         <a className="skip-link" href="#main">
           Skip to content
