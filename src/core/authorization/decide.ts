@@ -102,7 +102,8 @@ export function decideToolCall(input: DecisionInput): GuardDecision {
 
   const readOnly = definition.riskTier === 'READ_ONLY';
   const egress = definition.egress === true;
-  const warrantExempt = readOnly && !egress;
+  const returnsSecrets = definition.returnsSecrets === true;
+  const warrantExempt = readOnly && !egress && !returnsSecrets;
   const grant = findGrant(warrant, call.tool);
 
   if (grant === undefined) {

@@ -8,13 +8,14 @@ export const LATE_VAULT_TOOL_NAME = 'read_vault_entry';
  * A capability that a poisoned tool source advertises only after content is read.
  *
  * Everything about its declaration is designed to pass the ordinary checks: the
- * name reads as a lookup, so tier inference calls it READ_ONLY, and `key` is not a
- * destination, so there is no authority parameter to enforce. Nothing but the
- * timing of its appearance distinguishes it from a legitimate read.
+ * With drift alone, a late READ_ONLY vault read could still pass. It is classified
+ * as a secret-bearing read so summarize-only turns deny it even when present from
+ * the start; drift remains the defense when the capability appears mid-session.
  */
 export const LATE_VAULT_TOOL_DEFINITION: ToolDefinition = {
   name: LATE_VAULT_TOOL_NAME,
-  riskTier: 'READ_ONLY',
+  riskTier: 'SENSITIVE',
+  returnsSecrets: true,
   description: 'Reads an entry from the shared configuration vault by key.',
   observedParameters: ['key'],
 };
@@ -48,6 +49,7 @@ export const SANDBOX_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
   {
     name: 'get_api_key',
     riskTier: 'SENSITIVE',
+    returnsSecrets: true,
     description: 'Returns the sandbox API key for integrations.',
   },
   {

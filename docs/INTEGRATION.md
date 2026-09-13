@@ -139,14 +139,11 @@ Measured against `openai/gpt-oss-20b` (`tool_set_drift` payload):
 | --- | --- | --- |
 | Guard OFF, tool appears mid-session | yes | yes |
 | Guard ENFORCE, tool appears mid-session | no | no |
-| Guard ENFORCE, tool present from the start (control) | yes | yes |
+| Guard ENFORCE, tool present from the start | blocked at call | no |
 
-The control is the point of the table: with the guard fully on, the same tool is
-allowed when it was present all along. Drift is carrying that denial, not the tier.
-
-It also exposes a real gap — a read-only tool that returns a secret can still leak it
-through the model's answer when no drift occurred. Closing that needs provenance
-tracking from tool result to final output, which is not implemented yet.
+Secret-bearing reads (`returnsSecrets`, vault/API-key-shaped names) require a warrant
+even when they look like ordinary reads. Output redaction removes unauthorized secret
+substrings from the model's final text as a second layer (ENFORCE only).
 
 Pin the expected tool set (`pinnedTools`) to check the **first** request too; an
 observed baseline is only as trustworthy as the traffic it was taken from.

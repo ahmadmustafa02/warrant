@@ -157,7 +157,14 @@ function inferSecretAccessTool(tokens: readonly string[]): boolean {
   ) {
     return true;
   }
+  if (tokens.includes('vault')) {
+    return true;
+  }
   return false;
+}
+
+function toolReturnsSecrets(tokens: readonly string[]): boolean {
+  return inferSecretAccessTool(tokens);
 }
 
 function inferRiskTier(tokens: readonly string[]): RiskTier {
@@ -229,6 +236,7 @@ export function classifyDiscoveredTool(
     riskTier,
     description,
     observedParameters: Object.freeze([...tool.parameterNames]),
+    ...(toolReturnsSecrets(tokens) ? { returnsSecrets: true as const } : {}),
     ...(authorityParameters.length > 0
       ? { authorityParameters: Object.freeze([...authorityParameters]) }
       : {}),

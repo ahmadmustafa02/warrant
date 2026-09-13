@@ -14,6 +14,12 @@ const tools: readonly ToolDefinition[] = [
     authorityParameters: ['url'],
   },
   {
+    name: 'read_vault_entry',
+    riskTier: 'SENSITIVE',
+    returnsSecrets: true,
+    description: 'Reads a vault entry.',
+  },
+  {
     name: 'send_email',
     riskTier: 'SENSITIVE',
     description: 'Sends an email.',
@@ -237,6 +243,15 @@ describe('decideToolCall', () => {
     expect(decision.allowed === false && decision.code).toBe(
       'AUTHORITY_PARAMETER_FROM_CONTENT',
     );
+  });
+
+  it('requires a warrant for a secret-bearing read', () => {
+    const decision = decide(warrantFor({ requestedTools: ['read_document'] }), {
+      tool: 'read_vault_entry',
+      args: { key: taint('api_key', 'TOOL_RESULT') },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe('NO_WARRANT_FOR_TOOL');
   });
 
   it('requires a warrant for an egress read even when the tier is READ_ONLY', () => {

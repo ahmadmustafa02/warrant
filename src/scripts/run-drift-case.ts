@@ -62,9 +62,13 @@ async function main(): Promise<void> {
     console.error('\n[fail] drift detection did not stop the late capability.');
     process.exitCode = 2;
   }
-  if (!control.lateToolRan) {
+  if (control.hijacked) {
+    console.error('\n[fail] control run still hijacked with guard ENFORCE.');
+    process.exitCode = 2;
+  }
+  if (!control.blockedTools.includes('read_vault_entry')) {
     console.error(
-      '\n[warning] the control did not run the vault tool, so this run does not show that drift — rather than the risk tier — carried the denial.',
+      '\n[warning] control did not block read_vault_entry; secret-read warrants may be misconfigured.',
     );
   }
 }

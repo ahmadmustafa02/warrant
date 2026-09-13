@@ -7,9 +7,11 @@ import { driftedToolNames, type ToolDrift } from '@/core/tools/toolSetDrift';
 import { buildProxyRegistry, type ToolOverride } from './classifyDiscoveredTool';
 import type { ProxySession } from './proxySession';
 import { deriveProxyIntent } from './deriveProxyIntent';
+import { buildSecretTrackerFromOpenAiRequest } from './ingestOpenAiToolResults';
 import {
   parseOpenAiRequest,
   parseOpenAiToolCalls,
+  redactUnauthorizedSecretsInResponse,
   stripDeniedToolCalls,
   WireParseError,
 } from './openaiWire';
@@ -114,18 +116,33 @@ export function guardExchange(options: {
   const drifts = options.session?.observeTools(request.tools) ?? [];
   const drifted = driftedToolNames(drifts);
 
+  // The warrant is issued from the user turn only, before any tool result in this
+  // exchange is considered, which is what makes later injected text unable to widen it.
+  const intent = deriveProxyIntent(request.userRequest, registry);
+
+  const withOutputRedaction = (body: unknown): unknown => {
+    if (options.mode !== 'ENFORCE') {
+      return body;
+    }
+    const secretTracker = buildSecretTrackerFromOpenAiRequest(
+      options.rawRequest,
+      registry,
+    );
+    return redactUnauthorizedSecretsInResponse(
+      body,
+      (text) =>
+        secretTracker.redactUnauthorizedInText(text, intent.requestedTools).text,
+    );
+  };
+
   if (toolCalls.length === 0) {
     return {
       ...EMPTY_EXCHANGE,
-      response: options.rawResponse,
+      response: withOutputRedaction(options.rawResponse),
       classifiedTools,
       drifts: Object.freeze([...drifts]),
     };
   }
-
-  // The warrant is issued from the user turn only, before any tool result in this
-  // exchange is considered, which is what makes later injected text unable to widen it.
-  const intent = deriveProxyIntent(request.userRequest, registry);
   const warrant = issueWarrant(taint(intent, 'USER'), registry);
 
   const decisions: ProxyDecision[] = [];
@@ -202,7 +219,9 @@ export function guardExchange(options: {
   }
 
   return {
-    response: stripDeniedToolCalls(options.rawResponse, denialsByCallId),
+    response: withOutputRedaction(
+      stripDeniedToolCalls(options.rawResponse, denialsByCallId),
+    ),
     decisions: Object.freeze(decisions),
     blockedTools: Object.freeze(blockedTools),
     wouldBlockTools: Object.freeze(wouldBlockTools),

@@ -21,6 +21,7 @@ import {
   executeSandboxTool,
   sandboxToolsForApi,
 } from './sandbox/tools';
+import { TurnSecretTracker } from '@/core/output/turnSecrets';
 import { detectHijack, isHijacked } from '@/eval/outcome';
 import {
   detectToolSetDrift,
@@ -140,6 +141,7 @@ export async function runSandboxAgent(
   let steps = 0;
   let baseline: ToolSetBaseline | undefined;
   const drifts: ToolDrift[] = [];
+  const secretTracker = new TurnSecretTracker();
 
   for (let step = 0; step < maxSteps; step += 1) {
     steps = step + 1;
@@ -195,6 +197,12 @@ export async function runSandboxAgent(
 
     if (toolCalls.length === 0) {
       finalAnswer = assistant.content?.trim() ?? '';
+      if (options.guardMode === 'ENFORCE') {
+        finalAnswer = secretTracker.redactUnauthorizedInText(
+          finalAnswer,
+          authorizedTools,
+        ).text;
+      }
       break;
     }
 
@@ -262,6 +270,10 @@ export async function runSandboxAgent(
           continue;
         }
         toolResult = executeSandboxTool(toolName, args, toolCtx);
+        const definition = registry.get(toolName);
+        if (definition?.returnsSecrets === true) {
+          secretTracker.recordToolResult(toolName, toolResult, true);
+        }
       }
 
       messages.push({

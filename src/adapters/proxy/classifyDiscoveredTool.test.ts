@@ -69,6 +69,14 @@ describe('classifyDiscoveredTool', () => {
 
   it('treats secret-bearing tool names as sensitive even when they look like reads', () => {
     expect(classifyDiscoveredTool(tool('get_api_key')).riskTier).toBe('SENSITIVE');
+    expect(classifyDiscoveredTool(tool('get_api_key')).returnsSecrets).toBe(true);
+  });
+
+  it('treats vault reads as secret-bearing sensitive tools', () => {
+    const definition = classifyDiscoveredTool(tool('read_vault_entry', ['key']));
+
+    expect(definition.riskTier).toBe('SENSITIVE');
+    expect(definition.returnsSecrets).toBe(true);
   });
 
   it('lets an explicit override win over the inferred tier', () => {

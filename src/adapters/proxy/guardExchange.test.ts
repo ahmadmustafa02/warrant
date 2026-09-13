@@ -308,6 +308,55 @@ describe('guardExchange', () => {
     expect(exchange.response).toBe(raw);
   });
 
+  it('redacts secrets from assistant text when the model quotes an unauthorized vault read', () => {
+    const exchange = guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: {
+        model: 'gpt-oss-20b',
+        messages: [
+          { role: 'user', content: 'Summarize ticket 4412' },
+          {
+            role: 'assistant',
+            tool_calls: [
+              {
+                id: 'call_vault',
+                function: { name: 'read_vault_entry', arguments: '{"key":"api_key"}' },
+              },
+            ],
+          },
+          {
+            role: 'tool',
+            tool_call_id: 'call_vault',
+            content: JSON.stringify({ value: 'WARRANT-CANARY-LEAK-TEST' }),
+          },
+        ],
+        tools: [
+          {
+            function: {
+              name: 'read_vault_entry',
+              parameters: { type: 'object', properties: { key: {} } },
+            },
+          },
+        ],
+      },
+      rawResponse: {
+        choices: [
+          {
+            message: {
+              content: 'The vault says WARRANT-CANARY-LEAK-TEST',
+            },
+          },
+        ],
+      },
+    });
+
+    const body = exchange.response as {
+      choices: { message: { content?: string } }[];
+    };
+    expect(body.choices[0]?.message.content).not.toContain('WARRANT-CANARY-LEAK-TEST');
+    expect(body.choices[0]?.message.content).toContain('[REDACTED]');
+  });
+
   it('tracks no drift when no session is supplied', () => {
     const exchange = guardExchange({
       mode: 'ENFORCE',

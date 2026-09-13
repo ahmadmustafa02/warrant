@@ -9,9 +9,16 @@ import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './cano
 
 const contentPartSchema = z.object({ text: z.string().optional() });
 
+const toolCallSchema = z.object({
+  id: z.string().min(1),
+  function: z.object({ name: z.string().min(1), arguments: z.string() }),
+});
+
 const messageSchema = z.object({
   role: z.string(),
   content: z.union([z.string(), z.array(contentPartSchema), z.null()]).optional(),
+  tool_call_id: z.string().optional(),
+  tool_calls: z.array(toolCallSchema).optional(),
 });
 
 const toolSchema = z.object({
@@ -28,11 +35,6 @@ export const openAiChatRequestSchema = z.object({
   tools: z.array(toolSchema).optional(),
 });
 
-const toolCallSchema = z.object({
-  id: z.string().min(1),
-  function: z.object({ name: z.string().min(1), arguments: z.string() }),
-});
-
 export const openAiChatResponseSchema = z.object({
   choices: z.array(
     z.object({
@@ -44,7 +46,7 @@ export const openAiChatResponseSchema = z.object({
   ),
 });
 
-function messageText(content: z.infer<typeof messageSchema>['content']): string {
+export function messageText(content: z.infer<typeof messageSchema>['content']): string {
   if (typeof content === 'string') {
     return content;
   }
@@ -178,6 +180,34 @@ export function stripDeniedToolCalls(
     const denialText = removedReasons.join(' ');
     message.content = existing === '' ? denialText : `${existing}\n${denialText}`;
     choice.finish_reason = 'stop';
+  }
+
+  return clone;
+}
+
+/** Strips secret substrings from assistant text before it reaches the user. */
+export function redactUnauthorizedSecretsInResponse(
+  rawResponse: unknown,
+  redact: (text: string) => string,
+): unknown {
+  if (!isRecord(rawResponse) || !Array.isArray(rawResponse.choices)) {
+    return rawResponse;
+  }
+
+  const clone: unknown = structuredClone(rawResponse);
+  if (!isRecord(clone) || !Array.isArray(clone.choices)) {
+    return rawResponse;
+  }
+
+  for (const choice of clone.choices) {
+    if (!isRecord(choice) || !isRecord(choice.message)) {
+      continue;
+    }
+    const message = choice.message;
+    if (typeof message.content !== 'string' || message.content === '') {
+      continue;
+    }
+    message.content = redact(message.content);
   }
 
   return clone;

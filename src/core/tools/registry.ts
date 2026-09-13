@@ -36,6 +36,13 @@ export interface ToolDefinition {
   readonly authorityParameters?: readonly string[];
   /** Declarative limits on argument values (SQL shape, numeric ceilings, …). */
   readonly parameterConstraints?: ParameterConstraints;
+  /**
+   * When true, the tool may return credentials or other high-value secrets.
+   *
+   * Such reads require a warrant even when labeled READ_ONLY, because quoting them
+   * in the model's answer is exfiltration with no second tool call.
+   */
+  readonly returnsSecrets?: boolean;
 }
 
 export class DuplicateToolError extends Error {
@@ -138,6 +145,9 @@ export class ToolRegistry {
   requiresWarrant(name: string): boolean {
     const tool = this.tools.get(name);
     if (tool === undefined) {
+      return true;
+    }
+    if (tool.returnsSecrets === true) {
       return true;
     }
     return tool.riskTier !== 'READ_ONLY' || tool.egress === true;

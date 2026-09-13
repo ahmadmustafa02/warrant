@@ -59,6 +59,18 @@ describe('ToolRegistry', () => {
     expect(registry.requiresWarrant('read_document')).toBe(false);
   });
 
+  it('requires a warrant for secret-bearing reads even when read-only', () => {
+    const registry = new ToolRegistry([
+      {
+        name: 'read_vault_entry',
+        riskTier: 'READ_ONLY',
+        returnsSecrets: true,
+        description: 'Vault read',
+      },
+    ]);
+    expect(registry.requiresWarrant('read_vault_entry')).toBe(true);
+  });
+
   it('requires a warrant for consequential tools', () => {
     const registry = new ToolRegistry([sendEmail, deleteAccount]);
     expect(registry.requiresWarrant('send_email')).toBe(true);
