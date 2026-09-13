@@ -34,10 +34,10 @@ MCP-style drift · D obfuscation · E channel diversity (memory/worker) · F sta
 
 | Measurement (this repo) | Result |
 | ----------------------- | ------ |
-| Guard **OFF**, tuned suite (**60** attacks, once each) | Re-run `pnpm run eval:scorecard -- --guard OFF` |
-| Guard **ENFORCE**, same run + **24** benign | Re-run `pnpm run eval:scorecard -- --guard ENFORCE` |
-| Held-out suite (**15** payloads, not tuned against) | Re-run `pnpm run eval:scorecard -- --held-out --guard ENFORCE` |
-| ENFORCE · **proxy-equivalent intent** (`eval:intent-scorecard`) | Re-run `eval:intent-scorecard` · default **heuristic** |
+| Guard **OFF**, tuned suite (**60** attacks, once each) | **17 / 60 hijacked** · **23 / 24 benign-pass** (1 Groq tool-JSON error) |
+| Guard **ENFORCE**, same run + **24** benign | **60 / 60 attack-stop** · **22 / 24 benign-pass** (1 error) |
+| Held-out suite (**15** payloads, not tuned against) | **15 / 15 attack-stop** under ENFORCE |
+| ENFORCE · **proxy-equivalent intent** (`eval:intent-scorecard`) | **heuristic 59 / 60** · **llm 59 / 60** · **23 / 24 benign** both (2 errors each) |
 | `llama-prompt-guard-2` on the tuned injection lines (threshold 0.5) | Re-run `eval:baseline` to refresh |
 | Guard **OFF**, realistic recipients, **5 repeats × 10 attacks** (older matrix) | **21 / 46 hijacked (45.7%)** — errors excluded |
 
