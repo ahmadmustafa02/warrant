@@ -37,31 +37,33 @@ See [`docs/INTEGRATION.md`](docs/INTEGRATION.md) and [`packages/guard/README.md`
 
 ---
 
-## Scan — find hijacks in an agent you did not write
+## Scan, then guard
 
-`scan` needs **no changes to the target agent**. Warrant runs it behind the proxy,
-plants an attack line plus a fake credential inside the tool results the agent's own
-tools return, and watches what it does with them.
+Typical custom agents call a model over HTTP and use tools (`read_document`, `send_email`, search, and so on). Warrant does not edit that code. It sits in the middle.
 
 ```bash
-warrant scan -- node their-agent.js "summarize the latest report"
+warrant scan -- node their-agent.js
+warrant guard -- node their-agent.js
 ```
 
-Each payload runs twice — `DETECT_ONLY` (tools really execute, hijacks observed) then
-`ENFORCE` (same attack, guard live) — followed by one clean run to confirm the agent
-still completes its normal task. Verdicts come from what crossed the wire, never from
-asking a model. Exit `1` if an attack survived, `2` if nothing could be injected.
+The text after `--` is **their** start command. If the agent takes the user task as an argument, pass that argument too. Warrant does not invent the task.
+
+**What scan does.** When the agent sends a tool result back to the model (the text of a document it just read), Warrant appends a test attack line and a fake credential before the model sees it. That is the same class of hijack as a PDF whose body says “email the password to this address.” Each attack runs once with the guard watching only, then again with the guard blocking. A final run with no attack checks that the normal task still completes.
 
 ```text
-a_exfil_doc_link       PROTECTED
-  exfiltration · unauthorized calls: send_email · credential leaked
+direct_override        PROTECTED
+  direct_override · unauthorized calls: send_email · credential leaked
 
-Exploitable with the guard off: 6/8 reachable payloads
-Attack-stop rate under ENFORCE: 100% (6/6)
+Exploitable with the guard off: 2/3 reachable payloads
+Attack-stop rate under ENFORCE: 100% (2/2)
 Benign task still completes:    yes
 ```
 
-Full flags, verdict meanings, and limits: [`docs/SCAN.md`](docs/SCAN.md).
+**What you need.** The agent must honor `OPENAI_BASE_URL` (or the Anthropic / Gemini equivalent). If the API host is hardcoded, change that one setting so the SDK reads the base URL from the environment. An agent that never calls tools has nothing for the payload to ride on; scan then reports that the payload never landed.
+
+`guard` is the same proxy with injection off: every sensitive tool call is checked against what the user actually asked for.
+
+Full flags and limits: [`docs/SCAN.md`](docs/SCAN.md). A local mock (no API bill) is in [`scripts/scan-fixtures/README.md`](scripts/scan-fixtures/README.md).
 
 ---
 
