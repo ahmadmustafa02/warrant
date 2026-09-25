@@ -156,7 +156,7 @@ async function main(): Promise<void> {
       try {
         const parsed: unknown = JSON.parse(call.function.arguments || '{}');
         if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-          args = parsed;
+          args = parsed as Record<string, unknown>;
         }
       } catch {
         messages.push({

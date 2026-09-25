@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import { IBM_Plex_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 import Script from 'next/script';
 import { SiteMotion } from '@/components/motion/SiteMotion';
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
     'Guard your AI agent against hijacking by the content it reads — block unauthorized actions, with attack-stop and benign-pass measured together.',
 };
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
