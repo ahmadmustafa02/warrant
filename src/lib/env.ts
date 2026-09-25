@@ -56,6 +56,27 @@ export function parseServerEnv(source: Record<string, string | undefined>): Serv
   return result.data;
 }
 
+const databaseUrlSchema = z.object({
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+});
+
+/**
+ * Database access must not demand a model key. Next.js imports route modules
+ * during `next build`, and those imports construct Prisma before any LLM call.
+ */
+export function databaseUrl(
+  source: Record<string, string | undefined> = process.env,
+): string {
+  const value = source.DATABASE_URL === '' ? undefined : source.DATABASE_URL;
+  const result = databaseUrlSchema.safeParse({ DATABASE_URL: value });
+  if (!result.success) {
+    throw new EnvValidationError(
+      result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
+    );
+  }
+  return result.data.DATABASE_URL;
+}
+
 let cached: ServerEnv | undefined;
 
 /** Lazily validated so importing a module never crashes a test that does not need env. */

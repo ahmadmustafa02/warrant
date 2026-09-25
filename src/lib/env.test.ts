@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { EnvValidationError, parseServerEnv, serverEnv } from './env';
+import { databaseUrl, EnvValidationError, parseServerEnv, serverEnv } from './env';
 
 const minimal = {
   DATABASE_URL: 'postgresql://warrant:pw@localhost:5433/warrant?schema=public',
@@ -45,6 +45,14 @@ describe('parseServerEnv', () => {
     expect(() =>
       parseServerEnv({ ...minimal, SANDBOX_CANARY_SECRET: 'short' }),
     ).toThrow(EnvValidationError);
+  });
+});
+
+describe('databaseUrl', () => {
+  it('reads the database URL without requiring a model key', () => {
+    expect(databaseUrl({ DATABASE_URL: minimal.DATABASE_URL })).toBe(
+      minimal.DATABASE_URL,
+    );
   });
 });
 

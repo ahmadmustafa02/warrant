@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
-import { serverEnv } from '@/lib/env';
+import { databaseUrl } from '@/lib/env';
 
 /**
  * Next.js hot-reloads modules in development, which would otherwise open a new
@@ -11,7 +11,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const adapter = new PrismaPg({ connectionString: serverEnv().DATABASE_URL });
+  const adapter = new PrismaPg({ connectionString: databaseUrl() });
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
