@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Added
+
+- `warrant scan` — hijack-tests an agent that knows nothing about Warrant. The proxy
+  plants an attack line plus a canary credential inside the tool results the agent's
+  own tools return, runs each payload in `DETECT_ONLY` then `ENFORCE`, and adds a
+  clean benign run. Verdicts come from proxy-observed facts, never an LLM judge.
+  Docs: [`docs/SCAN.md`](docs/SCAN.md).
+- Proxy-side payload injection for the OpenAI, Anthropic, and Gemini wires, with a
+  `user-content` target for agents that fold retrieved documents into the user turn.
+- Canary tracking distinguishes an attempted leak (raw upstream reply) from one that
+  actually reached the agent (post-guard response).
+
 ## 0.1.0 — 2026-09-13
 
 First public release: provenance-based tool authorization, measured adversarial harness,

@@ -4,6 +4,7 @@ import type { IntentParseMode } from '@/agent/intent/parseUserIntentLlm';
 import type { ToolOverride } from './classifyDiscoveredTool';
 import { guardChatCompletion, UpstreamGuardError } from './guardChatCompletion';
 import { ProxyGuardError } from './guardExchange';
+import type { InjectionTarget, ScanInjection } from './injectPayload';
 import type { ApprovalCoordinator } from './proxyApproval';
 import type { ApprovalMode, StreamingPolicy } from './proxyPolicy';
 import { ProxySession } from './proxySession';
@@ -28,10 +29,18 @@ export interface ProxyServerOptions {
   readonly streaming?: StreamingPolicy;
   readonly approvalMode?: ApprovalMode;
   readonly approval?: ApprovalCoordinator;
+  /**
+   * Set by `warrant scan`: poisons tool results in flight so an unmodified agent
+   * can be probed for hijackability. Never set during a normal `warrant guard` run.
+   */
+  readonly injection?: ScanInjection;
   readonly onExchange?: (summary: {
     readonly blockedTools: readonly string[];
     readonly wouldBlockTools: readonly string[];
     readonly drifts: readonly ToolDrift[];
+    readonly injectedInto: InjectionTarget | 'none';
+    readonly canaryLeaked: boolean;
+    readonly canaryDelivered: boolean;
   }) => void;
 }
 
@@ -133,12 +142,16 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
           destructiveRequiresExplicitUser: options.destructiveRequiresExplicitUser,
           streaming: options.streaming,
           approval: options.approvalMode === 'prompt' ? options.approval : undefined,
+          injection: options.injection,
         });
 
         options.onExchange?.({
           blockedTools: result.exchange.blockedTools,
           wouldBlockTools: result.exchange.wouldBlockTools,
           drifts: result.exchange.drifts,
+          injectedInto: result.injectedInto,
+          canaryLeaked: result.canaryLeaked,
+          canaryDelivered: result.canaryDelivered,
         });
 
         if (result.sseBody !== undefined) {

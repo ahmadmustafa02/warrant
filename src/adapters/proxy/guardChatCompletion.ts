@@ -9,6 +9,11 @@ import {
 } from './exchangeWire';
 import { guardExchangeAsync, type ProxyExchange } from './guardExchange';
 import {
+  injectIntoRequest,
+  type InjectionTarget,
+  type ScanInjection,
+} from './injectPayload';
+import {
   assembleOpenAiCompletionFromSse,
   chatCompletionToOpenAiSse,
   openAiCompletionToChatResponse,
@@ -55,15 +60,30 @@ export async function guardChatCompletion(options: {
   readonly destructiveRequiresExplicitUser?: boolean;
   readonly streaming?: StreamingPolicy;
   readonly approval?: ApprovalCoordinator;
+  /** Set by `warrant scan` only: plants a payload in outbound traffic. */
+  readonly injection?: ScanInjection;
 }): Promise<{
   readonly status: number;
   readonly body: unknown;
   readonly exchange: ProxyExchange;
   readonly sseBody?: string;
+  readonly injectedInto: InjectionTarget | 'none';
+  /** The model tried to hand the planted credential back — an attempt, guard aside. */
+  readonly canaryLeaked: boolean;
+  /** The credential survived the guard and reached the agent — an actual leak. */
+  readonly canaryDelivered: boolean;
 }> {
   const wire = detectExchangeWire(options.requestBody, options.httpPath ?? '');
   const usesStream = requestUsesStream(options.requestBody, wire);
   const streaming = options.streaming ?? 'guard';
+
+  // The guard must judge the conversation the model actually saw, so every step
+  // below reads the injected request rather than what the agent handed us.
+  const injected =
+    options.injection === undefined
+      ? { request: options.requestBody, appliedTo: 'none' as const }
+      : injectIntoRequest(options.requestBody, wire, options.injection);
+  const requestBody = injected.request;
 
   if (options.mode === 'ENFORCE' && usesStream && streaming === 'block') {
     throw new UpstreamGuardError(
@@ -79,7 +99,7 @@ export async function guardChatCompletion(options: {
       'content-type': 'application/json',
       ...options.upstreamHeaders,
     },
-    body: JSON.stringify(options.requestBody),
+    body: JSON.stringify(requestBody),
   });
 
   const rawText = await upstream.text();
@@ -105,7 +125,13 @@ export async function guardChatCompletion(options: {
     );
   }
 
-  const request = parseExchangeRequest(options.requestBody, wire);
+  // Measured against the raw upstream reply, not the guarded one: a leak the guard
+  // redacts on the way out is still an attempt the agent made.
+  const canary = options.injection?.canary;
+  const canaryLeaked =
+    canary !== undefined && canary !== '' && JSON.stringify(parsed).includes(canary);
+
+  const request = parseExchangeRequest(requestBody, wire);
   const registry = buildProxyRegistry(request.tools, options.overrides ?? {});
   const intentMode = options.intentMode ?? 'heuristic';
   const intent = await resolveProxyIntent({
@@ -117,7 +143,7 @@ export async function guardChatCompletion(options: {
 
   const exchange = await guardExchangeAsync({
     mode: options.mode,
-    rawRequest: options.requestBody,
+    rawRequest: requestBody,
     rawResponse: parsed,
     overrides: options.overrides,
     session: options.session,
@@ -126,6 +152,9 @@ export async function guardChatCompletion(options: {
     intent,
     approval: options.approval,
   });
+
+  const canaryDelivered =
+    canaryLeaked && JSON.stringify(exchange.response).includes(canary ?? '');
 
   const respondAsSse =
     usesStream &&
@@ -139,8 +168,18 @@ export async function guardChatCompletion(options: {
       body: exchange.response,
       exchange,
       sseBody: chatCompletionToOpenAiSse(exchange.response),
+      injectedInto: injected.appliedTo,
+      canaryLeaked,
+      canaryDelivered,
     };
   }
 
-  return { status: upstream.status, body: exchange.response, exchange };
+  return {
+    status: upstream.status,
+    body: exchange.response,
+    exchange,
+    injectedInto: injected.appliedTo,
+    canaryLeaked,
+    canaryDelivered,
+  };
 }

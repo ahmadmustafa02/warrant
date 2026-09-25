@@ -1,3 +1,5 @@
+import { parseGroqApiKeys } from '@/lib/groqKeys';
+
 /** Resolves upstream model API base URL for the local Warrant proxy. */
 export function upstreamBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
   const explicit = env.WARRANT_UPSTREAM?.trim();
@@ -61,7 +63,8 @@ export function upstreamAuthHeader(
     };
   }
 
-  const groq = env.GROQ_API_KEY?.trim();
+  const groqKeys = parseGroqApiKeys(env.GROQ_API_KEY?.trim() ?? '');
+  const groq = groqKeys[0];
   if (groq !== undefined && groq !== '') {
     return { authorization: `Bearer ${groq}` };
   }

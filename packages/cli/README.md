@@ -17,6 +17,12 @@ warrant init --from-sandbox
 warrant guard -- node my-agent.js
 ```
 
+Hijack-test an agent before guarding it — no changes to the agent required:
+
+```bash
+warrant scan -- node my-agent.js
+```
+
 Optional: `warrant doctor` (sanity check), `warrant red-team -- node my-agent.js` (attack corpus, OFF then ENFORCE — see [INTEGRATION.md](../docs/INTEGRATION.md)).
 
 ## Commands
@@ -25,6 +31,7 @@ Optional: `warrant doctor` (sanity check), `warrant red-team -- node my-agent.js
 | ------- | ------- |
 | `init` | Write `.warrant/proxy-policy.json` |
 | `guard` | Proxy + your command (`OPENAI_BASE_URL` → Warrant) |
+| `scan` | Find hijacks in **any** agent, no cooperation needed ([SCAN.md](../docs/SCAN.md)) |
 | `red-team` | Scripted OFF/ENFORCE runs against **your** agent |
 | `doctor` | Optional: keys visible, policy file, registry |
 | `attack` / `eval intent` | Warrant lab development only |

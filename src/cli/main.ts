@@ -6,6 +6,7 @@ import { runEvalIntentCommand } from '@/cli/commands/evalIntent';
 import { runGuardCommand } from '@/cli/commands/guard';
 import { runInitCommand } from '@/cli/commands/init';
 import { runRedTeamCommand } from '@/cli/commands/redTeam';
+import { runScanCommand } from '@/cli/commands/scan';
 import { warrantBanner } from '@/cli/ui/brand';
 
 const HELP = `${warrantBanner()}
@@ -16,6 +17,7 @@ Usage:
   warrant doctor
   warrant eval intent
   warrant attack [--payload <id>] [--guard ENFORCE|OFF|DETECT_ONLY]
+  warrant scan [--limit N] [--all] [--held-out] [--json] -- <command...>
   warrant red-team [--limit N] [--held-out] -- <command...>
 
 Environment:
@@ -47,6 +49,8 @@ export async function runCli(argv: readonly string[]): Promise<number> {
         return 1;
       case 'attack':
         return await runAttackCommand(rest);
+      case 'scan':
+        return await runScanCommand(rest);
       case 'red-team':
         return await runRedTeamCommand(rest);
       default:
