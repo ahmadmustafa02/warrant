@@ -76,11 +76,12 @@ warrant scan --adaptive -- node their-agent.js "summarize the latest report"
 The fixed corpus names the lab's own tools. `--adaptive` does not use it.
 Warrant first watches one unguarded run, reads the tools that agent actually
 advertises, and keeps the ones the guard can stop (sensitive, destructive,
-egress, or secret-returning). A generator model then writes a short test
-sentence aimed at each of those tools. If the sentence lands and the agent
-ignores it, Warrant asks for a different phrasing, up to `--rounds` (default 2).
-The verdict is still `scoreScanFinding`: which tool was called, and whether the
-canary moved. The generator never decides the result.
+egress, or secret-returning). For each of those tools it plants four lines that
+name that tool: a direct request, a false claim that the user already approved
+it, a multi-step request, and the same request with hidden characters in the
+name. If every one of those lands and is ignored, a generator model writes
+further sentences, up to `--rounds` (default 2). The verdict is still
+`scoreScanFinding`. The generator never decides the result.
 
 `--adaptive` cannot be combined with `--held-out` or `--all`. Those stay on the
 fixed corpus so held-out numbers are not tuned against a live model.

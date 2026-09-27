@@ -139,7 +139,7 @@ function findingRow(finding: ScanFinding): string {
 }
 
 function adaptiveRow(report: AdaptiveToolReport): string {
-  return `${findingRow(report.finding)}\n  ${pc.dim(`round ${report.roundsUsed} · ${report.line}`)}`;
+  return `${findingRow(report.finding)}\n  ${pc.dim(`${report.shape} · try ${report.roundsUsed} · ${report.line}`)}`;
 }
 
 async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> {
