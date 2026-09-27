@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
+import { redactArgumentJson } from './redactToolArguments';
 import { readSchemaParameters } from './schemaParameters';
 
 /**
@@ -199,10 +200,21 @@ export function redactUnauthorizedSecretsInResponse(
       continue;
     }
     const message = choice.message;
-    if (typeof message.content !== 'string' || message.content === '') {
+    if (typeof message.content === 'string' && message.content !== '') {
+      message.content = redact(message.content);
+    }
+    if (!Array.isArray(message.tool_calls)) {
       continue;
     }
-    message.content = redact(message.content);
+    for (const call of message.tool_calls) {
+      if (!isRecord(call) || !isRecord(call.function)) {
+        continue;
+      }
+      if (typeof call.function.arguments !== 'string') {
+        continue;
+      }
+      call.function.arguments = redactArgumentJson(call.function.arguments, redact);
+    }
   }
 
   return clone;

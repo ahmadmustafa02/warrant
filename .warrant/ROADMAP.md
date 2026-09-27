@@ -55,7 +55,7 @@ Do these in order. Same rule: finish, test, and push one before the next.
 | # | Item | Done when |
 | --- | --- | --- |
 | 1 | Recipient origin | **Done.** An email field (`to`, `cc`, `bcc`, `send_to`, or a schema description that says recipient) accepts an address the user typed, or one returned by a lookup of the person they named. An address seen in other tool output is blocked and cannot be approved. An address Warrant cannot trace is `DESTINATION_ORIGIN_UNCLEAR` and can be confirmed for this turn |
-| 2 | Secret egress on every path | Not started |
+| 2 | Secret egress on every path | **Done.** A secret from a tool this turn did not authorize is removed from the reply and from payload fields (email body included) on every wire, including a copy retyped with spaces or dropped dashes. `[REDACTED]` marks the removal. A link parameter that carries the secret is `SECRET_IN_LINK` and cannot be approved. Gemini function responses are tracked. Ordinary document text is left alone |
 | 3 | Only the current user request is permission | Not started |
 | 4 | Saved tool-list pin | Not started |
 | 5 | Full scan mode | Not started |

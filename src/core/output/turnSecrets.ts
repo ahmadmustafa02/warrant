@@ -8,6 +8,16 @@
 
 const MIN_FRAGMENT_LENGTH = 8;
 
+/**
+ * Spaces, dashes, and invisible characters are ignored when comparing a secret
+ * to text. A model can retype `sk_live_ABC` as `sk live ABC` or `s k _ l i v e`.
+ * Letters themselves still have to appear in order, so ordinary sentences do not
+ * match an API key.
+ */
+const IGNORED_IN_SECRET = /[\s\u200b\u200c\u200d\ufeff_-]/;
+
+const REDACTED = '[REDACTED]';
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -65,6 +75,8 @@ export class TurnSecretTracker {
    * Removes secret substrings that came from tools this turn did not authorize.
    *
    * Authorized secret reads (the user explicitly asked for a key) stay visible.
+   * `[REDACTED]` is the visible notice that a value was removed. A secret retyped
+   * with spaces or dropped dashes is removed too.
    */
   redactUnauthorizedInText(
     text: string,
@@ -72,19 +84,83 @@ export class TurnSecretTracker {
   ): { readonly text: string; readonly redacted: boolean } {
     let out = text;
     let redacted = false;
-    const authorized = new Set(authorizedTools);
 
-    for (const fragment of this.fragments) {
-      if (authorized.has(fragment.toolName)) {
+    for (const fragment of this.unauthorizedFragments(authorizedTools)) {
+      const next = redactFragment(out, fragment.value);
+      if (next === out) {
         continue;
       }
-      if (!out.includes(fragment.value)) {
-        continue;
-      }
-      out = out.split(fragment.value).join('[REDACTED]');
+      out = next;
       redacted = true;
     }
 
     return { text: out, redacted };
   }
+
+  /** True when `text` still carries a secret this turn did not authorize. */
+  containsUnauthorizedSecret(
+    text: string,
+    authorizedTools: readonly string[],
+  ): boolean {
+    return this.unauthorizedFragments(authorizedTools).some(
+      (fragment) => redactFragment(text, fragment.value) !== text,
+    );
+  }
+
+  private unauthorizedFragments(
+    authorizedTools: readonly string[],
+  ): readonly SecretFragment[] {
+    const authorized = new Set(authorizedTools);
+    return this.fragments.filter((fragment) => !authorized.has(fragment.toolName));
+  }
+}
+
+function isIgnoredInSecret(char: string): boolean {
+  return IGNORED_IN_SECRET.test(char);
+}
+
+function compactSecret(value: string): string {
+  return [...value]
+    .filter((char) => !isIgnoredInSecret(char))
+    .join('')
+    .toLowerCase();
+}
+
+/**
+ * Replaces one secret, including a copy that only differs by spaces or dashes.
+ * The span in the original text is what gets removed, so the surrounding words stay.
+ */
+function redactFragment(text: string, secret: string): string {
+  const needle = compactSecret(secret);
+  if (needle.length < MIN_FRAGMENT_LENGTH) {
+    return text;
+  }
+
+  let out = text;
+  let searchFrom = 0;
+  while (searchFrom < out.length) {
+    const compactChars: { readonly index: number; readonly char: string }[] = [];
+    for (let index = searchFrom; index < out.length; index += 1) {
+      const char = out[index] ?? '';
+      if (isIgnoredInSecret(char)) {
+        continue;
+      }
+      compactChars.push({ index, char: char.toLowerCase() });
+    }
+
+    const compact = compactChars.map((entry) => entry.char).join('');
+    const at = compact.indexOf(needle);
+    if (at < 0) {
+      break;
+    }
+    const start = compactChars[at]?.index;
+    const end = compactChars[at + needle.length - 1]?.index;
+    if (start === undefined || end === undefined) {
+      break;
+    }
+    out = `${out.slice(0, start)}${REDACTED}${out.slice(end + 1)}`;
+    searchFrom = start + REDACTED.length;
+  }
+
+  return out;
 }

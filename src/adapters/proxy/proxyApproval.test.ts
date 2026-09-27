@@ -27,6 +27,12 @@ describe('isApprovalEligible', () => {
     ).toBe(false);
   });
 
+  it('rejects a link that is carrying a secret', () => {
+    expect(
+      isApprovalEligible(denied({ code: 'SECRET_IN_LINK', riskTier: 'SENSITIVE' })),
+    ).toBe(false);
+  });
+
   it('asks when a recipient cannot be traced, and still rejects one taken from content', () => {
     expect(
       isApprovalEligible(

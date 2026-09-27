@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
+import { redactArgumentRecord } from './redactToolArguments';
 import { readSchemaParameters } from './schemaParameters';
 
 const textBlockSchema = z.object({ type: z.literal('text'), text: z.string() });
@@ -178,8 +179,17 @@ export function redactAnthropicTextBlocks(
   }
 
   for (const block of clone.content) {
-    if (isRecord(block) && block.type === 'text' && typeof block.text === 'string') {
+    if (!isRecord(block)) {
+      continue;
+    }
+    if (block.type === 'text' && typeof block.text === 'string') {
       block.text = redact(block.text);
+    }
+    if (block.type === 'tool_use') {
+      const redacted = redactArgumentRecord(block.input, redact);
+      if (redacted.changed) {
+        block.input = redacted.value;
+      }
     }
   }
 

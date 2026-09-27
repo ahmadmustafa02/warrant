@@ -8,6 +8,7 @@ import {
   type ToolSetBaseline,
 } from '@/core/tools/toolSetDrift';
 import { appendAnthropicToolSecretsToTracker } from './ingestAnthropicToolResults';
+import { appendGeminiToolSecretsToTracker } from './ingestGeminiToolResults';
 import { appendOpenAiToolSecretsToTracker } from './ingestOpenAiToolResults';
 import { appendResponsesToolSecretsToTracker } from './ingestResponsesToolResults';
 
@@ -62,5 +63,9 @@ export class ProxySession {
 
   ingestAnthropicRequestSecrets(rawRequest: unknown, registry: ToolRegistry): void {
     appendAnthropicToolSecretsToTracker(this.secretTracker, rawRequest, registry);
+  }
+
+  ingestGeminiRequestSecrets(rawRequest: unknown, registry: ToolRegistry): void {
+    appendGeminiToolSecretsToTracker(this.secretTracker, rawRequest, registry);
   }
 }

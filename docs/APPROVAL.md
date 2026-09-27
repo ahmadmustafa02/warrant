@@ -24,6 +24,7 @@ These stay hard denies — untrusted content must not unlock them via a click-th
 - `AUTHORITY_PARAMETER_MISSING`
 - `PINNED_PARAMETER_CONFLICT`
 - `UNKNOWN_TOOL`
+- `SECRET_IN_LINK` (a destination URL is carrying a secret)
 
 `DESTINATION_ORIGIN_UNCLEAR` is approvable: the user named a person or authorized the
 send, and Warrant could not see whether the address came from a lookup. Approving

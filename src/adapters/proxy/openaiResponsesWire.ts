@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
+import { redactArgumentJson } from './redactToolArguments';
 import { readSchemaParameters } from './schemaParameters';
 
 /**
@@ -212,6 +213,15 @@ export function redactResponsesOutputText(
       ) {
         part.text = redact(part.text);
       }
+    }
+  }
+  for (const item of clone.output) {
+    if (
+      isRecord(item) &&
+      item.type === 'function_call' &&
+      typeof item.arguments === 'string'
+    ) {
+      item.arguments = redactArgumentJson(item.arguments, redact);
     }
   }
   return clone;

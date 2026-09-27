@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
+import { redactArgumentRecord } from './redactToolArguments';
 import { readSchemaParameters } from './schemaParameters';
 
 const partSchema = z.union([
@@ -219,8 +220,17 @@ export function redactGeminiTextParts(
   }
 
   for (const part of partsRaw) {
-    if (isRecord(part) && typeof part.text === 'string') {
+    if (!isRecord(part)) {
+      continue;
+    }
+    if (typeof part.text === 'string') {
       part.text = redact(part.text);
+    }
+    if (isRecord(part.functionCall)) {
+      const redacted = redactArgumentRecord(part.functionCall.args, redact);
+      if (redacted.changed) {
+        part.functionCall.args = redacted.value;
+      }
     }
   }
 

@@ -27,6 +27,7 @@ import {
   type ExchangeWire,
 } from './exchangeWire';
 import { appendAnthropicToolSecretsToTracker } from './ingestAnthropicToolResults';
+import { appendGeminiToolSecretsToTracker } from './ingestGeminiToolResults';
 import { appendOpenAiToolSecretsToTracker } from './ingestOpenAiToolResults';
 import { appendResponsesToolSecretsToTracker } from './ingestResponsesToolResults';
 import type { ProxySession } from './proxySession';
@@ -172,7 +173,69 @@ function trackRequestSecrets(
       return;
     }
     appendAnthropicToolSecretsToTracker(tracker, rawRequest, registry);
+    return;
   }
+  if (wire === 'gemini') {
+    if (session !== undefined) {
+      session.ingestGeminiRequestSecrets(rawRequest, registry);
+      return;
+    }
+    appendGeminiToolSecretsToTracker(tracker, rawRequest, registry);
+  }
+}
+
+const LINK_PARAMETER =
+  /^(url|uri|endpoint|href|link|host|hostname|webhook|callback|src)$|(?:_url|_uri|_href|_link)$/i;
+
+function isSecretCarryingLink(parameter: string, value: string): boolean {
+  if (LINK_PARAMETER.test(parameter)) {
+    return true;
+  }
+  return /^https?:\/\//i.test(value.trim());
+}
+
+/**
+ * A destination that contains a secret is stopped, not edited. Replacing the
+ * secret inside the URL would still send the request to the attacker's host.
+ * An address the user typed themselves is left to the pin.
+ */
+function denySecretLink(
+  call: { readonly name: string; readonly rawArguments: string },
+  decision: GuardDecision,
+  tracker: TurnSecretTracker,
+  authorizedTools: readonly string[],
+  warrant: ReturnType<typeof issueWarrant>,
+): GuardDecision {
+  if (!decision.allowed) {
+    return decision;
+  }
+  let args: Record<string, unknown>;
+  try {
+    args = parseToolArguments(call.rawArguments);
+  } catch {
+    return decision;
+  }
+  const grant = findGrant(warrant, call.name);
+  for (const [parameter, value] of Object.entries(args)) {
+    if (typeof value !== 'string' || !isSecretCarryingLink(parameter, value)) {
+      continue;
+    }
+    if (grant?.pinnedParameters[parameter] === value) {
+      continue;
+    }
+    if (!tracker.containsUnauthorizedSecret(value, authorizedTools)) {
+      continue;
+    }
+    return {
+      allowed: false,
+      tool: call.name,
+      riskTier: decision.riskTier,
+      code: 'SECRET_IN_LINK',
+      taintSources: decision.taintSources,
+      reason: `${parameter} carries a secret from a tool this turn did not authorize, so the link is stopped`,
+    };
+  }
+  return decision;
 }
 
 export class ProxyGuardError extends Error {
@@ -232,19 +295,25 @@ export function guardExchange(options: {
   const drifted = driftedToolNames(drifts);
 
   const intent = options.intent ?? deriveProxyIntent(request.userRequest, registry);
+  const secretTracker = options.session?.secretTracker ?? new TurnSecretTracker();
+  trackRequestSecrets(
+    wire,
+    options.rawRequest,
+    registry,
+    options.session,
+    secretTracker,
+  );
 
   const finalizeResponse = (denials: ReadonlyMap<string, string>): unknown => {
     if (options.mode !== 'ENFORCE') {
       return options.rawResponse;
     }
-    const tracker = options.session?.secretTracker ?? new TurnSecretTracker();
-    trackRequestSecrets(wire, options.rawRequest, registry, options.session, tracker);
     return rewriteExchangeResponse({
       wire,
       rawResponse: options.rawResponse,
       denialsByCallId: denials,
       redactText: (text) =>
-        tracker.redactUnauthorizedInText(text, intent.requestedTools).text,
+        secretTracker.redactUnauthorizedInText(text, intent.requestedTools).text,
     });
   };
 
@@ -321,6 +390,14 @@ export function guardExchange(options: {
       continue;
     }
 
+    decision = denySecretLink(
+      call,
+      decision,
+      secretTracker,
+      intent.requestedTools,
+      warrant,
+    );
+
     decisions.push({ kind: 'GUARD', callId: call.id, decision });
     if (decision.allowed) {
       continue;
@@ -386,18 +463,25 @@ export async function guardExchangeAsync(options: {
   const drifted = driftedToolNames(drifts);
 
   let intent = options.intent ?? deriveProxyIntent(request.userRequest, registry);
+  const secretTracker = options.session?.secretTracker ?? new TurnSecretTracker();
+  trackRequestSecrets(
+    wire,
+    options.rawRequest,
+    registry,
+    options.session,
+    secretTracker,
+  );
 
   const buildFinalize =
     (activeIntent: UserIntent) =>
     (denials: ReadonlyMap<string, string>): unknown => {
-      const tracker = options.session?.secretTracker ?? new TurnSecretTracker();
-      trackRequestSecrets(wire, options.rawRequest, registry, options.session, tracker);
       return rewriteExchangeResponse({
         wire,
         rawResponse: options.rawResponse,
         denialsByCallId: denials,
         redactText: (text) =>
-          tracker.redactUnauthorizedInText(text, activeIntent.requestedTools).text,
+          secretTracker.redactUnauthorizedInText(text, activeIntent.requestedTools)
+            .text,
       });
     };
 
@@ -496,6 +580,14 @@ export async function guardExchangeAsync(options: {
     if (decision === null) {
       continue;
     }
+
+    decision = denySecretLink(
+      call,
+      decision,
+      secretTracker,
+      intent.requestedTools,
+      warrant,
+    );
 
     decisions.push({ kind: 'GUARD', callId: call.id, decision });
     if (decision.allowed) {
