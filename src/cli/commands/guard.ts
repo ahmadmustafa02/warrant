@@ -14,6 +14,7 @@ import {
   clackApprovalPrompt,
   nonInteractiveApprovalPrompt,
 } from '@/cli/ui/approvalPrompt';
+import { createDecisionLogSink } from '@/cli/decisionLog/fileSink';
 import { proxyEnvForChild, upstreamAuthHeader, upstreamBaseUrl } from '@/cli/upstream';
 import {
   modeBadge,
@@ -71,6 +72,8 @@ export async function runGuardCommand(argv: readonly string[]): Promise<number> 
     interactive && mode === 'ENFORCE',
   );
 
+  const decisionLog = createDecisionLogSink();
+
   const spin = p.spinner();
   spin.start('Starting Warrant proxy');
 
@@ -85,7 +88,8 @@ export async function runGuardCommand(argv: readonly string[]): Promise<number> 
     streaming: policy.streaming,
     approvalMode: policy.approvalMode,
     approval,
-    onExchange: ({ blockedTools, wouldBlockTools, drifts }) => {
+    onExchange: ({ blockedTools, wouldBlockTools, drifts, decisions }) => {
+      decisionLog?.append({ decisions, mode, source: 'guard' });
       for (const drift of drifts) {
         p.log.warn(`Tool-set drift (${drift.kind}): ${drift.reason}`);
       }
@@ -109,6 +113,9 @@ export async function runGuardCommand(argv: readonly string[]): Promise<number> 
       `Upstream ${upstreamBaseUrl()}`,
     ].join('\n'),
   );
+  if (decisionLog !== null) {
+    p.log.info(`Decisions  ${decisionLog.path}`);
+  }
   p.log.step(`Running: ${command.join(' ')}`);
 
   const child = spawn(command[0] ?? '', command.slice(1), {

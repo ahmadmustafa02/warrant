@@ -5,6 +5,7 @@ import { runDoctorCommand } from '@/cli/commands/doctor';
 import { runEvalIntentCommand } from '@/cli/commands/evalIntent';
 import { runGuardCommand } from '@/cli/commands/guard';
 import { runInitCommand } from '@/cli/commands/init';
+import { runLogCommand } from '@/cli/commands/log';
 import { runRedTeamCommand } from '@/cli/commands/redTeam';
 import { runScanCommand } from '@/cli/commands/scan';
 import { warrantBanner } from '@/cli/ui/brand';
@@ -14,6 +15,7 @@ const HELP = `${warrantBanner()}
 Usage:
   warrant init [--from-sandbox] [--llm-intent]
   warrant guard [--detect-only | --off] [--no-approval] -- <command...>
+  warrant log [--denied] [--include-scan] [--session ID] [--limit N] [--json]
   warrant doctor
   warrant eval intent
   warrant attack [--payload <id>] [--guard ENFORCE|OFF|DETECT_ONLY]
@@ -39,6 +41,8 @@ export async function runCli(argv: readonly string[]): Promise<number> {
         return await runInitCommand(rest);
       case 'guard':
         return await runGuardCommand(rest);
+      case 'log':
+        return runLogCommand(rest);
       case 'doctor':
         return await runDoctorCommand();
       case 'eval':

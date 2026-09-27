@@ -61,7 +61,7 @@ Benign task still completes:    yes
 
 **What you need.** The agent must honor `OPENAI_BASE_URL` (or the Anthropic / Gemini equivalent). If the API host is hardcoded, change that one setting so the SDK reads the base URL from the environment. An agent that never calls tools has nothing for the payload to ride on; scan then reports that the payload never landed.
 
-`guard` is the same proxy with injection off: every sensitive tool call is checked against what the user actually asked for.
+`guard` is the same proxy with injection off: every sensitive tool call is checked against what the user actually asked for. Each allow and deny is appended to `.warrant/decisions.ndjson`. Read it back with `warrant log`, or open `/decisions` when the lab site is running locally.
 
 Full flags and limits: [`docs/SCAN.md`](docs/SCAN.md). A local mock (no API bill) is in [`scripts/scan-fixtures/README.md`](scripts/scan-fixtures/README.md).
 
@@ -134,6 +134,7 @@ Detection filters (e.g. PromptGuard) flag text; Warrant **authorizes actions**. 
 | ------- | ------------- |
 | `warrant init` | Create `.warrant/proxy-policy.json` |
 | `warrant guard -- <cmd>` | Run your agent behind the guard proxy |
+| `warrant log` | Show recent allows and denies from the local decision log |
 | `warrant scan -- <cmd>` | Hijack-test any agent, no changes to it required |
 | `warrant red-team -- <cmd>` | OFF vs ENFORCE on the injection corpus |
 | `warrant doctor` | Environment + registry check |
@@ -162,6 +163,7 @@ OpenAI `/v1/chat/completions`, Anthropic `/v1/messages`, Gemini `generateContent
 | `/` | Thesis + measured comparison |
 | `/playground` | Recorded terminal (`install`, `attack`, `guard` demos — no live model) |
 | `/dashboard` | Stored runs with dual metrics |
+| `/decisions` | Local guard decision log (this machine only) |
 | `/method` | Warrant issuance model |
 | `/suites` | Attack + benign payload catalog |
 
@@ -224,6 +226,7 @@ pnpm run build:guard && pnpm run build:cli
 | --- | -------- |
 | [`docs/INTEGRATION.md`](docs/INTEGRATION.md) | Tool-loop + HTTP proxy integration |
 | [`docs/SCAN.md`](docs/SCAN.md) | Scanning a third-party agent for hijacks |
+| [`docs/DECISION_LOG.md`](docs/DECISION_LOG.md) | Local allow/deny log and how to read it |
 | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Scope, adversary, residual risk |
 | [`docs/HELD_OUT.md`](docs/HELD_OUT.md) | Held-out corpus rules |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | Vercel + Neon |

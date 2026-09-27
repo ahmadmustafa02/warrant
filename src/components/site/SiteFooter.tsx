@@ -18,6 +18,9 @@ export function SiteFooter() {
           <Link href="/dashboard" className="hover:opacity-60">
             Lab
           </Link>
+          <Link href="/decisions" className="hover:opacity-60">
+            Decisions
+          </Link>
           <Link href="/method" className="hover:opacity-60">
             Method
           </Link>

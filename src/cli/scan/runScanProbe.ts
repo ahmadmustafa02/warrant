@@ -9,6 +9,7 @@ import {
   toolOverridesFromPolicy,
 } from '@/adapters/proxy/proxyPolicy';
 import { listenWarrantProxy } from '@/adapters/proxy/proxyServer';
+import { createDecisionLogSink } from '@/cli/decisionLog/fileSink';
 import { proxyEnvForChild, upstreamAuthHeader, upstreamBaseUrl } from '@/cli/upstream';
 
 export const DEFAULT_SCAN_TIMEOUT_MS = 120_000;
@@ -109,6 +110,7 @@ export async function runScanProbe(options: {
   let canaryLeaked = false;
   let canaryDelivered = false;
   let exchanges = 0;
+  const decisionLog = createDecisionLogSink();
 
   const { server, url } = await listenWarrantProxy({
     mode: options.guardMode,
@@ -122,6 +124,12 @@ export async function runScanProbe(options: {
     approvalMode: 'deny',
     injection: options.injection,
     onExchange: (summary) => {
+      decisionLog?.append({
+        decisions: summary.decisions,
+        mode: options.guardMode,
+        source: 'scan',
+        canary: options.injection?.canary,
+      });
       exchanges += 1;
       unauthorizedTools.push(...summary.blockedTools, ...summary.wouldBlockTools);
       blockedTools.push(...summary.blockedTools);

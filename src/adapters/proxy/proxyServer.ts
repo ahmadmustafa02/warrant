@@ -3,7 +3,7 @@ import type { GuardMode } from '@/agent/guard/applyGuard';
 import type { IntentParseMode } from '@/agent/intent/parseUserIntentLlm';
 import type { ToolOverride } from './classifyDiscoveredTool';
 import { guardChatCompletion, UpstreamGuardError } from './guardChatCompletion';
-import { ProxyGuardError } from './guardExchange';
+import { ProxyGuardError, type ProxyDecision } from './guardExchange';
 import type { InjectionTarget, ScanInjection } from './injectPayload';
 import type { ApprovalCoordinator } from './proxyApproval';
 import type { ApprovalMode, StreamingPolicy } from './proxyPolicy';
@@ -44,6 +44,7 @@ export interface ProxyServerOptions {
     readonly canaryDelivered: boolean;
     /** Tools the agent advertised on this request, after risk classification. */
     readonly classifiedTools: readonly ToolDefinition[];
+    readonly decisions: readonly ProxyDecision[];
   }) => void;
 }
 
@@ -156,6 +157,7 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
           canaryLeaked: result.canaryLeaked,
           canaryDelivered: result.canaryDelivered,
           classifiedTools: result.exchange.classifiedTools,
+          decisions: result.exchange.decisions,
         });
 
         if (result.sseBody !== undefined) {

@@ -1,6 +1,6 @@
 # Plan 02 — Guard decision log and viewer
 
-Status: APPROVED 27 Sep 2026, ready to build. Roadmap item 2.
+Status: IMPLEMENTED 27 Sep 2026. Roadmap item 2.
 
 ## Problem
 
