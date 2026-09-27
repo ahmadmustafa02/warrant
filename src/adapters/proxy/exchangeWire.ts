@@ -20,8 +20,24 @@ import {
   stripDeniedToolCalls,
   WireParseError,
 } from './openaiWire';
+import {
+  parseResponsesRequest,
+  parseResponsesToolCalls,
+  redactResponsesOutputText,
+  ResponsesWireParseError,
+  stripDeniedResponsesFunctionCalls,
+} from './openaiResponsesWire';
 
-export type ExchangeWire = 'openai' | 'anthropic' | 'gemini';
+export type ExchangeWire = 'openai' | 'openai-responses' | 'anthropic' | 'gemini';
+
+function wireErrorDetail(error: unknown): string {
+  return error instanceof WireParseError ||
+    error instanceof AnthropicWireParseError ||
+    error instanceof GeminiWireParseError ||
+    error instanceof ResponsesWireParseError
+    ? error.message
+    : 'unknown shape';
+}
 
 export class ExchangeParseError extends Error {
   constructor(message: string) {
@@ -43,8 +59,14 @@ export function detectExchangeWire(
   if (httpPath.endsWith('/chat/completions') || httpPath === '/v1/chat/completions') {
     return 'openai';
   }
+  if (httpPath.endsWith('/responses')) {
+    return 'openai-responses';
+  }
   const parsed =
     typeof rawRequest === 'object' && rawRequest !== null ? rawRequest : {};
+  if ('input' in parsed && !('messages' in parsed)) {
+    return 'openai-responses';
+  }
   if (
     'contents' in parsed &&
     Array.isArray((parsed as { contents?: unknown }).contents)
@@ -68,15 +90,12 @@ export function parseExchangeRequest(
     if (wire === 'gemini') {
       return parseGeminiRequest(rawRequest);
     }
+    if (wire === 'openai-responses') {
+      return parseResponsesRequest(rawRequest);
+    }
     return parseOpenAiRequest(rawRequest);
   } catch (error) {
-    const detail =
-      error instanceof WireParseError ||
-      error instanceof AnthropicWireParseError ||
-      error instanceof GeminiWireParseError
-        ? error.message
-        : 'unknown shape';
-    throw new ExchangeParseError(detail);
+    throw new ExchangeParseError(wireErrorDetail(error));
   }
 }
 
@@ -91,15 +110,12 @@ export function parseExchangeToolCalls(
     if (wire === 'gemini') {
       return parseGeminiToolCalls(rawResponse);
     }
+    if (wire === 'openai-responses') {
+      return parseResponsesToolCalls(rawResponse);
+    }
     return parseOpenAiToolCalls(rawResponse);
   } catch (error) {
-    const detail =
-      error instanceof WireParseError ||
-      error instanceof AnthropicWireParseError ||
-      error instanceof GeminiWireParseError
-        ? error.message
-        : 'unknown shape';
-    throw new ExchangeParseError(detail);
+    throw new ExchangeParseError(wireErrorDetail(error));
   }
 }
 
@@ -117,6 +133,10 @@ export function rewriteExchangeResponse(options: {
   if (options.wire === 'gemini') {
     stripped = stripDeniedGeminiFunctionCalls(stripped, options.denialsByCallId);
     return redactGeminiTextParts(stripped, options.redactText);
+  }
+  if (options.wire === 'openai-responses') {
+    stripped = stripDeniedResponsesFunctionCalls(stripped, options.denialsByCallId);
+    return redactResponsesOutputText(stripped, options.redactText);
   }
   stripped = stripDeniedToolCalls(stripped, options.denialsByCallId);
   return redactUnauthorizedSecretsInResponse(stripped, options.redactText);

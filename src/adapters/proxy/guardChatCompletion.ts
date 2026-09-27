@@ -18,6 +18,7 @@ import {
   chatCompletionToOpenAiSse,
   openAiCompletionToChatResponse,
 } from './openAiStreamGuard';
+import { assembleResponsesFromSse, responsesToSse } from './openaiResponsesWire';
 import type { ApprovalCoordinator } from './proxyApproval';
 import type { ProxySession } from './proxySession';
 import type { StreamingPolicy } from './proxyPolicy';
@@ -40,7 +41,8 @@ function upstreamResponseLooksLikeSse(
   if (contentType?.includes('text/event-stream') === true) {
     return true;
   }
-  return rawText.trimStart().startsWith('data:');
+  const head = rawText.trimStart();
+  return head.startsWith('data:') || head.startsWith('event:');
 }
 
 /**
@@ -109,6 +111,16 @@ export async function guardChatCompletion(options: {
   if (wire === 'openai' && upstreamResponseLooksLikeSse(contentType, rawText)) {
     const assembled = assembleOpenAiCompletionFromSse(rawText);
     parsed = openAiCompletionToChatResponse(assembled);
+  } else if (
+    wire === 'openai-responses' &&
+    upstream.ok &&
+    upstreamResponseLooksLikeSse(contentType, rawText)
+  ) {
+    try {
+      parsed = assembleResponsesFromSse(rawText);
+    } catch {
+      parsed = { raw: rawText };
+    }
   } else {
     try {
       parsed = rawText === '' ? {} : JSON.parse(rawText);
@@ -161,6 +173,20 @@ export async function guardChatCompletion(options: {
     streaming === 'guard' &&
     wire === 'openai' &&
     options.mode === 'ENFORCE';
+
+  // A Responses client that asked for a stream can only parse events, so it gets
+  // them in every mode; the guarded turn is re-emitted once it has been judged.
+  if (usesStream && wire === 'openai-responses') {
+    return {
+      status: upstream.status,
+      body: exchange.response,
+      exchange,
+      sseBody: responsesToSse(exchange.response),
+      injectedInto: injected.appliedTo,
+      canaryLeaked,
+      canaryDelivered,
+    };
+  }
 
   if (respondAsSse) {
     return {

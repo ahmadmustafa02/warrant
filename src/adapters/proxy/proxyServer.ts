@@ -112,7 +112,11 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
       const isOpenAi =
         path.endsWith('/chat/completions') || path === '/v1/chat/completions';
       const isAnthropic = path.endsWith('/messages') || path === '/v1/messages';
-      if (req.method !== 'POST' || (!isOpenAi && !isAnthropic && !isGeminiNative)) {
+      const isResponses = path.endsWith('/responses');
+      if (
+        req.method !== 'POST' ||
+        (!isOpenAi && !isAnthropic && !isGeminiNative && !isResponses)
+      ) {
         writeJson(res, 404, { error: 'not_found' });
         return;
       }
@@ -130,6 +134,8 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
             options.upstreamBaseUrl.replace(/\/openai\/?$/, ''),
             '/messages',
           );
+        } else if (isResponses) {
+          upstreamUrl = joinUrl(options.upstreamBaseUrl, '/responses');
         } else {
           upstreamUrl = joinUrl(options.upstreamBaseUrl, '/chat/completions');
         }

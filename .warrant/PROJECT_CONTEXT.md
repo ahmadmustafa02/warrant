@@ -128,7 +128,7 @@ Policy file: `.warrant/proxy-policy.json` (created by `warrant init`). Important
 
 `approvalMode: prompt` can ask on a TTY before blocking an eligible call. Scan forces `deny` so a scan never waits for a human.
 
-Wires supported: OpenAI `/v1/chat/completions` (including buffered SSE), Anthropic `/v1/messages`, Gemini `generateContent` (native or OpenAI-compatible).
+Wires supported: OpenAI `/v1/chat/completions` (including buffered SSE), OpenAI Responses `/v1/responses` (including buffered SSE; only client-side `function` tools are judged), Anthropic `/v1/messages`, Gemini `generateContent` (native or OpenAI-compatible).
 
 Comma-separated `GROQ_API_KEY` values are split. Eval chat and `openAiCompatibleClient` try the next key on auth or rate-limit errors. The proxy upstream header uses the first key. Do not wrap the list in quotes.
 

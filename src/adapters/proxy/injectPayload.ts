@@ -1,4 +1,5 @@
 import type { ExchangeWire } from './exchangeWire';
+import { injectIntoResponsesRequest } from './openaiResponsesWire';
 
 /**
  * Where a scan places its payload.
@@ -190,6 +191,10 @@ export function injectIntoRequest(
   }
   if (wire === 'gemini') {
     return injectGemini(rawRequest, text, target);
+  }
+  if (wire === 'openai-responses') {
+    const outcome = injectIntoResponsesRequest(rawRequest, text, target);
+    return { request: outcome.request, appliedTo: outcome.applied ? target : 'none' };
   }
   return injectOpenAi(rawRequest, text, target);
 }

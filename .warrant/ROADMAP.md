@@ -32,7 +32,7 @@ research; "Build" means implementing an agreed design.
 | 6 | Slides: problem → solution → demo → learnings | written | Opus 5.5 | — |
 | 7 | 5-minute demo video | recorded | — | — |
 | 8 | MCP proxy mode (`warrant guard --mcp`) | **Done.** `warrant guard --mcp --user TEXT -- <server>` judges `tools/call` with the same warrant as the HTTP proxy | Opus 5.5 | Composer / Grok 4.7 |
-| 9 | OpenAI Responses API + Vercel AI SDK support | those clients work behind the proxy | Opus 5.5 | Composer |
+| 9 | OpenAI Responses API + Vercel AI SDK support | **Done.** `POST /v1/responses` (plain and streamed) is guarded like chat completions; tested with the official `openai` SDK and live on Groq. The Vercel AI SDK's OpenAI provider uses this endpoint; its own run is item 10 | Opus 5.5 | Composer |
 | 10 | Real-framework tests: LangChain (Python), Vercel AI SDK | scan + guard pass on both | — | Grok 4.7 |
 | 11 | Shareable hosted scan report | a scan result opens as a URL | Opus 5.5 | Composer |
 
