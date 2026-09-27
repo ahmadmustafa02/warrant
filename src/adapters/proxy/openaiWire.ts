@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
+import { readSchemaParameters } from './schemaParameters';
 
 /**
  * Schemas cover only the fields the guard reads. Everything else on the wire is
@@ -59,18 +60,6 @@ export function messageText(content: z.infer<typeof messageSchema>['content']): 
   return '';
 }
 
-/** Property names of a JSON-schema `parameters` object, or none if absent/malformed. */
-function schemaParameterNames(parameters: unknown): readonly string[] {
-  if (typeof parameters !== 'object' || parameters === null) {
-    return [];
-  }
-  const properties = (parameters as { properties?: unknown }).properties;
-  if (typeof properties !== 'object' || properties === null) {
-    return [];
-  }
-  return Object.keys(properties);
-}
-
 export class WireParseError extends Error {
   constructor(message: string) {
     super(message);
@@ -87,11 +76,17 @@ export function parseOpenAiRequest(body: unknown): CanonicalRequest {
   const userTurns = parsed.data.messages.filter((message) => message.role === 'user');
   const latest = userTurns[userTurns.length - 1];
 
-  const tools: DiscoveredTool[] = (parsed.data.tools ?? []).map((tool) => ({
-    name: tool.function.name,
-    description: tool.function.description ?? '',
-    parameterNames: schemaParameterNames(tool.function.parameters),
-  }));
+  const tools: DiscoveredTool[] = (parsed.data.tools ?? []).map((tool) => {
+    const schema = readSchemaParameters(tool.function.parameters);
+    return {
+      name: tool.function.name,
+      description: tool.function.description ?? '',
+      parameterNames: schema.names,
+      ...(Object.keys(schema.descriptions).length > 0
+        ? { parameterDescriptions: schema.descriptions }
+        : {}),
+    };
+  });
 
   return {
     model: parsed.data.model ?? 'unknown',

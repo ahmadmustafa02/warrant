@@ -31,7 +31,11 @@ export const registry = new ToolRegistry([
 ```
 
 `authorityParameters` are fields that decide **where** an action lands. Content must not
-set them unless the user pinned the same value.
+set them unless the user pinned the same value. On the proxy, you do not have to list
+these by hand: Warrant reads the tool schema (`to`, `cc`, `bcc`, `send_to`, or a
+description that says the field is the recipient). A typed address locks that field.
+"Email Ali" allows `ali@…` only when a contacts lookup of Ali returned it. An address
+that shows up in a document is blocked. If Warrant cannot see either source, it asks.
 
 Optional `parameterConstraints` cap argument shape (`stringPattern` for SQL, `numberMax`
 for amounts). Violations deny with `PARAMETER_CONSTRAINT_VIOLATION`.

@@ -5,6 +5,7 @@ import { issueWarrant, type UserIntent, type Warrant } from './warrant';
 export interface ExplicitGrantInput {
   readonly tool: string;
   readonly pinnedParameters?: Readonly<Record<string, string>>;
+  readonly namedParties?: Readonly<Record<string, readonly string[]>>;
 }
 
 export class ExplicitGrantError extends Error {
@@ -19,6 +20,7 @@ export function userIntentFromExplicit(
 ): UserIntent {
   const requestedTools = grants.map((grant) => grant.tool);
   const pinnedParameters: Record<string, Record<string, string>> = {};
+  const namedParties: Record<string, Record<string, readonly string[]>> = {};
 
   const seen = new Set<string>();
   for (const grant of grants) {
@@ -34,17 +36,20 @@ export function userIntentFromExplicit(
 
   for (const grant of grants) {
     const pinned = grant.pinnedParameters;
-    if (pinned === undefined || Object.keys(pinned).length === 0) {
-      continue;
+    if (pinned !== undefined && Object.keys(pinned).length > 0) {
+      pinnedParameters[grant.tool] = { ...pinned };
     }
-    pinnedParameters[grant.tool] = { ...pinned };
+    const parties = grant.namedParties;
+    if (parties !== undefined && Object.keys(parties).length > 0) {
+      namedParties[grant.tool] = parties;
+    }
   }
 
-  if (Object.keys(pinnedParameters).length === 0) {
-    return { requestedTools };
-  }
-
-  return { requestedTools, pinnedParameters };
+  return {
+    requestedTools,
+    ...(Object.keys(pinnedParameters).length > 0 ? { pinnedParameters } : {}),
+    ...(Object.keys(namedParties).length > 0 ? { namedParties } : {}),
+  };
 }
 
 /**

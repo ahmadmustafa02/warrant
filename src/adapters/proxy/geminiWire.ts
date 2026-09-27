@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
+import { readSchemaParameters } from './schemaParameters';
 
 const partSchema = z.union([
   z.object({ text: z.string() }),
@@ -52,17 +53,6 @@ export class GeminiWireParseError extends Error {
   }
 }
 
-function schemaParameterNames(parameters: unknown): readonly string[] {
-  if (typeof parameters !== 'object' || parameters === null) {
-    return [];
-  }
-  const properties = (parameters as { properties?: unknown }).properties;
-  if (typeof properties !== 'object' || properties === null) {
-    return [];
-  }
-  return Object.keys(properties);
-}
-
 function userTextFromContents(
   contents: z.infer<typeof geminiGenerateRequestSchema>['contents'],
 ): string {
@@ -91,10 +81,14 @@ export function parseGeminiRequest(body: unknown): CanonicalRequest {
   const tools: DiscoveredTool[] = [];
   for (const toolGroup of parsed.data.tools ?? []) {
     for (const decl of toolGroup.functionDeclarations) {
+      const schema = readSchemaParameters(decl.parameters);
       tools.push({
         name: decl.name,
         description: decl.description ?? '',
-        parameterNames: schemaParameterNames(decl.parameters),
+        parameterNames: schema.names,
+        ...(Object.keys(schema.descriptions).length > 0
+          ? { parameterDescriptions: schema.descriptions }
+          : {}),
       });
     }
   }

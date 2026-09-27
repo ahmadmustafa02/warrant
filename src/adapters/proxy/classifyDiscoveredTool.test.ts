@@ -79,6 +79,21 @@ describe('classifyDiscoveredTool', () => {
     expect(definition.returnsSecrets).toBe(true);
   });
 
+  it('infers a destination from send_to and from a recipient description', () => {
+    expect(
+      classifyDiscoveredTool(tool('send_email', ['send_to', 'body']))
+        .authorityParameters,
+    ).toEqual(['send_to']);
+
+    const described = classifyDiscoveredTool({
+      name: 'send_email',
+      description: '',
+      parameterNames: ['who', 'body'],
+      parameterDescriptions: { who: 'Recipient email address', body: 'Message body' },
+    });
+    expect(described.authorityParameters).toEqual(['who']);
+  });
+
   it('lets an explicit override win over the inferred tier', () => {
     const definition = classifyDiscoveredTool(tool('frobnicate_widget'), {
       riskTier: 'READ_ONLY',

@@ -48,6 +48,29 @@ export function augmentIntentWithTool(
   };
 }
 
+/**
+ * An approval of an unclear recipient locks the address the user just confirmed.
+ *
+ * Adding the tool alone would re-evaluate to the same question. The confirmed
+ * value is pinned for this turn only, the same way a typed address is pinned.
+ */
+export function pinApprovedDestination(
+  intent: UserIntent,
+  toolName: string,
+  parameter: string,
+  value: string,
+): UserIntent {
+  const withTool = augmentIntentWithTool(intent, toolName);
+  const existing = withTool.pinnedParameters?.[toolName] ?? {};
+  return {
+    ...withTool,
+    pinnedParameters: {
+      ...(withTool.pinnedParameters ?? {}),
+      [toolName]: { ...existing, [parameter]: value },
+    },
+  };
+}
+
 export interface ApprovalRecord {
   readonly at: string;
   readonly toolName: string;

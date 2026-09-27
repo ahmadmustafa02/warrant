@@ -66,3 +66,48 @@ describe('deriveProxyIntent · document scope', () => {
     expect(intent.pinnedParameters?.['read_document']).toEqual({ id: 'doc-1' });
   });
 });
+
+describe('deriveProxyIntent · recipient origin', () => {
+  const mailRegistry = buildProxyRegistry([
+    {
+      name: 'send_email',
+      description: '',
+      parameterNames: ['to', 'cc', 'bcc', 'body'],
+    },
+  ]);
+
+  it('pins cc and bcc separately from the main recipient', () => {
+    const intent = deriveProxyIntent(
+      'Email bob@corp.com and cc carol@corp.com and bcc dave@corp.com',
+      mailRegistry,
+    );
+
+    expect(intent.pinnedParameters?.['send_email']).toEqual({
+      to: 'bob@corp.com',
+      cc: 'carol@corp.com',
+      bcc: 'dave@corp.com',
+    });
+  });
+
+  it('remembers a person when the user did not type an address', () => {
+    const intent = deriveProxyIntent('Email Ali the summary', mailRegistry);
+
+    expect(intent.requestedTools).toContain('send_email');
+    expect(intent.pinnedParameters?.['send_email']).toBeUndefined();
+    expect(intent.namedParties?.['send_email']).toEqual({ to: ['Ali'] });
+  });
+
+  it('pins send_to when that is the tool destination field', () => {
+    const sendToRegistry = buildProxyRegistry([
+      { name: 'send_email', description: '', parameterNames: ['send_to', 'body'] },
+    ]);
+    const intent = deriveProxyIntent(
+      'Email the summary to bob@corp.com',
+      sendToRegistry,
+    );
+
+    expect(intent.pinnedParameters?.['send_email']).toEqual({
+      send_to: 'bob@corp.com',
+    });
+  });
+});

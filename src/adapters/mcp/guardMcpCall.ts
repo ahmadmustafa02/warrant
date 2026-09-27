@@ -4,6 +4,7 @@ import { issueWarrant } from '@/core/authorization/warrant';
 import { taint } from '@/core/provenance/tainted';
 import type { DiscoveredTool } from '@/adapters/proxy/canonical';
 import { buildProxyRegistry } from '@/adapters/proxy/classifyDiscoveredTool';
+import { readSchemaParameters } from '@/adapters/proxy/schemaParameters';
 import { deriveProxyIntent } from '@/adapters/proxy/deriveProxyIntent';
 import type { ProxyDecision } from '@/adapters/proxy/guardExchange';
 import type { ProxySession } from '@/adapters/proxy/proxySession';
@@ -61,12 +62,16 @@ export function toolsFromListResult(value: unknown): readonly DiscoveredTool[] {
     if (!parsed.success) {
       continue;
     }
+    const schema = readSchemaParameters({
+      properties: parsed.data.inputSchema?.properties ?? {},
+    });
     discovered.push({
       name: parsed.data.name,
       description: parsed.data.description ?? '',
-      parameterNames: Object.freeze(
-        Object.keys(parsed.data.inputSchema?.properties ?? {}),
-      ),
+      parameterNames: schema.names,
+      ...(Object.keys(schema.descriptions).length > 0
+        ? { parameterDescriptions: schema.descriptions }
+        : {}),
     });
   }
   return Object.freeze(discovered);

@@ -27,6 +27,22 @@ describe('isApprovalEligible', () => {
     ).toBe(false);
   });
 
+  it('asks when a recipient cannot be traced, and still rejects one taken from content', () => {
+    expect(
+      isApprovalEligible(
+        denied({ code: 'DESTINATION_ORIGIN_UNCLEAR', riskTier: 'SENSITIVE' }),
+      ),
+    ).toBe(true);
+    expect(
+      isApprovalEligible(
+        denied({
+          code: 'AUTHORITY_PARAMETER_FROM_CONTENT',
+          riskTier: 'SENSITIVE',
+        }),
+      ),
+    ).toBe(false);
+  });
+
   it('allows destructive scope escalation prompts', () => {
     expect(
       isApprovalEligible(

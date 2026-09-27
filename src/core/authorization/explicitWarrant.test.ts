@@ -42,6 +42,15 @@ describe('issueWarrantFromExplicit', () => {
     ).toThrow(ExplicitGrantError);
   });
 
+  it('keeps a named person so a lookup can fill the address later', () => {
+    const warrant = issueWarrantFromExplicit(
+      [{ tool: 'send_email', namedParties: { to: ['Ali'] } }],
+      registry,
+      () => new Date('2026-09-12T00:00:00.000Z'),
+    );
+    expect(findGrant(warrant, 'send_email')?.namedParties).toEqual({ to: ['Ali'] });
+  });
+
   it('drops unknown tool names into diagnostics', () => {
     const warrant = issueWarrantFromExplicit(
       [{ tool: 'wire_funds' }],

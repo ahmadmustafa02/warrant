@@ -1,3 +1,11 @@
+import {
+  copyParameter,
+  labeledPartyName,
+  labeledRecipientEmail,
+  primaryEmail,
+  primaryEmailParameter,
+  primaryPartyName,
+} from '@/core/authorization/recipientOrigin';
 import type { UserIntent } from '@/core/authorization/warrant';
 import type { ToolRegistry } from '@/core/tools/registry';
 import { tokenizeToolName } from './classifyDiscoveredTool';
@@ -84,53 +92,86 @@ function userNamedTool(userRequest: string, toolName: string): boolean {
   );
 }
 
-const EMAIL_PATTERN = /\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/;
 const URL_PATTERN = /\bhttps?:\/\/[^\s"'<>]+/i;
 const PATH_PATTERN = /\b[\w.-]*\/[\w./-]+\b/;
 const AMOUNT_PATTERN = /(?:\$|\bamount\s+(?:of\s+)?)(\d+(?:\.\d+)?)/i;
 
-const EMAIL_PARAMETERS = new Set(['to', 'recipient', 'recipients', 'email', 'address']);
 const URL_PARAMETERS = new Set(['url', 'uri', 'endpoint', 'host', 'hostname']);
 const PATH_PARAMETERS = new Set(['path', 'filepath', 'destination', 'dest']);
 
+interface RecipientBinding {
+  readonly pins: Record<string, string>;
+  readonly parties: Record<string, readonly string[]>;
+}
+
 /**
- * Pins authority parameters to values the user stated literally.
+ * Binds each destination field to what the user actually said.
  *
- * Without a pin, a tainted authority argument is denied outright — correct, but it
- * would also reject the legitimate request that named its recipient. Pinning is
- * what lets "email the summary to bob@corp.com" succeed while an injected
- * "email it to attacker@evil.test" still fails.
+ * A typed address locks that field. "cc" and "bcc" lock their own fields, not
+ * `to`. A person's name, with no address, is recorded so a later lookup of that
+ * person can fill the field. One address is not copied onto every email field:
+ * a tool that also has `recipient` must not require the call to repeat `to`.
  */
-function pinsFromRequest(
+function bindRecipients(
   userRequest: string,
   authorityParameters: readonly string[],
-): Record<string, string> {
+): RecipientBinding {
   const pins: Record<string, string> = {};
-  const email = userRequest.match(EMAIL_PATTERN)?.[0];
+  const parties: Record<string, string[]> = {};
+
+  const primary = primaryEmailParameter(authorityParameters);
+  const cc = copyParameter(authorityParameters, 'cc');
+  const bcc = copyParameter(authorityParameters, 'bcc');
+  const email = primaryEmail(userRequest);
+  const ccEmail = labeledRecipientEmail(userRequest, 'cc');
+  const bccEmail = labeledRecipientEmail(userRequest, 'bcc');
+
+  if (primary !== undefined && email !== undefined) {
+    pins[primary] = email;
+  } else if (primary !== undefined) {
+    const name = primaryPartyName(userRequest);
+    if (name !== undefined) {
+      parties[primary] = [name];
+    }
+  }
+  if (cc !== undefined && ccEmail !== undefined) {
+    pins[cc] = ccEmail;
+  } else if (cc !== undefined) {
+    const name = labeledPartyName(userRequest, 'cc');
+    if (name !== undefined) {
+      parties[cc] = [name];
+    }
+  }
+  if (bcc !== undefined && bccEmail !== undefined) {
+    pins[bcc] = bccEmail;
+  } else if (bcc !== undefined) {
+    const name = labeledPartyName(userRequest, 'bcc');
+    if (name !== undefined) {
+      parties[bcc] = [name];
+    }
+  }
+
   const url = userRequest.match(URL_PATTERN)?.[0];
   const path = userRequest.match(PATH_PATTERN)?.[0];
   const amount = userRequest.match(AMOUNT_PATTERN)?.[1];
-
   for (const parameter of authorityParameters) {
     const key = parameter.toLowerCase();
-    if (email !== undefined && EMAIL_PARAMETERS.has(key)) {
-      pins[parameter] = email;
-      continue;
-    }
     if (url !== undefined && URL_PARAMETERS.has(key)) {
       pins[parameter] = url;
-      continue;
     }
-    if (path !== undefined && PATH_PARAMETERS.has(key)) {
+    if (
+      path !== undefined &&
+      PATH_PARAMETERS.has(key) &&
+      pins[parameter] === undefined
+    ) {
       pins[parameter] = path;
-      continue;
     }
     if (amount !== undefined && key === 'amount') {
       pins[parameter] = amount;
     }
   }
 
-  return pins;
+  return { pins, parties };
 }
 
 /** Document id the user fixed in plain language (e.g. "summarize doc-1"). */
@@ -144,6 +185,7 @@ export function deriveProxyIntent(
 ): UserIntent {
   const requestedTools: string[] = [];
   const pinnedParameters: Record<string, Record<string, string>> = {};
+  const namedParties: Record<string, Record<string, readonly string[]>> = {};
 
   for (const tool of registry.list()) {
     if (!registry.requiresWarrant(tool.name)) {
@@ -154,9 +196,12 @@ export function deriveProxyIntent(
     }
 
     requestedTools.push(tool.name);
-    const pins = pinsFromRequest(userRequest, tool.authorityParameters ?? []);
-    if (Object.keys(pins).length > 0) {
-      pinnedParameters[tool.name] = pins;
+    const binding = bindRecipients(userRequest, tool.authorityParameters ?? []);
+    if (Object.keys(binding.pins).length > 0) {
+      pinnedParameters[tool.name] = binding.pins;
+    }
+    if (Object.keys(binding.parties).length > 0) {
+      namedParties[tool.name] = binding.parties;
     }
   }
 
@@ -177,5 +222,6 @@ export function deriveProxyIntent(
   return {
     requestedTools,
     ...(Object.keys(pinnedParameters).length > 0 ? { pinnedParameters } : {}),
+    ...(Object.keys(namedParties).length > 0 ? { namedParties } : {}),
   };
 }

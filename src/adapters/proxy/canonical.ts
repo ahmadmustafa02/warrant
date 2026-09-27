@@ -11,6 +11,8 @@ export interface DiscoveredTool {
   readonly description: string;
   /** Parameter names from the advertised JSON schema, used to locate authority params. */
   readonly parameterNames: readonly string[];
+  /** Schema descriptions, used only to notice a destination field under an odd name. */
+  readonly parameterDescriptions?: Readonly<Record<string, string>>;
 }
 
 /** What the agent asked its model to do, extracted from an outbound request. */

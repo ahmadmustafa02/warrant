@@ -2,6 +2,7 @@ import { describeValue, isUntrusted, sourcesOfArguments } from '../provenance/ta
 import type { ProvenanceKind, TaintedValue } from '../provenance/types';
 import { findParameterConstraintViolation } from '../tools/parameterConstraints';
 import type { RiskTier, ToolDefinition, ToolRegistry } from '../tools/registry';
+import { isEmailAuthorityParameter, type DestinationOrigin } from './recipientOrigin';
 import { findGrant, type Warrant } from './warrant';
 
 export type DenialCode =
@@ -10,6 +11,7 @@ export type DenialCode =
   | 'PINNED_PARAMETER_CONFLICT'
   | 'AUTHORITY_PARAMETER_FROM_CONTENT'
   | 'AUTHORITY_PARAMETER_MISSING'
+  | 'DESTINATION_ORIGIN_UNCLEAR'
   | 'PARAMETER_CONSTRAINT_VIOLATION';
 
 export type AuthorizationBasis = 'USER_WARRANT' | 'RISK_TIER';
@@ -43,6 +45,14 @@ export interface DecisionInput {
   readonly warrant: Warrant;
   readonly registry: ToolRegistry;
   readonly call: ProposedToolCall;
+  /**
+   * Where each email field's value was seen in this turn.
+   *
+   * Omitted by callers that do not have the conversation (they keep the stricter
+   * rule: an untrusted address is denied). The proxy sets it after reading prior
+   * tool results.
+   */
+  readonly destinationOrigins?: Readonly<Record<string, DestinationOrigin>>;
 }
 
 function denyConstraintViolation(
@@ -182,13 +192,42 @@ export function decideToolCall(input: DecisionInput): GuardDecision {
       // Model/worker taint on an argument that still matches the user pin is OK.
       continue;
     }
+
+    if (
+      isEmailAuthorityParameter(parameter) &&
+      input.destinationOrigins !== undefined
+    ) {
+      const origin = input.destinationOrigins[parameter] ?? {
+        kind: 'unknown' as const,
+      };
+      const names = grant.namedParties?.[parameter] ?? [];
+      if (origin.kind === 'lookup') {
+        const named = names.some(
+          (name) => name.toLowerCase() === origin.matchedName.toLowerCase(),
+        );
+        if (named) {
+          continue;
+        }
+      }
+      if (origin.kind === 'unknown') {
+        return {
+          allowed: false,
+          tool: call.tool,
+          riskTier: definition.riskTier,
+          code: 'DESTINATION_ORIGIN_UNCLEAR',
+          taintSources,
+          reason: `${parameter} was not typed by the user, and it did not come from a lookup of the person they named; confirm this recipient before sending`,
+        };
+      }
+    }
+
     return {
       allowed: false,
       tool: call.tool,
       riskTier: definition.riskTier,
       code: 'AUTHORITY_PARAMETER_FROM_CONTENT',
       taintSources,
-      reason: `${parameter} decides where this action lands; content may not choose it unless the user pinned that value`,
+      reason: `${parameter} decides where this action lands; content may not choose it unless the user pinned that value or a lookup of the person they named returned it`,
     };
   }
 

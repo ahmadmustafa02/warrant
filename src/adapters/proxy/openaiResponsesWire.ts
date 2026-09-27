@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
+import { readSchemaParameters } from './schemaParameters';
 
 /**
  * OpenAI Responses API (`POST /v1/responses`), the default transport of the
@@ -64,13 +65,6 @@ function partsText(content: z.infer<typeof inputItemSchema>['content']): string 
     .join('\n');
 }
 
-function schemaParameterNames(parameters: unknown): readonly string[] {
-  if (!isRecord(parameters) || !isRecord(parameters.properties)) {
-    return [];
-  }
-  return Object.keys(parameters.properties);
-}
-
 export function parseResponsesRequest(body: unknown): CanonicalRequest {
   const parsed = responsesRequestSchema.safeParse(body);
   if (!parsed.success) {
@@ -91,17 +85,21 @@ export function parseResponsesRequest(body: unknown): CanonicalRequest {
 
   // Built-in tools (web_search, file_search, …) run server-side at OpenAI; the proxy
   // only ever sees and judges client-executed function tools.
-  const tools: DiscoveredTool[] = (parsed.data.tools ?? []).flatMap((tool) =>
-    tool.type === 'function' && tool.name !== undefined && tool.name !== ''
-      ? [
-          {
-            name: tool.name,
-            description: tool.description ?? '',
-            parameterNames: schemaParameterNames(tool.parameters),
-          },
-        ]
-      : [],
-  );
+  const tools: DiscoveredTool[] = [];
+  for (const tool of parsed.data.tools ?? []) {
+    if (tool.type !== 'function' || tool.name === undefined || tool.name === '') {
+      continue;
+    }
+    const schema = readSchemaParameters(tool.parameters);
+    tools.push({
+      name: tool.name,
+      description: tool.description ?? '',
+      parameterNames: schema.names,
+      ...(Object.keys(schema.descriptions).length > 0
+        ? { parameterDescriptions: schema.descriptions }
+        : {}),
+    });
+  }
 
   return {
     model: parsed.data.model ?? 'unknown',

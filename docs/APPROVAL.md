@@ -20,10 +20,14 @@ Use `--no-approval` or `"approvalMode": "deny"` for CI and non-interactive runs.
 
 These stay hard denies — untrusted content must not unlock them via a click-through:
 
-- `AUTHORITY_PARAMETER_FROM_CONTENT`
+- `AUTHORITY_PARAMETER_FROM_CONTENT` (a document chose the recipient)
 - `AUTHORITY_PARAMETER_MISSING`
 - `PINNED_PARAMETER_CONFLICT`
 - `UNKNOWN_TOOL`
+
+`DESTINATION_ORIGIN_UNCLEAR` is approvable: the user named a person or authorized the
+send, and Warrant could not see whether the address came from a lookup. Approving
+pins that address for the current turn.
 - Tool-set **drift** (capability appeared after baseline)
 
 ### Lab / Prisma

@@ -48,6 +48,19 @@ Do these in order. Same rule: finish, test, and push one before the next.
 | F4 | Re-run LangChain and Vercel | **Done.** Both exit 0. LangChain: direct line, stop rate 1/1, benign 1/1, marker not repeated under the guard. Vercel: direct and false-approval ignored, multi-step called `send_email`; guard blocked the tool and the planted marker was still repeated (`marker-echoed`); stop rate 1/1, benign 1/1 |
 | F5 | Item 11, then publish | Hosted scan report, then CLI 0.2.0 last |
 
+## Upgrades locked 27 Sep (after the follow-ups)
+
+Do these in order. Same rule: finish, test, and push one before the next.
+
+| # | Item | Done when |
+| --- | --- | --- |
+| 1 | Recipient origin | **Done.** An email field (`to`, `cc`, `bcc`, `send_to`, or a schema description that says recipient) accepts an address the user typed, or one returned by a lookup of the person they named. An address seen in other tool output is blocked and cannot be approved. An address Warrant cannot trace is `DESTINATION_ORIGIN_UNCLEAR` and can be confirmed for this turn |
+| 2 | Secret egress on every path | Not started |
+| 3 | Only the current user request is permission | Not started |
+| 4 | Saved tool-list pin | Not started |
+| 5 | Full scan mode | Not started |
+| 6 | Shareable report, then publish | Not started |
+
 ## Model rule of thumb
 
 - **Opus 5.5:** anything where a wrong design is expensive — attacker loop,

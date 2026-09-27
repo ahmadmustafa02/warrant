@@ -1,3 +1,4 @@
+import { isEmailAuthorityParameter } from '@/core/authorization/recipientOrigin';
 import {
   ToolRegistry,
   type RiskTier,
@@ -202,9 +203,12 @@ export function classifyDiscoveredTool(
 
   const authorityParameters =
     override.authorityParameters ??
-    tool.parameterNames.filter((name) =>
-      AUTHORITY_PARAMETER_NAMES.has(name.toLowerCase()),
-    );
+    tool.parameterNames.filter((name) => {
+      if (AUTHORITY_PARAMETER_NAMES.has(name.toLowerCase())) {
+        return true;
+      }
+      return isEmailAuthorityParameter(name, tool.parameterDescriptions?.[name] ?? '');
+    });
 
   const reachesOutside = tokens.some((token) => EGRESS_TOKENS.has(token));
   const description =

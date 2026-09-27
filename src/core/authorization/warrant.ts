@@ -13,12 +13,22 @@ export interface Grant {
    * may never do is contradict a parameter the user pinned.
    */
   readonly pinnedParameters: Readonly<Record<string, string>>;
+  /**
+   * People the user named for a destination field without typing the address.
+   *
+   * A later contacts lookup of that person may fill the field. A document may not.
+   */
+  readonly namedParties?: Readonly<Record<string, readonly string[]>>;
 }
 
 export interface UserIntent {
   readonly requestedTools: readonly string[];
   readonly pinnedParameters?: Readonly<
     Record<string, Readonly<Record<string, string>>>
+  >;
+  /** Per tool, then per parameter: the person the user named. */
+  readonly namedParties?: Readonly<
+    Record<string, Readonly<Record<string, readonly string[]>>>
   >;
 }
 
@@ -58,7 +68,7 @@ export function issueWarrant(
     );
   }
 
-  const { requestedTools, pinnedParameters = {} } = intent.value;
+  const { requestedTools, pinnedParameters = {}, namedParties = {} } = intent.value;
   const grants: Grant[] = [];
   const unknownTools: string[] = [];
   const granted = new Set<string>();
@@ -72,10 +82,18 @@ export function issueWarrant(
       continue;
     }
     granted.add(tool);
+    const parties = namedParties[tool] ?? {};
+    const frozenParties: Record<string, readonly string[]> = {};
+    for (const [parameter, names] of Object.entries(parties)) {
+      frozenParties[parameter] = Object.freeze([...names]);
+    }
     grants.push(
       Object.freeze({
         tool,
         pinnedParameters: Object.freeze({ ...(pinnedParameters[tool] ?? {}) }),
+        ...(Object.keys(frozenParties).length > 0
+          ? { namedParties: Object.freeze(frozenParties) }
+          : {}),
       }),
     );
   }

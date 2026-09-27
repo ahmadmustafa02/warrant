@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
+import { readSchemaParameters } from './schemaParameters';
 
 const textBlockSchema = z.object({ type: z.literal('text'), text: z.string() });
 export const toolUseBlockSchema = z.object({
@@ -56,17 +57,6 @@ export class AnthropicWireParseError extends Error {
   }
 }
 
-function schemaParameterNames(inputSchema: unknown): readonly string[] {
-  if (typeof inputSchema !== 'object' || inputSchema === null) {
-    return [];
-  }
-  const properties = (inputSchema as { properties?: unknown }).properties;
-  if (typeof properties !== 'object' || properties === null) {
-    return [];
-  }
-  return Object.keys(properties);
-}
-
 function userTextFromContent(
   content: z.infer<typeof anthropicMessageSchema>['content'],
 ): string {
@@ -88,11 +78,17 @@ export function parseAnthropicRequest(body: unknown): CanonicalRequest {
   const userTurns = parsed.data.messages.filter((message) => message.role === 'user');
   const latest = userTurns[userTurns.length - 1];
 
-  const tools: DiscoveredTool[] = (parsed.data.tools ?? []).map((tool) => ({
-    name: tool.name,
-    description: tool.description ?? '',
-    parameterNames: schemaParameterNames(tool.input_schema),
-  }));
+  const tools: DiscoveredTool[] = (parsed.data.tools ?? []).map((tool) => {
+    const schema = readSchemaParameters(tool.input_schema);
+    return {
+      name: tool.name,
+      description: tool.description ?? '',
+      parameterNames: schema.names,
+      ...(Object.keys(schema.descriptions).length > 0
+        ? { parameterDescriptions: schema.descriptions }
+        : {}),
+    };
+  });
 
   return {
     model: parsed.data.model ?? 'unknown',

@@ -1,8 +1,18 @@
-import { evaluateToolCall, type GuardMode } from '@/agent/guard/applyGuard';
+import {
+  evaluateToolCall,
+  parseToolArguments,
+  type GuardMode,
+} from '@/agent/guard/applyGuard';
 import type { GuardDecision } from '@/core/authorization/decide';
-import { issueWarrant } from '@/core/authorization/warrant';
+import {
+  destinationOriginsForCall,
+  isEmailAuthorityParameter,
+  type DestinationOrigin,
+  type ObservedToolExchange,
+} from '@/core/authorization/recipientOrigin';
+import { findGrant, issueWarrant } from '@/core/authorization/warrant';
 import type { UserIntent } from '@/core/authorization/warrant';
-import { taint } from '@/core/provenance/tainted';
+import { describeValue, taint } from '@/core/provenance/tainted';
 import { TurnSecretTracker } from '@/core/output/turnSecrets';
 import type { ToolDefinition, ToolRegistry } from '@/core/tools/registry';
 import { driftedToolNames, type ToolDrift } from '@/core/tools/toolSetDrift';
@@ -20,9 +30,11 @@ import { appendAnthropicToolSecretsToTracker } from './ingestAnthropicToolResult
 import { appendOpenAiToolSecretsToTracker } from './ingestOpenAiToolResults';
 import { appendResponsesToolSecretsToTracker } from './ingestResponsesToolResults';
 import type { ProxySession } from './proxySession';
+import { observeToolResults } from './observeToolResults';
 import {
   augmentIntentWithTool,
   isApprovalEligible,
+  pinApprovedDestination,
   type ApprovalCoordinator,
 } from './proxyApproval';
 
@@ -75,6 +87,62 @@ export interface ProxyExchange {
  * unchecked. A silently disabled guard is the worst failure mode this project has,
  * so it is an error rather than a warning.
  */
+function originsForCall(
+  warrant: ReturnType<typeof issueWarrant>,
+  registry: ToolRegistry,
+  toolName: string,
+  rawArguments: string,
+  observations: readonly ObservedToolExchange[],
+): Readonly<Record<string, DestinationOrigin>> {
+  try {
+    const definition = registry.get(toolName);
+    const grant = findGrant(warrant, toolName);
+    return destinationOriginsForCall({
+      authorityParameters: definition?.authorityParameters ?? [],
+      args: parseToolArguments(rawArguments),
+      namedParties: grant?.namedParties ?? {},
+      observations,
+    });
+  } catch {
+    return {};
+  }
+}
+
+function intentAfterApproval(
+  intent: UserIntent,
+  decision: GuardDecision,
+  rawArguments: string,
+  registry: ToolRegistry,
+): UserIntent {
+  if (decision.allowed) {
+    return intent;
+  }
+  const withTool = augmentIntentWithTool(intent, decision.tool);
+  if (decision.code !== 'DESTINATION_ORIGIN_UNCLEAR') {
+    return withTool;
+  }
+  let args: Record<string, unknown>;
+  try {
+    args = parseToolArguments(rawArguments);
+  } catch {
+    return withTool;
+  }
+  const definition = registry.get(decision.tool);
+  let next = withTool;
+  for (const parameter of definition?.authorityParameters ?? []) {
+    if (!isEmailAuthorityParameter(parameter) || !(parameter in args)) {
+      continue;
+    }
+    next = pinApprovedDestination(
+      next,
+      decision.tool,
+      parameter,
+      describeValue(args[parameter]),
+    );
+  }
+  return next;
+}
+
 function trackRequestSecrets(
   wire: ExchangeWire,
   rawRequest: unknown,
@@ -189,6 +257,7 @@ export function guardExchange(options: {
     };
   }
 
+  const observations = observeToolResults(options.rawRequest, wire);
   const warrant = issueWarrant(taint(intent, 'USER'), registry);
 
   const decisions: ProxyDecision[] = [];
@@ -223,6 +292,13 @@ export function guardExchange(options: {
         registry,
         toolName: call.name,
         rawArguments: call.rawArguments,
+        destinationOrigins: originsForCall(
+          warrant,
+          registry,
+          call.name,
+          call.rawArguments,
+          observations,
+        ),
       });
     } catch {
       const reason = `Warrant blocked ${call.name}: its arguments were not valid JSON, so they could not be checked.`;
@@ -334,6 +410,7 @@ export async function guardExchangeAsync(options: {
     };
   }
 
+  const observations = observeToolResults(options.rawRequest, wire);
   let warrant = issueWarrant(taint(intent, 'USER'), registry);
   const decisions: ProxyDecision[] = [];
   const denialsByCallId = new Map<string, string>();
@@ -362,6 +439,13 @@ export async function guardExchangeAsync(options: {
         registry,
         toolName: call.name,
         rawArguments: call.rawArguments,
+        destinationOrigins: originsForCall(
+          warrant,
+          registry,
+          call.name,
+          call.rawArguments,
+          observations,
+        ),
       });
     } catch {
       const reason = `Warrant blocked ${call.name}: its arguments were not valid JSON, so they could not be checked.`;
@@ -389,7 +473,7 @@ export async function guardExchangeAsync(options: {
         riskTier: decision.riskTier ?? 'SENSITIVE',
       });
       if (choice === 'approve') {
-        intent = augmentIntentWithTool(intent, decision.tool);
+        intent = intentAfterApproval(intent, decision, call.rawArguments, registry);
         warrant = issueWarrant(taint(intent, 'USER'), registry);
         decision =
           evaluateToolCall({
@@ -398,6 +482,13 @@ export async function guardExchangeAsync(options: {
             registry,
             toolName: call.name,
             rawArguments: call.rawArguments,
+            destinationOrigins: originsForCall(
+              warrant,
+              registry,
+              call.name,
+              call.rawArguments,
+              observations,
+            ),
           }) ?? decision;
       }
     }

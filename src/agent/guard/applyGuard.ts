@@ -1,4 +1,5 @@
 import { decideToolCall, type GuardDecision } from '@/core/authorization/decide';
+import type { DestinationOrigin } from '@/core/authorization/recipientOrigin';
 import { taint } from '@/core/provenance/tainted';
 import type { ProvenanceKind } from '@/core/provenance/types';
 import type { Warrant } from '@/core/authorization/warrant';
@@ -50,6 +51,7 @@ export function evaluateToolCall(options: {
   registry: ToolRegistry;
   toolName: string;
   rawArguments: string;
+  destinationOrigins?: Readonly<Record<string, DestinationOrigin>>;
 }): GuardDecision | null {
   if (options.mode === 'OFF') {
     return null;
@@ -63,6 +65,9 @@ export function evaluateToolCall(options: {
       tool: options.toolName,
       args: taintToolArguments(argsObject),
     },
+    ...(options.destinationOrigins === undefined
+      ? {}
+      : { destinationOrigins: options.destinationOrigins }),
   });
   return decision;
 }

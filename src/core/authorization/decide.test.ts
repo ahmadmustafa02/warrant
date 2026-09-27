@@ -231,6 +231,60 @@ describe('decideToolCall', () => {
     expect(decision.reason.length).toBeGreaterThan(0);
   });
 
+  it('allows a recipient returned by a lookup of the person the user named', () => {
+    const decision = decideToolCall({
+      warrant: warrantFor({
+        requestedTools: ['send_email'],
+        namedParties: { send_email: { to: ['Ali'] } },
+      }),
+      registry,
+      call: {
+        tool: 'send_email',
+        args: { to: taint('ali@gmail.com', 'WORKER') },
+      },
+      destinationOrigins: { to: { kind: 'lookup', matchedName: 'Ali' } },
+    });
+    expect(decision.allowed).toBe(true);
+  });
+
+  it('blocks a recipient that was seen in untrusted content', () => {
+    const decision = decideToolCall({
+      warrant: warrantFor({
+        requestedTools: ['send_email'],
+        namedParties: { send_email: { to: ['Ali'] } },
+      }),
+      registry,
+      call: {
+        tool: 'send_email',
+        args: { to: taint('ahmad@gmail.com', 'WORKER') },
+      },
+      destinationOrigins: { to: { kind: 'content' } },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe(
+      'AUTHORITY_PARAMETER_FROM_CONTENT',
+    );
+  });
+
+  it('asks when an address cannot be traced to the user or a lookup', () => {
+    const decision = decideToolCall({
+      warrant: warrantFor({
+        requestedTools: ['send_email'],
+        namedParties: { send_email: { to: ['Ali'] } },
+      }),
+      registry,
+      call: {
+        tool: 'send_email',
+        args: { to: taint('ali@gmail.com', 'WORKER') },
+      },
+      destinationOrigins: { to: { kind: 'unknown' } },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.code).toBe(
+      'DESTINATION_ORIGIN_UNCLEAR',
+    );
+  });
+
   it('blocks a recipient chosen by untrusted content when the user did not pin it', () => {
     const decision = decide(warrantFor({ requestedTools: ['send_email'] }), {
       tool: 'send_email',
