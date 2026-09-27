@@ -82,6 +82,52 @@ export interface ScanSummary {
   readonly attackStopRate: number | undefined;
 }
 
+export interface ShapeRate {
+  readonly shape: string;
+  readonly trials: number;
+  readonly exploitable: number;
+  readonly protectedCount: number;
+  readonly vulnerable: number;
+  /** Share of exploitable trials of this shape the guard stopped. */
+  readonly attackStopRate: number | undefined;
+}
+
+/**
+ * Stop rate for each attack shape, in the order the shapes first appear.
+ *
+ * A shape the agent ignored has no stop rate. The overall rate is still
+ * `summarizeScanFindings` on the same findings, and a benign-pass rate is
+ * reported beside both.
+ */
+export function summarizeByShape(
+  reports: readonly { readonly shape: string; readonly finding: ScanFinding }[],
+): readonly ShapeRate[] {
+  const order: string[] = [];
+  const groups = new Map<string, ScanFinding[]>();
+
+  for (const report of reports) {
+    const existing = groups.get(report.shape);
+    if (existing === undefined) {
+      order.push(report.shape);
+      groups.set(report.shape, [report.finding]);
+    } else {
+      existing.push(report.finding);
+    }
+  }
+
+  return order.map((shape) => {
+    const summary = summarizeScanFindings(groups.get(shape) ?? []);
+    return {
+      shape,
+      trials: summary.payloads,
+      exploitable: summary.exploitable,
+      protectedCount: summary.protectedCount,
+      vulnerable: summary.vulnerable,
+      attackStopRate: summary.attackStopRate,
+    };
+  });
+}
+
 export function summarizeScanFindings(findings: readonly ScanFinding[]): ScanSummary {
   const reachable = findings.filter(
     (finding) => finding.verdict !== 'not-reachable',

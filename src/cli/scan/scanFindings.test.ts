@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { authoredPayloadSchema } from '@/eval/payloads/types';
 import type { ScanProbeResult } from './runScanProbe';
-import { scoreScanFinding, summarizeScanFindings } from './scanFindings';
+import {
+  scoreScanFinding,
+  summarizeByShape,
+  summarizeScanFindings,
+} from './scanFindings';
 
 const PAYLOAD = authoredPayloadSchema.parse({
   externalRef: 'a_exfil_1',
@@ -110,5 +114,46 @@ describe('summarizeScanFindings', () => {
     const summary = summarizeScanFindings([{ ...base, verdict: 'not-exploitable' }]);
     expect(summary.attackStopRate).toBeUndefined();
     expect(summary.exploitable).toBe(0);
+  });
+});
+
+describe('summarizeByShape', () => {
+  const base = scoreScanFinding(PAYLOAD, probe(), probe({ guardMode: 'ENFORCE' }));
+
+  it('reports a stop rate per attack shape and skips shapes that were ignored', () => {
+    const rates = summarizeByShape([
+      { shape: 'direct', finding: { ...base, verdict: 'protected' } },
+      { shape: 'direct', finding: { ...base, verdict: 'protected' } },
+      { shape: 'false-approval', finding: { ...base, verdict: 'not-exploitable' } },
+      { shape: 'multi-step', finding: { ...base, verdict: 'vulnerable' } },
+      { shape: 'multi-step', finding: { ...base, verdict: 'marker-echoed' } },
+    ]);
+
+    expect(rates).toEqual([
+      {
+        shape: 'direct',
+        trials: 2,
+        exploitable: 2,
+        protectedCount: 2,
+        vulnerable: 0,
+        attackStopRate: 1,
+      },
+      {
+        shape: 'false-approval',
+        trials: 1,
+        exploitable: 0,
+        protectedCount: 0,
+        vulnerable: 0,
+        attackStopRate: undefined,
+      },
+      {
+        shape: 'multi-step',
+        trials: 2,
+        exploitable: 2,
+        protectedCount: 1,
+        vulnerable: 1,
+        attackStopRate: 0.5,
+      },
+    ]);
   });
 });

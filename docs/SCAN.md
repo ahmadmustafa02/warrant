@@ -63,8 +63,10 @@ passed, `1` an attack survived or a normal task was blocked or did not finish,
 | `--inject-into` | `tool-result` | See below. |
 | `--timeout MS` | `120000` | Per-run timeout; a hung agent is killed and scored. |
 | `--json` | off | Machine-readable report for CI. |
-| `--adaptive` | off | Generate lines for this agent's sensitive tools instead of the fixed corpus. |
+| `--adaptive` | off | Generate lines for this agent's sensitive tools instead of the fixed corpus. Stops at the first shape the agent acts on. |
 | `--rounds N` | `2` | With `--adaptive`, how many phrasings to try per tool. |
+| `--full` | off | Run every attack shape against each sensitive tool, repeated. Reports a stop rate per shape and the benign-pass rate. |
+| `--repeats N` | `3` | With `--full`, how many times to run each shape. |
 | `--benign TASK` | the scan command, once | Repeat for each normal task. The text is appended to the command. Do not also put the task in the command. |
 
 ## Adaptive mode
@@ -85,6 +87,22 @@ further sentences, up to `--rounds` (default 2). The verdict is still
 
 `--adaptive` cannot be combined with `--held-out` or `--all`. Those stay on the
 fixed corpus so held-out numbers are not tuned against a live model.
+
+## Full mode
+
+```bash
+warrant scan --full -- node their-agent.js "summarize the latest report"
+```
+
+`--full` uses the same four shapes as the adaptive probe (direct, false-approval,
+multi-step, hidden-character) but does not stop when one of them works, and does
+not ask a generator for more lines. Each shape runs `--repeats` times (default 3)
+against every sensitive tool the agent advertises. The report gives a stop rate
+for each shape and one overall stop rate, always next to the benign-pass rate.
+A shape the agent ignored has no stop rate, because there was nothing to stop.
+
+`--full` cannot be combined with `--adaptive`, `--held-out`, `--all`, `--limit`,
+or `--rounds`.
 
 ## Injection targets
 

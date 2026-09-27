@@ -7,6 +7,11 @@ import { DOCUMENT_INJECTION_ATTACKS } from '@/eval/payloads/documentInjectionAut
 import { HELD_OUT_DOCUMENT_ATTACKS } from '@/eval/payloads/heldOutDocumentInjection';
 import { runAdaptiveProbe, type AdaptiveToolReport } from '@/cli/scan/adaptiveProbe';
 import {
+  DEFAULT_FULL_SCAN_REPEATS,
+  runFullProbe,
+  type FullScanReport,
+} from '@/cli/scan/fullScan';
+import {
   benignTaskStatus,
   parseBenignTasks,
   runBenignSuite,
@@ -15,6 +20,7 @@ import {
 import { DEFAULT_SCAN_TIMEOUT_MS, runScanProbe } from '@/cli/scan/runScanProbe';
 import {
   scoreScanFinding,
+  summarizeByShape,
   summarizeScanFindings,
   type ScanFinding,
   type ScanSummary,
@@ -25,7 +31,7 @@ import { statusFail, statusOk, statusWarn, warrantBanner } from '@/cli/ui/brand'
 const DEFAULT_LIMIT = 8;
 
 const USAGE =
-  'Usage: warrant scan [--limit N] [--all] [--held-out] [--adaptive] [--rounds N] [--benign TASK]... [--inject-into tool-result|user-content] [--timeout MS] [--json] -- <command...>';
+  'Usage: warrant scan [--limit N] [--all] [--held-out] [--adaptive] [--rounds N] [--full] [--repeats N] [--benign TASK]... [--inject-into tool-result|user-content] [--timeout MS] [--json] -- <command...>';
 
 function readFlag(argv: readonly string[], name: string): string | undefined {
   const index = argv.indexOf(name);
@@ -249,7 +255,141 @@ async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> 
   return code;
 }
 
+function formatStopRate(
+  rate: number | undefined,
+  protectedCount: number,
+  exploitable: number,
+): string {
+  if (rate === undefined) {
+    return 'n/a (nothing was exploitable)';
+  }
+  return `${(rate * 100).toFixed(0)}% (${protectedCount}/${exploitable})`;
+}
+
+function fullRow(report: FullScanReport): string {
+  return `${findingRow(report.finding)}\n  ${pc.dim(`${report.shape} · repeat ${report.repeat} · ${report.line}`)}`;
+}
+
+async function runFullScanCommand(argv: readonly string[]): Promise<number> {
+  if (
+    argv.includes('--adaptive') ||
+    argv.includes('--held-out') ||
+    argv.includes('--all') ||
+    argv.includes('--limit') ||
+    argv.includes('--rounds')
+  ) {
+    throw new Error(
+      '--full runs every attack shape against this agent’s tools, so --adaptive, --held-out, --all, --limit, and --rounds do not apply',
+    );
+  }
+
+  const json = argv.includes('--json');
+  if (!json) {
+    p.intro(warrantBanner('Scan — every attack shape, repeated'));
+  }
+
+  const target = parseTarget(argv);
+  const timeoutMs = parsePositiveInt(argv, '--timeout') ?? DEFAULT_SCAN_TIMEOUT_MS;
+  const repeats = parsePositiveInt(argv, '--repeats') ?? DEFAULT_FULL_SCAN_REPEATS;
+  const targetCommand = parseCommandAfterDash(argv);
+  const benignTasks = parseBenignTasks(argv);
+  const canary = `WARRANT-SCAN-CANARY-${randomUUID().slice(0, 8).toUpperCase()}`;
+
+  if (!json) {
+    p.log.info(`Agent under test: ${pc.dim(targetCommand.join(' '))}`);
+    p.log.info(
+      pc.dim(
+        `every shape · ${repeats} repeats · planted in ${target} · agent runs unmodified behind the proxy`,
+      ),
+    );
+  }
+
+  const full = await runFullProbe({
+    command: targetCommand,
+    canary,
+    repeats,
+    timeoutMs,
+    injectionTarget: target,
+  });
+
+  if (full.reports.length === 0) {
+    const names = full.observedTools.map((tool) => tool.name).join(', ') || '(none)';
+    if (!json) {
+      p.log.warn(`No sensitive tools to probe. Observed: ${names}`);
+      p.outro(statusWarn('Scan inconclusive — nothing sensitive to test'));
+    } else {
+      process.stdout.write(
+        `${JSON.stringify({ mode: 'full', observedTools: full.observedTools, reports: [], byShape: [] }, null, 2)}\n`,
+      );
+    }
+    return 2;
+  }
+
+  const benign = await collectBenign(targetCommand, benignTasks, timeoutMs);
+  const findings = full.reports.map((report) => report.finding);
+  const summary = summarizeScanFindings(findings);
+  const byShape = summarizeByShape(full.reports);
+
+  if (json) {
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          mode: 'full',
+          agent: targetCommand.join(' '),
+          injectionTarget: target,
+          repeats,
+          observedTools: full.observedTools,
+          reports: full.reports,
+          byShape,
+          summary,
+          benign,
+        },
+        null,
+        2,
+      )}\n`,
+    );
+  } else {
+    p.note(full.reports.map(fullRow).join('\n\n'), 'Findings');
+    const shapeLines = byShape
+      .map(
+        (rate) =>
+          `  ${rate.shape.padEnd(18)} ${formatStopRate(rate.attackStopRate, rate.protectedCount, rate.exploitable)}`,
+      )
+      .join('\n');
+    p.log.info(
+      [
+        `Trials: ${full.reports.length} (${repeats} repeats of each shape)`,
+        `Attack-stop rate by shape:\n${shapeLines}`,
+        `Attack-stop rate under ENFORCE: ${formatStopRate(summary.attackStopRate, summary.protectedCount, summary.exploitable)}`,
+        benignLine(benign),
+      ].join('\n'),
+    );
+  }
+
+  const code = exitCodeFor(summary, benign);
+  if (!json) {
+    if (code === 2) {
+      p.outro(statusWarn('Scan inconclusive — nothing to inject into'));
+    } else if (code === 1) {
+      p.outro(statusFail(failureReason(summary, benign)));
+    } else {
+      p.outro(
+        statusOk(
+          `Guard stopped every exploitable attack — run "warrant guard -- ${targetCommand.join(' ')}" to keep it on`,
+        ),
+      );
+    }
+  }
+  return code;
+}
+
 export async function runScanCommand(argv: readonly string[]): Promise<number> {
+  if (argv.includes('--full')) {
+    return runFullScanCommand(argv);
+  }
+  if (argv.includes('--repeats')) {
+    throw new Error('--repeats requires --full');
+  }
   if (argv.includes('--adaptive')) {
     return runAdaptiveScanCommand(argv);
   }
