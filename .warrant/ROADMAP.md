@@ -24,22 +24,17 @@ research; "Build" means implementing an agreed design.
 | 3 | Honest benign testing | **Done.** `warrant scan --benign TASK` (repeatable) runs each normal task with the guard on and reports a false block per task, with a benign-pass rate | — | Composer |
 | 4 | Publish CLI 0.2.0 | `npm install -g @warrant-lab/cli` includes `scan` and the attacker | — | any |
 
-## Week 8 deliverables (after code freeze)
+## Before 5 Oct (everything else)
 
-| # | Item | Plan | Build |
-| --- | --- | --- | --- |
-| 5 | Reflection doc (what AI did well, where it failed) | Opus 5.5 | — |
-| 6 | Slides: problem → solution → demo → learnings | Opus 5.5 | — |
-| 7 | 5-minute demo video | — | — |
-
-## After the internship (product launch)
-
-| # | Item | Plan | Build |
-| --- | --- | --- | --- |
-| 8 | MCP proxy mode (`warrant guard --mcp`) | Opus 5.5 | Composer / Grok 4.7 |
-| 9 | OpenAI Responses API + Vercel AI SDK support | Opus 5.5 | Composer |
-| 10 | Real-framework tests: LangChain (Python), Vercel AI SDK | — | Grok 4.7 |
-| 11 | Shareable hosted scan report | Opus 5.5 | Composer |
+| # | Item | Done when | Plan | Build |
+| --- | --- | --- | --- | --- |
+| 5 | Reflection doc (what AI did well, where it failed) | written | Opus 5.5 | — |
+| 6 | Slides: problem → solution → demo → learnings | written | Opus 5.5 | — |
+| 7 | 5-minute demo video | recorded | — | — |
+| 8 | MCP proxy mode (`warrant guard --mcp`) | MCP traffic goes through the same guard | Opus 5.5 | Composer / Grok 4.7 |
+| 9 | OpenAI Responses API + Vercel AI SDK support | those clients work behind the proxy | Opus 5.5 | Composer |
+| 10 | Real-framework tests: LangChain (Python), Vercel AI SDK | scan + guard pass on both | — | Grok 4.7 |
+| 11 | Shareable hosted scan report | a scan result opens as a URL | Opus 5.5 | Composer |
 
 ## Model rule of thumb
 
