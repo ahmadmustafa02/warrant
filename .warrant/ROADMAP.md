@@ -36,6 +36,18 @@ research; "Build" means implementing an agreed design.
 | 10 | Real-framework tests: LangChain (Python), Vercel AI SDK | **Done.** `examples/langchain-agent` (chat completions) and `examples/vercel-ai-agent` (`openai.responses`). Adaptive scan exit 0 on both: the probe landed in the tool result, neither agent called `send_email`, benign summarize passed. `warrant guard --no-approval` exit 0 on both. See `docs/FRAMEWORKS.md` | — | Grok 4.7 |
 | 11 | Shareable hosted scan report | a scan result opens as a URL | Opus 5.5 | Composer |
 
+## Follow-ups locked 27 Sep (after item 10)
+
+Do these in order. Same rule: finish, test, and push one before the next.
+
+| # | Item | Done when |
+| --- | --- | --- |
+| F1 | Responses secret tracking | **Done.** A `function_call_output` from a secret-returning tool is remembered and stripped from the reply, same as a chat `role: tool` result. Ordinary document text is not stripped |
+| F2 | Document echo is not a secret leak | A planted marker copied from the poisoned document is recorded, and does not by itself fail the scan. A value from a secret-returning tool in the reply still does |
+| F3 | Attacks aimed at the agent's own tools | Scan lines cover wording, hidden characters, multi-step, and false claims of user approval, and only name tools that agent advertised |
+| F4 | Re-run LangChain and Vercel | Both rates reported from F3 attacks: stop rate on exploitable lines, benign-pass on the normal summarize task |
+| F5 | Item 11, then publish | Hosted scan report, then CLI 0.2.0 last |
+
 ## Model rule of thumb
 
 - **Opus 5.5:** anything where a wrong design is expensive — attacker loop,

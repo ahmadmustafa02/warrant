@@ -357,6 +357,50 @@ describe('guardExchange', () => {
     expect(body.choices[0]?.message.content).toContain('[REDACTED]');
   });
 
+  it('redacts a vault secret quoted on the Responses wire', () => {
+    const exchange = guardExchange({
+      mode: 'ENFORCE',
+      wire: 'openai-responses',
+      rawRequest: {
+        model: 'gpt-oss-20b',
+        input: [
+          { type: 'message', role: 'user', content: 'Summarize the ticket' },
+          {
+            type: 'function_call',
+            call_id: 'call_vault',
+            name: 'read_vault_entry',
+            arguments: '{"key":"api"}',
+          },
+          {
+            type: 'function_call_output',
+            call_id: 'call_vault',
+            output: JSON.stringify({ value: 'sk_live_ABC123456' }),
+          },
+        ],
+        tools: [
+          {
+            type: 'function',
+            name: 'read_vault_entry',
+            description: 'Read a vault secret',
+            parameters: { type: 'object', properties: { key: {} } },
+          },
+        ],
+      },
+      rawResponse: {
+        output: [
+          {
+            type: 'message',
+            role: 'assistant',
+            content: [{ type: 'output_text', text: 'The key is sk_live_ABC123456' }],
+          },
+        ],
+      },
+    });
+
+    expect(JSON.stringify(exchange.response)).not.toContain('sk_live_ABC123456');
+    expect(JSON.stringify(exchange.response)).toContain('[REDACTED]');
+  });
+
   it('tracks no drift when no session is supplied', () => {
     const exchange = guardExchange({
       mode: 'ENFORCE',

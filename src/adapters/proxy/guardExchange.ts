@@ -4,7 +4,7 @@ import { issueWarrant } from '@/core/authorization/warrant';
 import type { UserIntent } from '@/core/authorization/warrant';
 import { taint } from '@/core/provenance/tainted';
 import { TurnSecretTracker } from '@/core/output/turnSecrets';
-import type { ToolDefinition } from '@/core/tools/registry';
+import type { ToolDefinition, ToolRegistry } from '@/core/tools/registry';
 import { driftedToolNames, type ToolDrift } from '@/core/tools/toolSetDrift';
 import { buildProxyRegistry, type ToolOverride } from './classifyDiscoveredTool';
 import { deriveProxyIntent } from './deriveProxyIntent';
@@ -18,6 +18,7 @@ import {
 } from './exchangeWire';
 import { appendAnthropicToolSecretsToTracker } from './ingestAnthropicToolResults';
 import { appendOpenAiToolSecretsToTracker } from './ingestOpenAiToolResults';
+import { appendResponsesToolSecretsToTracker } from './ingestResponsesToolResults';
 import type { ProxySession } from './proxySession';
 import {
   augmentIntentWithTool,
@@ -74,6 +75,38 @@ export interface ProxyExchange {
  * unchecked. A silently disabled guard is the worst failure mode this project has,
  * so it is an error rather than a warning.
  */
+function trackRequestSecrets(
+  wire: ExchangeWire,
+  rawRequest: unknown,
+  registry: ToolRegistry,
+  session: ProxySession | undefined,
+  tracker: TurnSecretTracker,
+): void {
+  if (wire === 'openai') {
+    if (session !== undefined) {
+      session.ingestOpenAiRequestSecrets(rawRequest, registry);
+      return;
+    }
+    appendOpenAiToolSecretsToTracker(tracker, rawRequest, registry);
+    return;
+  }
+  if (wire === 'openai-responses') {
+    if (session !== undefined) {
+      session.ingestResponsesRequestSecrets(rawRequest, registry);
+      return;
+    }
+    appendResponsesToolSecretsToTracker(tracker, rawRequest, registry);
+    return;
+  }
+  if (wire === 'anthropic') {
+    if (session !== undefined) {
+      session.ingestAnthropicRequestSecrets(rawRequest, registry);
+      return;
+    }
+    appendAnthropicToolSecretsToTracker(tracker, rawRequest, registry);
+  }
+}
+
 export class ProxyGuardError extends Error {
   constructor(message: string) {
     super(message);
@@ -137,15 +170,7 @@ export function guardExchange(options: {
       return options.rawResponse;
     }
     const tracker = options.session?.secretTracker ?? new TurnSecretTracker();
-    if (options.session !== undefined && wire === 'openai') {
-      options.session.ingestOpenAiRequestSecrets(options.rawRequest, registry);
-    } else if (wire === 'openai') {
-      appendOpenAiToolSecretsToTracker(tracker, options.rawRequest, registry);
-    } else if (options.session !== undefined && wire === 'anthropic') {
-      options.session.ingestAnthropicRequestSecrets(options.rawRequest, registry);
-    } else if (wire === 'anthropic') {
-      appendAnthropicToolSecretsToTracker(tracker, options.rawRequest, registry);
-    }
+    trackRequestSecrets(wire, options.rawRequest, registry, options.session, tracker);
     return rewriteExchangeResponse({
       wire,
       rawResponse: options.rawResponse,
@@ -290,15 +315,7 @@ export async function guardExchangeAsync(options: {
     (activeIntent: UserIntent) =>
     (denials: ReadonlyMap<string, string>): unknown => {
       const tracker = options.session?.secretTracker ?? new TurnSecretTracker();
-      if (options.session !== undefined && wire === 'openai') {
-        options.session.ingestOpenAiRequestSecrets(options.rawRequest, registry);
-      } else if (wire === 'openai') {
-        appendOpenAiToolSecretsToTracker(tracker, options.rawRequest, registry);
-      } else if (options.session !== undefined && wire === 'anthropic') {
-        options.session.ingestAnthropicRequestSecrets(options.rawRequest, registry);
-      } else if (wire === 'anthropic') {
-        appendAnthropicToolSecretsToTracker(tracker, options.rawRequest, registry);
-      }
+      trackRequestSecrets(wire, options.rawRequest, registry, options.session, tracker);
       return rewriteExchangeResponse({
         wire,
         rawResponse: options.rawResponse,

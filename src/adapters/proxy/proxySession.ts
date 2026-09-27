@@ -9,6 +9,7 @@ import {
 } from '@/core/tools/toolSetDrift';
 import { appendAnthropicToolSecretsToTracker } from './ingestAnthropicToolResults';
 import { appendOpenAiToolSecretsToTracker } from './ingestOpenAiToolResults';
+import { appendResponsesToolSecretsToTracker } from './ingestResponsesToolResults';
 
 /**
  * Per-run memory for the one thing the proxy has to remember: the capability
@@ -53,6 +54,10 @@ export class ProxySession {
 
   ingestOpenAiRequestSecrets(rawRequest: unknown, registry: ToolRegistry): void {
     appendOpenAiToolSecretsToTracker(this.secretTracker, rawRequest, registry);
+  }
+
+  ingestResponsesRequestSecrets(rawRequest: unknown, registry: ToolRegistry): void {
+    appendResponsesToolSecretsToTracker(this.secretTracker, rawRequest, registry);
   }
 
   ingestAnthropicRequestSecrets(rawRequest: unknown, registry: ToolRegistry): void {
