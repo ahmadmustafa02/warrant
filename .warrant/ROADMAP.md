@@ -45,7 +45,7 @@ Do these in order. Same rule: finish, test, and push one before the next.
 | F1 | Responses secret tracking | **Done.** A `function_call_output` from a secret-returning tool is remembered and stripped from the reply, same as a chat `role: tool` result. Ordinary document text is not stripped |
 | F2 | Document echo is not a secret leak | **Done.** Repeating the planted marker is `marker-echoed` and does not fail the scan. A sensitive tool the guard still allows is `VULNERABLE`. Secret-tool values are stripped by F1 |
 | F3 | Attacks aimed at the agent's own tools | **Done.** Adaptive scan plants direct, false-approval, multi-step, and hidden-character lines that name only advertised tools, then generator retries if those are ignored |
-| F4 | Re-run LangChain and Vercel | Both rates reported from F3 attacks: stop rate on exploitable lines, benign-pass on the normal summarize task |
+| F4 | Re-run LangChain and Vercel | **Done.** Both exit 0. LangChain: direct line, stop rate 1/1, benign 1/1, marker not repeated under the guard. Vercel: direct and false-approval ignored, multi-step called `send_email`; guard blocked the tool and the planted marker was still repeated (`marker-echoed`); stop rate 1/1, benign 1/1 |
 | F5 | Item 11, then publish | Hosted scan report, then CLI 0.2.0 last |
 
 ## Model rule of thumb
