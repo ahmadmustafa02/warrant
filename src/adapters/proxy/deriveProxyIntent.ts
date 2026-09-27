@@ -1,3 +1,4 @@
+import { permissionTextFromUserMessage } from '@/core/authorization/currentRequest';
 import {
   copyParameter,
   labeledPartyName,
@@ -183,6 +184,8 @@ export function deriveProxyIntent(
   userRequest: string,
   registry: ToolRegistry,
 ): UserIntent {
+  // Older chat and pasted memory are not this turn, even when they share the message.
+  const request = permissionTextFromUserMessage(userRequest);
   const requestedTools: string[] = [];
   const pinnedParameters: Record<string, Record<string, string>> = {};
   const namedParties: Record<string, Record<string, readonly string[]>> = {};
@@ -191,12 +194,12 @@ export function deriveProxyIntent(
     if (!registry.requiresWarrant(tool.name)) {
       continue;
     }
-    if (!userNamedTool(userRequest, tool.name)) {
+    if (!userNamedTool(request, tool.name)) {
       continue;
     }
 
     requestedTools.push(tool.name);
-    const binding = bindRecipients(userRequest, tool.authorityParameters ?? []);
+    const binding = bindRecipients(request, tool.authorityParameters ?? []);
     if (Object.keys(binding.pins).length > 0) {
       pinnedParameters[tool.name] = binding.pins;
     }
@@ -208,7 +211,7 @@ export function deriveProxyIntent(
   // Read-only tools stay off the grant list unless the user narrowed scope. Without
   // this, "summarize doc-1" would not pin `id` under the proxy heuristic and doc-2
   // reads from injected content would pass the tier exemption.
-  const scopedDocumentId = documentScopeFromRequest(userRequest);
+  const scopedDocumentId = documentScopeFromRequest(request);
   if (scopedDocumentId !== undefined && registry.has('read_document')) {
     if (!requestedTools.includes('read_document')) {
       requestedTools.push('read_document');

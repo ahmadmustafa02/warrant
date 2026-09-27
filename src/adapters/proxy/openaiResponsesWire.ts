@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isStoredContextPart } from '@/core/authorization/currentRequest';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
 import { redactArgumentJson } from './redactToolArguments';
 import { readSchemaParameters } from './schemaParameters';
@@ -61,6 +62,7 @@ function partsText(content: z.infer<typeof inputItemSchema>['content']): string 
     return content;
   }
   return (content ?? [])
+    .filter((part) => !isStoredContextPart(part.type))
     .map((part) => part.text ?? '')
     .filter((text) => text !== '')
     .join('\n');

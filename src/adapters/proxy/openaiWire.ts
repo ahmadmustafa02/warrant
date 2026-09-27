@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isStoredContextPart } from '@/core/authorization/currentRequest';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
 import { redactArgumentJson } from './redactToolArguments';
 import { readSchemaParameters } from './schemaParameters';
@@ -9,7 +10,10 @@ import { readSchemaParameters } from './schemaParameters';
  * re-serialized parse — a stripped `usage` or `id` would break the caller's SDK.
  */
 
-const contentPartSchema = z.object({ text: z.string().optional() });
+const contentPartSchema = z.object({
+  type: z.string().optional(),
+  text: z.string().optional(),
+});
 
 const toolCallSchema = z.object({
   id: z.string().min(1),
@@ -54,6 +58,7 @@ export function messageText(content: z.infer<typeof messageSchema>['content']): 
   }
   if (Array.isArray(content)) {
     return content
+      .filter((part) => !isStoredContextPart(part.type))
       .map((part) => part.text ?? '')
       .filter((text) => text !== '')
       .join('\n');
