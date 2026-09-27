@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import * as p from '@clack/prompts';
-import { spawn } from 'node:child_process';
+import { spawnUserCommand } from '@/lib/spawnCommand';
 import {
   loadProxyPolicy,
   pinnedToolsFromPolicy,
@@ -158,13 +158,12 @@ export async function runGuardCommand(argv: readonly string[]): Promise<number> 
   }
   p.log.step(`Running: ${command.join(' ')}`);
 
-  const child = spawn(command[0] ?? '', command.slice(1), {
+  const child = spawnUserCommand(command, {
     stdio: 'inherit',
     env: {
       ...process.env,
       ...proxyEnvForChild(url),
     },
-    shell: process.platform === 'win32',
   });
 
   const exitCode = await new Promise<number>((resolve) => {

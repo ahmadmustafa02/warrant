@@ -1,4 +1,5 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { prepareUserCommand } from '@/lib/spawnCommand';
 import type { GuardMode } from '@/agent/guard/applyGuard';
 import type { DiscoveredTool } from '@/adapters/proxy/canonical';
 import type { ProxyDecision } from '@/adapters/proxy/guardExchange';
@@ -44,9 +45,11 @@ export function startMcpStdioProxy(
     );
   }
 
-  const child = spawn(command, options.command.slice(1), {
+  const prepared = prepareUserCommand(options.command);
+  const child = spawn(prepared.file, [...prepared.args], {
     stdio: ['pipe', 'pipe', 'pipe'],
-    shell: process.platform === 'win32',
+    shell: prepared.shell,
+    windowsVerbatimArguments: prepared.windowsVerbatimArguments,
   });
 
   const session = new ProxySession();

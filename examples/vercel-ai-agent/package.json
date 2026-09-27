@@ -1,0 +1,12 @@
+{
+  "name": "warrant-vercel-ai-example",
+  "private": true,
+  "type": "module",
+  "description": "Unmodified Vercel AI SDK agent used to test warrant scan and warrant guard.",
+  "dependencies": {
+    "@ai-sdk/openai": "^4.0.78",
+    "ai": "^7.0.118",
+    "dotenv": "^18.0.4",
+    "zod": "^4.6.5"
+  }
+}

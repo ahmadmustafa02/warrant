@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawnUserCommand } from '@/lib/spawnCommand';
 import type { GuardMode } from '@/agent/guard/applyGuard';
 import {
   loadProxyPolicy,
@@ -64,14 +64,13 @@ async function runSpawnedAgent(options: {
   readonly payload: AuthoredPayload;
   readonly command: readonly string[];
 }): Promise<ProbeRunResult> {
-  const child = spawn(options.command[0] ?? '', options.command.slice(1), {
+  const child = spawnUserCommand(options.command, {
     env: {
       ...process.env,
       ...proxyEnvForChild(options.proxyBaseUrl),
       WARRANT_EVAL_USER_TURN: options.payload.userTurn ?? DEFAULT_USER_TURN,
       WARRANT_EVAL_INJECTION: options.payload.injectionLine,
     },
-    shell: process.platform === 'win32',
   });
 
   let stdout = '';

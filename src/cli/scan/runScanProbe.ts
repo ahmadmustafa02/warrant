@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawnUserCommand } from '@/lib/spawnCommand';
 import type { GuardMode } from '@/agent/guard/applyGuard';
 import type { InjectionTarget, ScanInjection } from '@/adapters/proxy/injectPayload';
 import type { RiskTier } from '@/core/tools/registry';
@@ -54,12 +54,11 @@ function runSpawnedAgent(options: {
   readonly command: readonly string[];
   readonly timeoutMs: number;
 }): Promise<SpawnOutcome> {
-  const child = spawn(options.command[0] ?? '', options.command.slice(1), {
+  const child = spawnUserCommand(options.command, {
     env: {
       ...process.env,
       ...proxyEnvForChild(options.proxyBaseUrl),
     },
-    shell: process.platform === 'win32',
   });
 
   let stderr = '';

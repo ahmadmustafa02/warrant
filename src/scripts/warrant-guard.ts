@@ -6,7 +6,7 @@ import 'dotenv/config';
  * Example:
  *   pnpm exec tsx src/scripts/warrant-guard.ts -- node my-agent.js
  */
-import { spawn } from 'node:child_process';
+import { spawnUserCommand } from '@/lib/spawnCommand';
 import {
   loadProxyPolicy,
   pinnedToolsFromPolicy,
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
 
   console.error(`[warrant] proxy ${url} → ${upstreamBaseUrl()} (${mode})`);
 
-  const child = spawn(command[0] ?? '', command.slice(1), {
+  const child = spawnUserCommand(command, {
     stdio: 'inherit',
     env: {
       ...process.env,
@@ -114,7 +114,6 @@ async function main(): Promise<void> {
       OPENAI_API_BASE: url,
       ANTHROPIC_BASE_URL: url,
     },
-    shell: process.platform === 'win32',
   });
 
   const exitCode = await new Promise<number>((resolve) => {

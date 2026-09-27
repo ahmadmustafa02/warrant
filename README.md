@@ -151,7 +151,7 @@ From this monorepo: `pnpm run warrant <command>`.
 | `approvalMode` | `prompt` | TTY approve/deny for eligible blocks |
 | `streaming` | `guard` | Buffer OpenAI SSE, apply guard, return stream |
 
-OpenAI `/v1/chat/completions`, OpenAI Responses `/v1/responses` (used by the Vercel AI SDK's OpenAI provider; streamed replies are guarded whole, then re-emitted as events), Anthropic `/v1/messages`, Gemini `generateContent` (native or OpenAI-compat). Cursor hooks: [`docs/CURSOR_HOOK.md`](docs/CURSOR_HOOK.md).
+OpenAI `/v1/chat/completions`, OpenAI Responses `/v1/responses` (used by the Vercel AI SDK's OpenAI provider; streamed replies are guarded whole, then re-emitted as events), Anthropic `/v1/messages`, Gemini `generateContent` (native or OpenAI-compat). Unmodified LangChain and Vercel AI SDK agents: [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md). Cursor hooks: [`docs/CURSOR_HOOK.md`](docs/CURSOR_HOOK.md).
 
 ---
 
