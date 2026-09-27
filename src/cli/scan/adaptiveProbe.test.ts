@@ -33,6 +33,7 @@ function probe(overrides: Partial<ScanProbeResult> = {}): ScanProbeResult {
     blockedTools: [],
     canaryLeaked: false,
     canaryDelivered: false,
+    unstoppedTools: [],
     injectedInto: 'tool-result',
     exchanges: 1,
     exitCode: 0,

@@ -68,6 +68,7 @@ function enforcedStandIn(baseline: ScanProbeResult): ScanProbeResult {
     unauthorizedTools: [],
     blockedTools: [],
     canaryDelivered: false,
+    unstoppedTools: [],
   };
 }
 

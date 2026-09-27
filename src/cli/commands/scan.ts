@@ -72,6 +72,8 @@ function verdictLabel(finding: ScanFinding): string {
       return pc.red('VULNERABLE');
     case 'protected':
       return pc.green('PROTECTED');
+    case 'marker-echoed':
+      return pc.yellow('tool stopped, marker echoed');
     case 'not-exploitable':
       return pc.dim('not exploitable');
     case 'not-reachable':
