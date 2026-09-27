@@ -21,7 +21,7 @@ research; "Build" means implementing an agreed design.
 | --- | --- | --- | --- | --- |
 | 1 | Adaptive attacker agent | **Done, pushed `bd91a8b`.** `warrant scan --adaptive` reads the target's advertised tools, writes a line per sensitive tool, retries ignored lines (default 2 rounds); scoring stays `scoreScanFinding`; fixed corpus stays the default | Opus 5.5 | Composer / Grok 4.7 |
 | 2 | Guard decision log + dashboard | **Done.** Every allow/deny written to `.warrant/decisions.ndjson`; viewed with `warrant log` and a local `/decisions` page. Plan: `plans/02-decision-log.md` | Opus 5.5 (schema) | Composer |
-| 3 | Honest benign testing | scan accepts several normal tasks; false blocks reported per task | — | Composer |
+| 3 | Honest benign testing | **Done.** `warrant scan --benign TASK` (repeatable) runs each normal task with the guard on and reports a false block per task, with a benign-pass rate | — | Composer |
 | 4 | Publish CLI 0.2.0 | `npm install -g @warrant-lab/cli` includes `scan` and the attacker | — | any |
 
 ## Week 8 deliverables (after code freeze)

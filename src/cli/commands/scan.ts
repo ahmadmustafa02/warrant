@@ -6,6 +6,12 @@ import type { InjectionTarget } from '@/adapters/proxy/injectPayload';
 import { DOCUMENT_INJECTION_ATTACKS } from '@/eval/payloads/documentInjectionAuthored';
 import { HELD_OUT_DOCUMENT_ATTACKS } from '@/eval/payloads/heldOutDocumentInjection';
 import { runAdaptiveProbe, type AdaptiveToolReport } from '@/cli/scan/adaptiveProbe';
+import {
+  benignTaskStatus,
+  parseBenignTasks,
+  runBenignSuite,
+  type BenignSummary,
+} from '@/cli/scan/benignTasks';
 import { DEFAULT_SCAN_TIMEOUT_MS, runScanProbe } from '@/cli/scan/runScanProbe';
 import {
   scoreScanFinding,
@@ -19,7 +25,7 @@ import { statusFail, statusOk, statusWarn, warrantBanner } from '@/cli/ui/brand'
 const DEFAULT_LIMIT = 8;
 
 const USAGE =
-  'Usage: warrant scan [--limit N] [--all] [--held-out] [--adaptive] [--rounds N] [--inject-into tool-result|user-content] [--timeout MS] [--json] -- <command...>';
+  'Usage: warrant scan [--limit N] [--all] [--held-out] [--adaptive] [--rounds N] [--benign TASK]... [--inject-into tool-result|user-content] [--timeout MS] [--json] -- <command...>';
 
 function readFlag(argv: readonly string[], name: string): string | undefined {
   const index = argv.indexOf(name);
@@ -73,14 +79,52 @@ function verdictLabel(finding: ScanFinding): string {
   }
 }
 
-function exitCodeFor(summary: ScanSummary): number {
+function exitCodeFor(summary: ScanSummary, benign: BenignSummary): number {
   if (summary.reachable === 0) {
     return 2;
   }
-  if (summary.vulnerable > 0) {
+  if (summary.vulnerable > 0 || benign.passed < benign.total) {
     return 1;
   }
   return 0;
+}
+
+function benignLine(benign: BenignSummary): string {
+  const rate = `${(benign.passRate * 100).toFixed(0)}% (${benign.passed}/${benign.total})`;
+  const rows = benign.tasks
+    .map((task) => `  ${benignTaskStatus(task).padEnd(24)} ${task.task}`)
+    .join('\n');
+  return `Benign-pass rate: ${rate}\n${rows}`;
+}
+
+function failureReason(summary: ScanSummary, benign: BenignSummary): string {
+  const parts: string[] = [];
+  if (summary.vulnerable > 0) {
+    parts.push(`${summary.vulnerable} attack(s) survived the guard`);
+  }
+  const failed = benign.total - benign.passed;
+  if (failed > 0) {
+    parts.push(`${failed} normal task(s) were blocked or did not finish`);
+  }
+  return parts.join('; ');
+}
+
+async function collectBenign(
+  command: readonly string[],
+  tasks: readonly string[],
+  timeoutMs: number,
+): Promise<BenignSummary> {
+  return runBenignSuite({
+    command,
+    tasks,
+    timeoutMs,
+    runProbe: async (probe) =>
+      runScanProbe({
+        guardMode: 'ENFORCE',
+        command: probe.command,
+        timeoutMs: probe.timeoutMs,
+      }),
+  });
 }
 
 function findingRow(finding: ScanFinding): string {
@@ -116,6 +160,7 @@ async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> 
   const timeoutMs = parsePositiveInt(argv, '--timeout') ?? DEFAULT_SCAN_TIMEOUT_MS;
   const rounds = parsePositiveInt(argv, '--rounds') ?? 2;
   const targetCommand = parseCommandAfterDash(argv);
+  const benignTasks = parseBenignTasks(argv);
   const canary = `WARRANT-SCAN-CANARY-${randomUUID().slice(0, 8).toUpperCase()}`;
 
   if (!json) {
@@ -149,13 +194,7 @@ async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> 
     return 2;
   }
 
-  const benign = await runScanProbe({
-    guardMode: 'ENFORCE',
-    command: targetCommand,
-    timeoutMs,
-  });
-  const benignPassed =
-    benign.exitCode === 0 && !benign.timedOut && benign.blockedTools.length === 0;
+  const benign = await collectBenign(targetCommand, benignTasks, timeoutMs);
   const findings = adaptive.reports.map((report) => report.finding);
   const summary = summarizeScanFindings(findings);
 
@@ -169,11 +208,7 @@ async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> 
           observedTools: adaptive.observedTools,
           reports: adaptive.reports,
           summary,
-          benign: {
-            passed: benignPassed,
-            exitCode: benign.exitCode,
-            blockedTools: benign.blockedTools,
-          },
+          benign,
         },
         null,
         2,
@@ -190,17 +225,17 @@ async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> 
         `Sensitive tools probed: ${adaptive.reports.length}`,
         `Exploitable with the guard off: ${summary.exploitable}/${summary.reachable} reachable lines`,
         `Attack-stop rate under ENFORCE: ${stopRate}`,
-        `Benign task still completes:    ${benignPassed ? 'yes' : 'no'}`,
+        benignLine(benign),
       ].join('\n'),
     );
   }
 
-  const code = exitCodeFor(summary);
+  const code = exitCodeFor(summary, benign);
   if (!json) {
     if (code === 2) {
       p.outro(statusWarn('Scan inconclusive — nothing to inject into'));
     } else if (code === 1) {
-      p.outro(statusFail(`${summary.vulnerable} attack(s) survived the guard`));
+      p.outro(statusFail(failureReason(summary, benign)));
     } else {
       p.outro(
         statusOk(
@@ -228,6 +263,7 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
   const target = parseTarget(argv);
   const timeoutMs = parsePositiveInt(argv, '--timeout') ?? DEFAULT_SCAN_TIMEOUT_MS;
   const targetCommand = parseCommandAfterDash(argv);
+  const benignTasks = parseBenignTasks(argv);
   const corpus = argv.includes('--held-out')
     ? HELD_OUT_DOCUMENT_ATTACKS
     : DOCUMENT_INJECTION_ATTACKS;
@@ -273,14 +309,8 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
     spin?.stop(`${payload.externalRef} · ${finding.verdict}`);
   }
 
-  // No injection, guard live: proves the guard is not simply blocking everything.
-  const benign = await runScanProbe({
-    guardMode: 'ENFORCE',
-    command: targetCommand,
-    timeoutMs,
-  });
-  const benignPassed =
-    benign.exitCode === 0 && !benign.timedOut && benign.blockedTools.length === 0;
+  // No injection, guard live: each normal task must still complete.
+  const benign = await collectBenign(targetCommand, benignTasks, timeoutMs);
 
   const summary = summarizeScanFindings(findings);
 
@@ -292,11 +322,7 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
           injectionTarget: target,
           findings,
           summary,
-          benign: {
-            passed: benignPassed,
-            exitCode: benign.exitCode,
-            blockedTools: benign.blockedTools,
-          },
+          benign,
         },
         null,
         2,
@@ -314,7 +340,7 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
       [
         `Exploitable with the guard off: ${summary.exploitable}/${summary.reachable} reachable payloads`,
         `Attack-stop rate under ENFORCE: ${stopRate}`,
-        `Benign task still completes:    ${benignPassed ? 'yes' : 'no'}`,
+        benignLine(benign),
       ].join('\n'),
     );
 
@@ -325,7 +351,7 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
     }
   }
 
-  const code = exitCodeFor(summary);
+  const code = exitCodeFor(summary, benign);
   if (code === 2) {
     if (!json) {
       p.outro(statusWarn('Scan inconclusive — nothing to inject into'));
@@ -334,7 +360,7 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
   }
   if (code === 1) {
     if (!json) {
-      p.outro(statusFail(`${summary.vulnerable} attack(s) survived the guard`));
+      p.outro(statusFail(failureReason(summary, benign)));
     }
     return 1;
   }

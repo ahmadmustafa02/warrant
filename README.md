@@ -42,7 +42,7 @@ See [`docs/INTEGRATION.md`](docs/INTEGRATION.md) and [`packages/guard/README.md`
 Typical custom agents call a model over HTTP and use tools (`read_document`, `send_email`, search, and so on). Warrant does not edit that code. It sits in the middle.
 
 ```bash
-warrant scan -- node their-agent.js
+warrant scan --benign "Summarize the report" --benign "Email the summary to me" -- node their-agent.js
 warrant guard -- node their-agent.js
 ```
 
