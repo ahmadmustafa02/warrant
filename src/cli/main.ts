@@ -14,7 +14,7 @@ const HELP = `${warrantBanner()}
 
 Usage:
   warrant init [--from-sandbox] [--llm-intent]
-  warrant guard [--detect-only | --off] [--no-approval] -- <command...>
+  warrant guard [--detect-only | --off] [--no-approval] [--mcp] [--user TEXT] -- <command...>
   warrant log [--denied] [--include-scan] [--session ID] [--limit N] [--json]
   warrant doctor
   warrant eval intent

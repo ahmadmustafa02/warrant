@@ -22,7 +22,7 @@ research; "Build" means implementing an agreed design.
 | 1 | Adaptive attacker agent | **Done, pushed `bd91a8b`.** `warrant scan --adaptive` reads the target's advertised tools, writes a line per sensitive tool, retries ignored lines (default 2 rounds); scoring stays `scoreScanFinding`; fixed corpus stays the default | Opus 5.5 | Composer / Grok 4.7 |
 | 2 | Guard decision log + dashboard | **Done.** Every allow/deny written to `.warrant/decisions.ndjson`; viewed with `warrant log` and a local `/decisions` page. Plan: `plans/02-decision-log.md` | Opus 5.5 (schema) | Composer |
 | 3 | Honest benign testing | **Done.** `warrant scan --benign TASK` (repeatable) runs each normal task with the guard on and reports a false block per task, with a benign-pass rate | — | Composer |
-| 4 | Publish CLI 0.2.0 | `npm install -g @warrant-lab/cli` includes `scan` and the attacker | — | any |
+| 4 | Publish CLI 0.2.0 | **Last.** After 5–11. `npm install -g @warrant-lab/cli` includes scan, adaptive, log, MCP | — | any |
 
 ## Before 5 Oct (everything else)
 
@@ -31,7 +31,7 @@ research; "Build" means implementing an agreed design.
 | 5 | Reflection doc (what AI did well, where it failed) | written | Opus 5.5 | — |
 | 6 | Slides: problem → solution → demo → learnings | written | Opus 5.5 | — |
 | 7 | 5-minute demo video | recorded | — | — |
-| 8 | MCP proxy mode (`warrant guard --mcp`) | MCP traffic goes through the same guard | Opus 5.5 | Composer / Grok 4.7 |
+| 8 | MCP proxy mode (`warrant guard --mcp`) | **Done.** `warrant guard --mcp --user TEXT -- <server>` judges `tools/call` with the same warrant as the HTTP proxy | Opus 5.5 | Composer / Grok 4.7 |
 | 9 | OpenAI Responses API + Vercel AI SDK support | those clients work behind the proxy | Opus 5.5 | Composer |
 | 10 | Real-framework tests: LangChain (Python), Vercel AI SDK | scan + guard pass on both | — | Grok 4.7 |
 | 11 | Shareable hosted scan report | a scan result opens as a URL | Opus 5.5 | Composer |

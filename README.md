@@ -134,6 +134,7 @@ Detection filters (e.g. PromptGuard) flag text; Warrant **authorizes actions**. 
 | ------- | ------------- |
 | `warrant init` | Create `.warrant/proxy-policy.json` |
 | `warrant guard -- <cmd>` | Run your agent behind the guard proxy |
+| `warrant guard --mcp --user TEXT -- <cmd>` | Same guard on an MCP stdio server |
 | `warrant log` | Show recent allows and denies from the local decision log |
 | `warrant scan -- <cmd>` | Hijack-test any agent, no changes to it required |
 | `warrant red-team -- <cmd>` | OFF vs ENFORCE on the injection corpus |
@@ -227,6 +228,7 @@ pnpm run build:guard && pnpm run build:cli
 | [`docs/INTEGRATION.md`](docs/INTEGRATION.md) | Tool-loop + HTTP proxy integration |
 | [`docs/SCAN.md`](docs/SCAN.md) | Scanning a third-party agent for hijacks |
 | [`docs/DECISION_LOG.md`](docs/DECISION_LOG.md) | Local allow/deny log and how to read it |
+| [`docs/MCP.md`](docs/MCP.md) | Guard an MCP stdio server |
 | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Scope, adversary, residual risk |
 | [`docs/HELD_OUT.md`](docs/HELD_OUT.md) | Held-out corpus rules |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | Vercel + Neon |
