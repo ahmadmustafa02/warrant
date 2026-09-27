@@ -425,6 +425,46 @@ export function guardExchange(options: {
   };
 }
 
+/**
+ * A person may accept a new or changed tool into the saved pin.
+ *
+ * The call is then judged like any other call. Accepting the tool does not
+ * accept a document-chosen recipient or a link that carries a secret.
+ */
+async function acceptDriftedTool(
+  options: {
+    readonly approval?: ApprovalCoordinator;
+    readonly session?: ProxySession;
+  },
+  tools: readonly {
+    readonly name: string;
+    readonly parameterNames: readonly string[];
+  }[],
+  toolName: string,
+  rawArguments: string,
+  reason: string,
+): Promise<boolean> {
+  if (options.approval === undefined || options.session === undefined) {
+    return false;
+  }
+  const choice = await options.approval.request({
+    toolName,
+    rawArguments,
+    code: 'TOOL_SET_DRIFT',
+    reason,
+    riskTier: 'SENSITIVE',
+  });
+  if (choice !== 'approve') {
+    return false;
+  }
+  const advertised = tools.find((tool) => tool.name === toolName);
+  options.session.acceptTool({
+    name: toolName,
+    parameterNames: advertised?.parameterNames ?? [],
+  });
+  return true;
+}
+
 /** Same as `guardExchange`, but may pause for interactive approval on eligible denials. */
 export async function guardExchangeAsync(options: {
   readonly mode: GuardMode;
@@ -499,20 +539,35 @@ export async function guardExchangeAsync(options: {
   const decisions: ProxyDecision[] = [];
   const denialsByCallId = new Map<string, string>();
   const blockedTools: string[] = [];
+  const pendingDrift = new Set(drifted);
+  const refusedDrift = new Set<string>();
 
   for (const call of toolCalls) {
-    if (drifted.has(call.name)) {
+    if (pendingDrift.has(call.name) || refusedDrift.has(call.name)) {
       const drift = drifts.find((entry) => entry.toolName === call.name);
       const reason = `Warrant denied ${call.name}: ${drift?.reason ?? 'its advertised surface changed mid-session'}.`;
-      decisions.push({
-        kind: 'DRIFT',
-        callId: call.id,
-        toolName: call.name,
-        reason,
-      });
-      denialsByCallId.set(call.id, reason);
-      blockedTools.push(call.name);
-      continue;
+      const accepted =
+        !refusedDrift.has(call.name) &&
+        (await acceptDriftedTool(
+          options,
+          request.tools,
+          call.name,
+          call.rawArguments,
+          reason,
+        ));
+      if (!accepted) {
+        refusedDrift.add(call.name);
+        decisions.push({
+          kind: 'DRIFT',
+          callId: call.id,
+          toolName: call.name,
+          reason,
+        });
+        denialsByCallId.set(call.id, reason);
+        blockedTools.push(call.name);
+        continue;
+      }
+      pendingDrift.delete(call.name);
     }
 
     let decision: GuardDecision | null;

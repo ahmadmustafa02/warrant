@@ -5,10 +5,12 @@ import type { UserIntent } from '@/core/authorization/warrant';
 
 export type ApprovalChoice = 'deny' | 'approve';
 
+export type ApprovalCode = DenialCode | 'TOOL_SET_DRIFT';
+
 export interface ApprovalPromptInput {
   readonly toolName: string;
   readonly rawArguments: string;
-  readonly code: DenialCode;
+  readonly code: ApprovalCode;
   readonly reason: string;
   readonly riskTier: string;
 }
@@ -75,7 +77,7 @@ export function pinApprovedDestination(
 export interface ApprovalRecord {
   readonly at: string;
   readonly toolName: string;
-  readonly code: DenialCode;
+  readonly code: ApprovalCode;
   readonly choice: ApprovalChoice;
   readonly reason: string;
 }
@@ -123,7 +125,12 @@ export class ApprovalCoordinator {
   }
 }
 
-function isApprovalEligibleCode(code: DenialCode, riskTier: string): boolean {
+function isApprovalEligibleCode(code: ApprovalCode, riskTier: string): boolean {
+  // A new or changed tool is a capability question, not a content question.
+  // The person may accept it into the saved pin. The call is still judged after that.
+  if (code === 'TOOL_SET_DRIFT') {
+    return true;
+  }
   if (NEVER_APPROVE_CODES.has(code)) {
     return false;
   }

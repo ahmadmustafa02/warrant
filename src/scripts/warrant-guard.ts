@@ -9,10 +9,10 @@ import 'dotenv/config';
 import { spawnUserCommand } from '@/lib/spawnCommand';
 import {
   loadProxyPolicy,
-  pinnedToolsFromPolicy,
   resolveIntentMode,
   toolOverridesFromPolicy,
 } from '@/adapters/proxy/proxyPolicy';
+import { resolveToolPin, saveToolPin } from '@/adapters/proxy/toolPin';
 import { listenWarrantProxy } from '@/adapters/proxy/proxyServer';
 import type { GuardMode } from '@/agent/guard/applyGuard';
 
@@ -87,7 +87,8 @@ async function main(): Promise<void> {
     mode,
     upstreamBaseUrl: upstreamBaseUrl(),
     upstreamHeaders: headers,
-    pinnedTools: pinnedToolsFromPolicy(policy),
+    pinnedTools: resolveToolPin(process.cwd(), policy),
+    persistToolPin: (tools) => saveToolPin(process.cwd(), tools),
     overrides: toolOverridesFromPolicy(policy),
     intentMode,
     destructiveRequiresExplicitUser: policy.destructiveRequiresExplicitUser,

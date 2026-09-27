@@ -3,10 +3,10 @@ import * as p from '@clack/prompts';
 import { spawnUserCommand } from '@/lib/spawnCommand';
 import {
   loadProxyPolicy,
-  pinnedToolsFromPolicy,
   resolveIntentMode,
   toolOverridesFromPolicy,
 } from '@/adapters/proxy/proxyPolicy';
+import { resolveToolPin, saveToolPin } from '@/adapters/proxy/toolPin';
 import { ApprovalCoordinator } from '@/adapters/proxy/proxyApproval';
 import { startMcpStdioProxy } from '@/adapters/mcp/mcpStdioProxy';
 import { listenWarrantProxy } from '@/adapters/proxy/proxyServer';
@@ -66,10 +66,14 @@ async function runMcpGuardCommand(options: {
   readonly userTurn: string;
 }): Promise<number> {
   const decisionLog = createDecisionLogSink();
+  const projectRoot = process.cwd();
+  const policy = loadProxyPolicy(projectRoot);
   const { done } = await startMcpStdioProxy({
     mode: options.mode,
     userTurn: options.userTurn,
     command: options.command,
+    pinnedTools: resolveToolPin(projectRoot, policy),
+    persistTools: (tools) => saveToolPin(projectRoot, tools),
     onEvent: ({ decisions, blockedTools, wouldBlockTools }) => {
       decisionLog?.append({ decisions, mode: options.mode, source: 'guard' });
       if (blockedTools.length > 0) {
@@ -121,7 +125,8 @@ export async function runGuardCommand(argv: readonly string[]): Promise<number> 
     mode,
     upstreamBaseUrl: upstreamBaseUrl(),
     upstreamHeaders: headers,
-    pinnedTools: pinnedToolsFromPolicy(policy),
+    pinnedTools: resolveToolPin(process.cwd(), policy),
+    persistToolPin: (tools) => saveToolPin(process.cwd(), tools),
     overrides: toolOverridesFromPolicy(policy),
     intentMode,
     destructiveRequiresExplicitUser: policy.destructiveRequiresExplicitUser,

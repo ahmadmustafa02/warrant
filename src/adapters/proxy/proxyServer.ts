@@ -25,6 +25,11 @@ export interface ProxyServerOptions {
    * which matters because an agent's opening request can already be poisoned.
    */
   readonly pinnedTools?: readonly AdvertisedTool[];
+  /**
+   * Writes the trusted tool list. Set by `warrant guard` only.
+   * Scan and red-team sessions must not overwrite the operator's pin.
+   */
+  readonly persistToolPin?: (tools: readonly AdvertisedTool[]) => void;
   readonly intentMode?: IntentParseMode;
   readonly destructiveRequiresExplicitUser?: boolean;
   readonly streaming?: StreamingPolicy;
@@ -98,7 +103,7 @@ function writeJson(res: http.ServerResponse, status: number, body: unknown): voi
 export function createWarrantProxyServer(options: ProxyServerOptions): http.Server {
   // One session per server: a `warrant guard` run wraps a single agent process, so
   // the capability surface observed first is the one that run is entitled to.
-  const session = new ProxySession(options.pinnedTools);
+  const session = new ProxySession(options.pinnedTools, options.persistToolPin);
 
   return http.createServer((req, res) => {
     void (async () => {

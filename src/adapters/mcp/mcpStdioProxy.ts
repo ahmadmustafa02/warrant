@@ -4,6 +4,7 @@ import type { GuardMode } from '@/agent/guard/applyGuard';
 import type { DiscoveredTool } from '@/adapters/proxy/canonical';
 import type { ProxyDecision } from '@/adapters/proxy/guardExchange';
 import { ProxySession } from '@/adapters/proxy/proxySession';
+import type { AdvertisedTool } from '@/core/tools/toolSetDrift';
 import {
   isJsonRpcRequest,
   isToolsCall,
@@ -24,6 +25,8 @@ export interface McpStdioProxyOptions {
   readonly userTurn: string;
   readonly command: readonly string[];
   readonly onEvent?: (event: McpProxyEvent) => void;
+  readonly pinnedTools?: readonly AdvertisedTool[];
+  readonly persistTools?: (tools: readonly AdvertisedTool[]) => void;
   readonly stdin?: NodeJS.ReadableStream;
   readonly stdout?: NodeJS.WritableStream;
   readonly stderr?: NodeJS.WritableStream;
@@ -52,7 +55,7 @@ export function startMcpStdioProxy(
     windowsVerbatimArguments: prepared.windowsVerbatimArguments,
   });
 
-  const session = new ProxySession();
+  const session = new ProxySession(options.pinnedTools, options.persistTools);
   let advertised: readonly DiscoveredTool[] = [];
   const clientDecoder = new McpFrameDecoder();
   const serverDecoder = new McpFrameDecoder();

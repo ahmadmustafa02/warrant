@@ -42,8 +42,9 @@ yarn-error.log*
 .env*
 !.env.example
 
-# local guard decision log (may contain tool names from a real agent)
+# local guard decision log and saved tool list (may contain tool names from a real agent)
 .warrant/decisions*.ndjson
+.warrant/tool-pin.json
 
 # vercel
 .vercel

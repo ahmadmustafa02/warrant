@@ -167,9 +167,12 @@ vault read, canary leak), not model opinion. Reference: `src/scripts/warrant-eva
 
 ## Tool-set drift
 
-Warrant records the capability surface advertised on the first request of a run. Any
-tool that appears later — or any known tool that **gains** a parameter — is refused,
-because the user's request predates it and cannot have authorized it.
+Warrant records the capability surface advertised on the first trusted run and writes
+it to `.warrant/tool-pin.json`. The next `warrant guard` loads that file, so a tool
+that appears on the first request of a later run is still drift. Any tool that
+appears later — or any known tool that **gains** a parameter — is refused until
+someone approves it. Approval adds that tool to the saved pin. The call is then
+judged normally.
 
 Drift overrides the read-only exemption. A late capability earns nothing from its
 risk tier, since that tier is inferred from a name its injector chose.
@@ -190,8 +193,10 @@ Secret-bearing reads (`returnsSecrets`, vault/API-key-shaped names) require a wa
 even when they look like ordinary reads. Output redaction removes unauthorized secret
 substrings from the model's final text as a second layer (ENFORCE only).
 
-Pin the expected tool set (`pinnedTools`) to check the **first** request too; an
-observed baseline is only as trustworthy as the traffic it was taken from.
+`warrant guard` saves the first list it sees when no pin exists yet. A policy
+`pinnedTools` list is the seed only when `.warrant/tool-pin.json` is missing. Scan
+and red-team runs do not write the pin. The very first save can still be poisoned
+if that run was already attacked; delete the file to start over.
 
 ## What Warrant does not do
 

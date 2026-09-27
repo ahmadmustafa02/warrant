@@ -47,4 +47,43 @@ describe('ProxySession', () => {
 
     expect(drifts.map((drift) => drift.toolName)).toEqual(['export_records']);
   });
+
+  it('saves the first list and does not save a later change', () => {
+    const saved: { name: string }[][] = [];
+    const session = new ProxySession(undefined, (tools) => {
+      saved.push(tools.map((tool) => ({ name: tool.name })));
+    });
+
+    session.observeTools(initial);
+    session.observeTools([
+      ...initial,
+      { name: 'export_records', parameterNames: ['url'] },
+    ]);
+
+    expect(saved).toEqual([[{ name: 'read_document' }, { name: 'send_email' }]]);
+  });
+
+  it('adds an approved tool to the saved list and stops flagging it', () => {
+    const saved: string[][] = [];
+    const session = new ProxySession(initial, (tools) => {
+      saved.push(tools.map((tool) => tool.name));
+    });
+
+    expect(
+      session.observeTools([
+        ...initial,
+        { name: 'export_records', parameterNames: ['url'] },
+      ]),
+    ).toHaveLength(1);
+
+    session.acceptTool({ name: 'export_records', parameterNames: ['url'] });
+
+    expect(
+      session.observeTools([
+        ...initial,
+        { name: 'export_records', parameterNames: ['url'] },
+      ]),
+    ).toEqual([]);
+    expect(saved).toEqual([['read_document', 'send_email', 'export_records']]);
+  });
 });

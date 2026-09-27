@@ -29,7 +29,10 @@ These stay hard denies — untrusted content must not unlock them via a click-th
 `DESTINATION_ORIGIN_UNCLEAR` is approvable: the user named a person or authorized the
 send, and Warrant could not see whether the address came from a lookup. Approving
 pins that address for the current turn.
-- Tool-set **drift** (capability appeared after baseline)
+
+Tool-set drift is approvable. Approving adds that tool's current parameter list to
+`.warrant/tool-pin.json` and then judges the call. A document-chosen recipient or a
+link carrying a secret is still denied. Denying leaves the pin unchanged.
 
 ### Lab / Prisma
 
