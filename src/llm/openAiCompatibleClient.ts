@@ -93,12 +93,17 @@ export async function chatWithTools(options: {
   messages: ChatMessage[];
   tools: ToolDefinitionForApi[];
   temperature?: number;
+  /**
+   * Overrides `OPENAI_BASE_URL` for this call. The scan generator sets this so a
+   * proxy URL meant for the target agent is not also used to write probe lines.
+   */
+  baseURL?: string;
 }): Promise<ChatWithToolsResult> {
   if (options.client !== undefined) {
     return chatWithToolsOnce(options.client, options);
   }
 
-  const baseUrl = openAiCompatibleBaseUrl();
+  const baseUrl = options.baseURL ?? openAiCompatibleBaseUrl();
   const onGroq = baseUrl.includes('groq.com');
   const groqKeys = groqApiKeysFromEnv();
 
@@ -125,5 +130,12 @@ export async function chatWithTools(options: {
     throw lastError ?? new Error('OpenAI-compatible chat failed');
   }
 
-  return chatWithToolsOnce(createOpenAiCompatibleClient(), options);
+  const apiKey = openAiCompatibleApiKey();
+  if (apiKey === '') {
+    throw new Error('Set GROQ_API_KEY or OPENAI_API_KEY');
+  }
+  return chatWithToolsOnce(
+    new OpenAI({ apiKey, baseURL: baseUrl, maxRetries: 0 }),
+    options,
+  );
 }

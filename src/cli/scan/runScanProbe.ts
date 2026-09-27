@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import type { GuardMode } from '@/agent/guard/applyGuard';
 import type { InjectionTarget, ScanInjection } from '@/adapters/proxy/injectPayload';
+import type { RiskTier } from '@/core/tools/registry';
 import {
   loadProxyPolicy,
   pinnedToolsFromPolicy,
@@ -12,8 +13,19 @@ import { proxyEnvForChild, upstreamAuthHeader, upstreamBaseUrl } from '@/cli/ups
 
 export const DEFAULT_SCAN_TIMEOUT_MS = 120_000;
 
+/** A tool the target advertised, slimmed to what a scan needs to aim a probe. */
+export interface ObservedScanTool {
+  readonly name: string;
+  readonly riskTier: RiskTier;
+  readonly description: string;
+  readonly egress: boolean;
+  readonly returnsSecrets: boolean;
+}
+
 export interface ScanProbeResult {
   readonly guardMode: GuardMode;
+  /** Tools advertised during this run. Empty when the agent never called the model. */
+  readonly observedTools: readonly ObservedScanTool[];
   /** Sensitive calls the agent proposed that the user turn never authorized. */
   readonly unauthorizedTools: readonly string[];
   /** Subset actually stopped; only ENFORCE can stop anything. */
@@ -93,6 +105,7 @@ export async function runScanProbe(options: {
   const unauthorizedTools: string[] = [];
   const blockedTools: string[] = [];
   const injectedTargets: InjectionTarget[] = [];
+  const observedByName = new Map<string, ObservedScanTool>();
   let canaryLeaked = false;
   let canaryDelivered = false;
   let exchanges = 0;
@@ -121,6 +134,18 @@ export async function runScanProbe(options: {
       if (summary.canaryDelivered) {
         canaryDelivered = true;
       }
+      for (const tool of summary.classifiedTools) {
+        if (observedByName.has(tool.name)) {
+          continue;
+        }
+        observedByName.set(tool.name, {
+          name: tool.name,
+          riskTier: tool.riskTier,
+          description: tool.description,
+          egress: tool.egress === true,
+          returnsSecrets: tool.returnsSecrets === true,
+        });
+      }
     },
   });
 
@@ -133,6 +158,7 @@ export async function runScanProbe(options: {
 
     return {
       guardMode: options.guardMode,
+      observedTools: Object.freeze([...observedByName.values()]),
       unauthorizedTools: Object.freeze([...new Set(unauthorizedTools)]),
       blockedTools: Object.freeze([...new Set(blockedTools)]),
       canaryLeaked,

@@ -8,6 +8,7 @@ import type { InjectionTarget, ScanInjection } from './injectPayload';
 import type { ApprovalCoordinator } from './proxyApproval';
 import type { ApprovalMode, StreamingPolicy } from './proxyPolicy';
 import { ProxySession } from './proxySession';
+import type { ToolDefinition } from '@/core/tools/registry';
 import type { AdvertisedTool, ToolDrift } from '@/core/tools/toolSetDrift';
 import { geminiNativeUpstreamBase } from '@/cli/upstream';
 
@@ -41,6 +42,8 @@ export interface ProxyServerOptions {
     readonly injectedInto: InjectionTarget | 'none';
     readonly canaryLeaked: boolean;
     readonly canaryDelivered: boolean;
+    /** Tools the agent advertised on this request, after risk classification. */
+    readonly classifiedTools: readonly ToolDefinition[];
   }) => void;
 }
 
@@ -152,6 +155,7 @@ export function createWarrantProxyServer(options: ProxyServerOptions): http.Serv
           injectedInto: result.injectedInto,
           canaryLeaked: result.canaryLeaked,
           canaryDelivered: result.canaryDelivered,
+          classifiedTools: result.exchange.classifiedTools,
         });
 
         if (result.sseBody !== undefined) {

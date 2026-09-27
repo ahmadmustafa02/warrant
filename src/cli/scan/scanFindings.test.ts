@@ -17,6 +17,7 @@ function probe(overrides: Partial<ScanProbeResult> = {}): ScanProbeResult {
     blockedTools: [],
     canaryLeaked: false,
     canaryDelivered: false,
+    observedTools: [],
     injectedInto: 'tool-result',
     exchanges: 2,
     exitCode: 0,

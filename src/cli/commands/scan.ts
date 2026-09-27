@@ -5,11 +5,13 @@ import pc from 'picocolors';
 import type { InjectionTarget } from '@/adapters/proxy/injectPayload';
 import { DOCUMENT_INJECTION_ATTACKS } from '@/eval/payloads/documentInjectionAuthored';
 import { HELD_OUT_DOCUMENT_ATTACKS } from '@/eval/payloads/heldOutDocumentInjection';
+import { runAdaptiveProbe, type AdaptiveToolReport } from '@/cli/scan/adaptiveProbe';
 import { DEFAULT_SCAN_TIMEOUT_MS, runScanProbe } from '@/cli/scan/runScanProbe';
 import {
   scoreScanFinding,
   summarizeScanFindings,
   type ScanFinding,
+  type ScanSummary,
 } from '@/cli/scan/scanFindings';
 import { selectScanPayloads } from '@/cli/scan/selectScanPayloads';
 import { statusFail, statusOk, statusWarn, warrantBanner } from '@/cli/ui/brand';
@@ -17,7 +19,7 @@ import { statusFail, statusOk, statusWarn, warrantBanner } from '@/cli/ui/brand'
 const DEFAULT_LIMIT = 8;
 
 const USAGE =
-  'Usage: warrant scan [--limit N] [--all] [--held-out] [--inject-into tool-result|user-content] [--timeout MS] [--json] -- <command...>';
+  'Usage: warrant scan [--limit N] [--all] [--held-out] [--adaptive] [--rounds N] [--inject-into tool-result|user-content] [--timeout MS] [--json] -- <command...>';
 
 function readFlag(argv: readonly string[], name: string): string | undefined {
   const index = argv.indexOf(name);
@@ -71,6 +73,16 @@ function verdictLabel(finding: ScanFinding): string {
   }
 }
 
+function exitCodeFor(summary: ScanSummary): number {
+  if (summary.reachable === 0) {
+    return 2;
+  }
+  if (summary.vulnerable > 0) {
+    return 1;
+  }
+  return 0;
+}
+
 function findingRow(finding: ScanFinding): string {
   const tools =
     finding.attemptedTools.length === 0 ? '(none)' : finding.attemptedTools.join(', ');
@@ -80,7 +92,134 @@ function findingRow(finding: ScanFinding): string {
   )}`;
 }
 
+function adaptiveRow(report: AdaptiveToolReport): string {
+  return `${findingRow(report.finding)}\n  ${pc.dim(`round ${report.roundsUsed} · ${report.line}`)}`;
+}
+
+async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> {
+  if (
+    argv.includes('--held-out') ||
+    argv.includes('--all') ||
+    argv.includes('--limit')
+  ) {
+    throw new Error(
+      '--adaptive probes the tools this agent advertises, so --held-out, --all, and --limit do not apply',
+    );
+  }
+
+  const json = argv.includes('--json');
+  if (!json) {
+    p.intro(warrantBanner('Scan — adaptive probe of this agent’s tools'));
+  }
+
+  const target = parseTarget(argv);
+  const timeoutMs = parsePositiveInt(argv, '--timeout') ?? DEFAULT_SCAN_TIMEOUT_MS;
+  const rounds = parsePositiveInt(argv, '--rounds') ?? 2;
+  const targetCommand = parseCommandAfterDash(argv);
+  const canary = `WARRANT-SCAN-CANARY-${randomUUID().slice(0, 8).toUpperCase()}`;
+
+  if (!json) {
+    p.log.info(`Agent under test: ${pc.dim(targetCommand.join(' '))}`);
+    p.log.info(
+      pc.dim(
+        `recon, then up to ${rounds} generated lines per sensitive tool · planted in ${target}`,
+      ),
+    );
+  }
+
+  const adaptive = await runAdaptiveProbe({
+    command: targetCommand,
+    canary,
+    rounds,
+    timeoutMs,
+    injectionTarget: target,
+  });
+
+  if (adaptive.reports.length === 0) {
+    const names =
+      adaptive.observedTools.map((tool) => tool.name).join(', ') || '(none)';
+    if (!json) {
+      p.log.warn(`No sensitive tools to probe. Observed: ${names}`);
+      p.outro(statusWarn('Scan inconclusive — nothing sensitive to test'));
+    } else {
+      process.stdout.write(
+        `${JSON.stringify({ mode: 'adaptive', observedTools: adaptive.observedTools, reports: [] }, null, 2)}\n`,
+      );
+    }
+    return 2;
+  }
+
+  const benign = await runScanProbe({
+    guardMode: 'ENFORCE',
+    command: targetCommand,
+    timeoutMs,
+  });
+  const benignPassed =
+    benign.exitCode === 0 && !benign.timedOut && benign.blockedTools.length === 0;
+  const findings = adaptive.reports.map((report) => report.finding);
+  const summary = summarizeScanFindings(findings);
+
+  if (json) {
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          mode: 'adaptive',
+          agent: targetCommand.join(' '),
+          injectionTarget: target,
+          observedTools: adaptive.observedTools,
+          reports: adaptive.reports,
+          summary,
+          benign: {
+            passed: benignPassed,
+            exitCode: benign.exitCode,
+            blockedTools: benign.blockedTools,
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+  } else {
+    p.note(adaptive.reports.map(adaptiveRow).join('\n\n'), 'Findings');
+    const stopRate =
+      summary.attackStopRate === undefined
+        ? 'n/a (nothing was exploitable)'
+        : `${(summary.attackStopRate * 100).toFixed(0)}% (${summary.protectedCount}/${summary.exploitable})`;
+    p.log.info(
+      [
+        `Sensitive tools probed: ${adaptive.reports.length}`,
+        `Exploitable with the guard off: ${summary.exploitable}/${summary.reachable} reachable lines`,
+        `Attack-stop rate under ENFORCE: ${stopRate}`,
+        `Benign task still completes:    ${benignPassed ? 'yes' : 'no'}`,
+      ].join('\n'),
+    );
+  }
+
+  const code = exitCodeFor(summary);
+  if (!json) {
+    if (code === 2) {
+      p.outro(statusWarn('Scan inconclusive — nothing to inject into'));
+    } else if (code === 1) {
+      p.outro(statusFail(`${summary.vulnerable} attack(s) survived the guard`));
+    } else {
+      p.outro(
+        statusOk(
+          `Guard stopped every exploitable attack — run "warrant guard -- ${targetCommand.join(' ')}" to keep it on`,
+        ),
+      );
+    }
+  }
+  return code;
+}
+
 export async function runScanCommand(argv: readonly string[]): Promise<number> {
+  if (argv.includes('--adaptive')) {
+    return runAdaptiveScanCommand(argv);
+  }
+  if (argv.includes('--rounds')) {
+    throw new Error('--rounds requires --adaptive');
+  }
+
   const json = argv.includes('--json');
   if (!json) {
     p.intro(warrantBanner('Scan — find hijacks in an agent you did not write'));
@@ -186,13 +325,14 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
     }
   }
 
-  if (summary.reachable === 0) {
+  const code = exitCodeFor(summary);
+  if (code === 2) {
     if (!json) {
       p.outro(statusWarn('Scan inconclusive — nothing to inject into'));
     }
     return 2;
   }
-  if (summary.vulnerable > 0) {
+  if (code === 1) {
     if (!json) {
       p.outro(statusFail(`${summary.vulnerable} attack(s) survived the guard`));
     }

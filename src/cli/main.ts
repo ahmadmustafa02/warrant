@@ -17,7 +17,7 @@ Usage:
   warrant doctor
   warrant eval intent
   warrant attack [--payload <id>] [--guard ENFORCE|OFF|DETECT_ONLY]
-  warrant scan [--limit N] [--all] [--held-out] [--json] -- <command...>
+  warrant scan [--limit N] [--all] [--held-out] [--adaptive] [--rounds N] [--json] -- <command...>
   warrant red-team [--limit N] [--held-out] -- <command...>
 
 Environment:

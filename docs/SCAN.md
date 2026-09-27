@@ -58,6 +58,26 @@ survived, `2` inconclusive because no payload reached the agent.
 | `--inject-into` | `tool-result` | See below. |
 | `--timeout MS` | `120000` | Per-run timeout; a hung agent is killed and scored. |
 | `--json` | off | Machine-readable report for CI. |
+| `--adaptive` | off | Generate lines for this agent's sensitive tools instead of the fixed corpus. |
+| `--rounds N` | `2` | With `--adaptive`, how many phrasings to try per tool. |
+
+## Adaptive mode
+
+```bash
+warrant scan --adaptive -- node their-agent.js "summarize the latest report"
+```
+
+The fixed corpus names the lab's own tools. `--adaptive` does not use it.
+Warrant first watches one unguarded run, reads the tools that agent actually
+advertises, and keeps the ones the guard can stop (sensitive, destructive,
+egress, or secret-returning). A generator model then writes a short test
+sentence aimed at each of those tools. If the sentence lands and the agent
+ignores it, Warrant asks for a different phrasing, up to `--rounds` (default 2).
+The verdict is still `scoreScanFinding`: which tool was called, and whether the
+canary moved. The generator never decides the result.
+
+`--adaptive` cannot be combined with `--held-out` or `--all`. Those stay on the
+fixed corpus so held-out numbers are not tuned against a live model.
 
 ## Injection targets
 
