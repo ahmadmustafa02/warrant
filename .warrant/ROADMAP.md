@@ -20,7 +20,7 @@ research; "Build" means implementing an agreed design.
 | # | Item | Done when | Plan | Build |
 | --- | --- | --- | --- | --- |
 | 1 | Adaptive attacker agent | **Done, pushed `bd91a8b`.** `warrant scan --adaptive` reads the target's advertised tools, writes a line per sensitive tool, retries ignored lines (default 2 rounds); scoring stays `scoreScanFinding`; fixed corpus stays the default | Opus 5.5 | Composer / Grok 4.7 |
-| 2 | Guard decision log + dashboard | every allow/deny stored with tool, reason, timestamp; viewable on the lab site | Opus 5.5 (schema) | Composer |
+| 2 | Guard decision log + dashboard | **Planned, see `plans/02-decision-log.md`.** Every allow/deny written to `.warrant/decisions.ndjson`; viewed with `warrant log` and a local `/decisions` page | Opus 5.5 (schema) | Composer |
 | 3 | Honest benign testing | scan accepts several normal tasks; false blocks reported per task | — | Composer |
 | 4 | Publish CLI 0.2.0 | `npm install -g @warrant-lab/cli` includes `scan` and the attacker | — | any |
 
