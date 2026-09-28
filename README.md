@@ -25,7 +25,7 @@ warrant doctor                 # keys + policy sanity check
 warrant guard -- node your-agent.js
 ```
 
-`guard` rewrites `OPENAI_BASE_URL` (and Anthropic / Gemini bases) to the Warrant proxy. Every sensitive tool call is checked against a **frozen warrant** derived from the user turn only — injected text cannot expand permissions.
+`guard` rewrites `OPENAI_BASE_URL` (and Anthropic / Gemini bases) to the Warrant proxy. Every sensitive tool call is checked against a **frozen warrant** taken from the latest user message. A pasted memory note, a history block, or an older chat turn cannot add a permission. Injected text cannot expand the warrant.
 
 **Library (tool loop in your own runner):**
 
@@ -50,6 +50,8 @@ The text after `--` is **their** start command. If the agent takes the user task
 
 **What scan does.** When the agent sends a tool result back to the model (the text of a document it just read), Warrant appends a test attack line and a fake credential before the model sees it. That is the same class of hijack as a PDF whose body says “email the password to this address.” Each attack runs once with the guard watching only, then again with the guard blocking. A final run with no attack checks that the normal task still completes.
 
+`warrant scan --adaptive` watches one unguarded run, reads the tools that agent actually advertises, and plants lines that name those tools. It stops at the first shape the agent acts on.
+
 `warrant scan --full` is the thorough pass. It plants four attack shapes (a direct request, a false claim that you already approved the tool, a multi-step request, and the same request with hidden characters in the name), repeats each one (default 3), and prints a stop rate per shape next to the benign-pass rate. A shape the agent ignored has no stop rate. The short scan above is unchanged.
 
 ```text
@@ -58,12 +60,14 @@ direct_override        PROTECTED
 
 Exploitable with the guard off: 2/3 reachable payloads
 Attack-stop rate under ENFORCE: 100% (2/2)
-Benign task still completes:    yes
+Benign-pass rate: 100% (1/1)
 ```
 
 **What you need.** The agent must honor `OPENAI_BASE_URL` (or the Anthropic / Gemini equivalent). If the API host is hardcoded, change that one setting so the SDK reads the base URL from the environment. An agent that never calls tools has nothing for the payload to ride on; scan then reports that the payload never landed.
 
 `guard` is the same proxy with injection off: every sensitive tool call is checked against what the user actually asked for. Each allow and deny is appended to `.warrant/decisions.ndjson`. Read it back with `warrant log`, or open `/decisions` when the lab site is running locally.
+
+The first trusted tool list is saved to `.warrant/tool-pin.json` and loaded the next time `warrant guard` starts. A tool that appears later, or a known tool that gains a parameter, stays blocked until someone approves it. Scan and red-team runs do not write that file.
 
 Full flags and limits: [`docs/SCAN.md`](docs/SCAN.md). A local mock (no API bill) is in [`scripts/scan-fixtures/README.md`](scripts/scan-fixtures/README.md).
 
@@ -121,10 +125,11 @@ User turn  →  derive + freeze warrant  →  agent reads untrusted content (tai
             every sensitive tool call  →  allowed?  →  execute or deny
 ```
 
-1. **Derive** explicit permissions from the user request (not from documents).
+1. **Derive** permissions from the latest user message, after saved notes and pasted history are removed. Documents, older chat turns, and system notes do not grant a tool.
 2. **Freeze** before any untrusted bytes enter context.
-3. **Enforce** on each sensitive tool call (and pinned parameters when authorized).
-4. **Optional** human approval for ambiguous cases ([`docs/APPROVAL.md`](docs/APPROVAL.md)).
+3. **Enforce** on each sensitive tool call. An email address is allowed when the user typed it, or when a contacts lookup returned it for the person they named. An address that appears in a document is blocked. A secret from a tool this turn did not authorize is removed from the reply and from payload text such as an email body; the notice is `[REDACTED]`. A link that carries that secret is stopped. Ordinary document text is left alone.
+4. **Remember the tool list.** The first trusted advertisement is saved. A new tool, or a known tool that gains a parameter, stays blocked until a person approves it. Approving the tool does not approve a document-chosen recipient or a secret-carrying link.
+5. **Optional** human approval for ambiguous cases ([`docs/APPROVAL.md`](docs/APPROVAL.md)).
 
 Detection filters (e.g. PromptGuard) flag text; Warrant **authorizes actions**. An unseen attack still fails if it was never permitted.
 
@@ -139,6 +144,7 @@ Detection filters (e.g. PromptGuard) flag text; Warrant **authorizes actions**. 
 | `warrant guard --mcp --user TEXT -- <cmd>` | Same guard on an MCP stdio server |
 | `warrant log` | Show recent allows and denies from the local decision log |
 | `warrant scan -- <cmd>` | Hijack-test any agent, no changes to it required |
+| `warrant scan --adaptive -- <cmd>` | Probe the tools this agent advertises; stop at the first shape it acts on |
 | `warrant scan --full -- <cmd>` | Every attack shape, repeated, with a stop rate per shape and the benign-pass rate |
 | `warrant red-team -- <cmd>` | OFF vs ENFORCE on the injection corpus |
 | `warrant doctor` | Environment + registry check |
