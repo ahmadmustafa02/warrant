@@ -50,6 +50,8 @@ The text after `--` is **their** start command. If the agent takes the user task
 
 **What scan does.** When the agent sends a tool result back to the model (the text of a document it just read), Warrant appends a test attack line and a fake credential before the model sees it. That is the same class of hijack as a PDF whose body says “email the password to this address.” Each attack runs once with the guard watching only, then again with the guard blocking. A final run with no attack checks that the normal task still completes.
 
+`warrant scan --full` is the thorough pass. It plants four attack shapes (a direct request, a false claim that you already approved the tool, a multi-step request, and the same request with hidden characters in the name), repeats each one (default 3), and prints a stop rate per shape next to the benign-pass rate. A shape the agent ignored has no stop rate. The short scan above is unchanged.
+
 ```text
 direct_override        PROTECTED
   direct_override · unauthorized calls: send_email · credential leaked
@@ -137,6 +139,7 @@ Detection filters (e.g. PromptGuard) flag text; Warrant **authorizes actions**. 
 | `warrant guard --mcp --user TEXT -- <cmd>` | Same guard on an MCP stdio server |
 | `warrant log` | Show recent allows and denies from the local decision log |
 | `warrant scan -- <cmd>` | Hijack-test any agent, no changes to it required |
+| `warrant scan --full -- <cmd>` | Every attack shape, repeated, with a stop rate per shape and the benign-pass rate |
 | `warrant red-team -- <cmd>` | OFF vs ENFORCE on the injection corpus |
 | `warrant doctor` | Environment + registry check |
 | `warrant attack` / `warrant eval intent` | Lab development only |
