@@ -12,10 +12,12 @@
         --paper: #f6f1e7;
         --line: #e4dccb;
       }
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
       body {
         margin: 0;
-        font-family: "Segoe UI", sans-serif;
+        font-family: 'Segoe UI', sans-serif;
         background: var(--paper);
         color: var(--ink);
       }
@@ -24,13 +26,33 @@
         min-height: 100vh;
         padding: 8vh 10vw;
       }
-      section.active { display: block; }
-      h1 { font-size: 3.2rem; line-height: 1.05; margin: 0 0 1rem; }
-      h2 { font-size: 2rem; margin: 0 0 1rem; }
-      p, li { font-size: 1.35rem; line-height: 1.45; }
-      .mark { color: var(--mark); font-weight: 700; }
-      .muted { color: var(--muted); }
-      ol { padding-left: 1.2rem; }
+      section.active {
+        display: block;
+      }
+      h1 {
+        font-size: 3.2rem;
+        line-height: 1.05;
+        margin: 0 0 1rem;
+      }
+      h2 {
+        font-size: 2rem;
+        margin: 0 0 1rem;
+      }
+      p,
+      li {
+        font-size: 1.35rem;
+        line-height: 1.45;
+      }
+      .mark {
+        color: var(--mark);
+        font-weight: 700;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      ol {
+        padding-left: 1.2rem;
+      }
       footer {
         position: fixed;
         bottom: 1.2rem;
@@ -44,20 +66,32 @@
     <section class="active">
       <p class="mark">Warrant</p>
       <h1>Stop the agent from doing what the document asked.</h1>
-      <p class="muted">The user asked for a summary. The document asked for a side effect.</p>
+      <p class="muted">
+        The user asked for a summary. The document asked for a side effect.
+      </p>
     </section>
     <section>
       <h2>The problem</h2>
-      <p>The model only writes “call send_email.” The agent loop is what sends the mail.</p>
+      <p>
+        The model only writes “call send_email.” The agent loop is what sends the mail.
+      </p>
       <p>Warrant sits on that loop. It does not try to make the model honest.</p>
     </section>
     <section>
       <h2>What is allowed</h2>
       <ol>
         <li>Only the latest user message grants a tool.</li>
-        <li>An email address must be one the user typed, or a lookup of the person they named.</li>
-        <li>A secret the user did not authorize is removed. A link carrying it is stopped.</li>
-        <li>A tool that appears after the first trusted run stays blocked until a person approves it.</li>
+        <li>
+          An email address must be one the user typed, or a lookup of the person they
+          named.
+        </li>
+        <li>
+          A secret the user did not authorize is removed. A link carrying it is stopped.
+        </li>
+        <li>
+          A tool that appears after the first trusted run stays blocked until a person
+          approves it.
+        </li>
       </ol>
     </section>
     <section>
@@ -65,7 +99,9 @@
       <p>Tuned lab, Groq <span class="muted">openai/gpt-oss-20b</span>.</p>
       <p>Guard off: <span class="mark">17 / 60 hijacked</span>, benign-pass 23 / 24.</p>
       <p>Guard on: <span class="mark">60 / 60 stopped</span>, benign-pass 22 / 24.</p>
-      <p class="muted">Held-out attacks: 15 / 15 stopped. Those cases were not used to tune the guard.</p>
+      <p class="muted">
+        Held-out attacks: 15 / 15 stopped. Those cases were not used to tune the guard.
+      </p>
     </section>
     <section>
       <h2>Demo</h2>
@@ -76,8 +112,13 @@
     <section>
       <h2>What failed, and what is left</h2>
       <p>The OpenAI key returns 401. Live runs use Groq.</p>
-      <p>The first saved tool list can be poisoned if that first run is already attacked.</p>
-      <p class="muted">The CLI is published as @warrant-lab/cli 0.2.0. The five-minute video still has to be recorded.</p>
+      <p>
+        The first saved tool list can be poisoned if that first run is already attacked.
+      </p>
+      <p class="muted">
+        The CLI is published as @warrant-lab/cli 0.2.0. The five-minute video still has
+        to be recorded.
+      </p>
     </section>
     <footer id="count"></footer>
     <script>
