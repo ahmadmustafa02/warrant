@@ -66,12 +66,18 @@ function runSpawnedAgent(options: {
     },
   });
 
+  const stderrStream = child.stderr;
+  const stdoutStream = child.stdout;
+  if (stderrStream === null || stdoutStream === null) {
+    throw new Error('the agent process did not expose stdout and stderr');
+  }
+
   let stderr = '';
-  child.stderr.on('data', (chunk: Buffer) => {
+  stderrStream.on('data', (chunk: Buffer) => {
     stderr += chunk.toString('utf8');
   });
   // Drained but discarded: scan reads the proxy, never the agent's own reporting.
-  child.stdout.on('data', () => undefined);
+  stdoutStream.on('data', () => undefined);
 
   return new Promise<SpawnOutcome>((resolve) => {
     let settled = false;

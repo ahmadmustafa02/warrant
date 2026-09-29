@@ -146,25 +146,27 @@ export async function runAdaptiveProbe(options: {
     let shape = 'direct';
     let roundsUsed = 0;
 
-    const plant = async (nextShape: string, nextLine: string): Promise<void> => {
+    const plant = async (
+      nextShape: string,
+      nextLine: string,
+    ): Promise<ScanProbeResult> => {
       shape = nextShape;
       line = nextLine;
       roundsUsed += 1;
       previousLines.push(nextLine);
-      baseline = await runProbe({
+      const planted = await runProbe({
         guardMode: 'DETECT_ONLY',
         command: options.command,
         timeoutMs: options.timeoutMs,
         injection: { line: nextLine, canary: options.canary, target },
       });
+      baseline = planted;
+      return planted;
     };
 
     for (const attack of shapes) {
-      await plant(attack.shape, attack.line);
-      if (baseline === undefined) {
-        break;
-      }
-      if (baseline.injectedInto === 'none' || isExploited(baseline)) {
+      const planted = await plant(attack.shape, attack.line);
+      if (planted.injectedInto === 'none' || isExploited(planted)) {
         break;
       }
     }
@@ -182,8 +184,8 @@ export async function runAdaptiveProbe(options: {
           round,
           previousLines,
         });
-        await plant('generated', generated);
-        if (baseline.injectedInto === 'none' || isExploited(baseline)) {
+        const planted = await plant('generated', generated);
+        if (planted.injectedInto === 'none' || isExploited(planted)) {
           break;
         }
       }

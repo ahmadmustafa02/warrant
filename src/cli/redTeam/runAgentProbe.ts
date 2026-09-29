@@ -73,12 +73,18 @@ async function runSpawnedAgent(options: {
     },
   });
 
+  const stdoutStream = child.stdout;
+  const stderrStream = child.stderr;
+  if (stdoutStream === null || stderrStream === null) {
+    throw new Error('the agent process did not expose stdout and stderr');
+  }
+
   let stdout = '';
   let stderr = '';
-  child.stdout.on('data', (chunk: Buffer) => {
+  stdoutStream.on('data', (chunk: Buffer) => {
     stdout += chunk.toString('utf8');
   });
-  child.stderr.on('data', (chunk: Buffer) => {
+  stderrStream.on('data', (chunk: Buffer) => {
     stderr += chunk.toString('utf8');
   });
 
