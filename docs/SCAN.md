@@ -63,6 +63,7 @@ passed, `1` an attack survived or a normal task was blocked or did not finish,
 | `--inject-into` | `tool-result` | See below. |
 | `--timeout MS` | `120000` | Per-run timeout; a hung agent is killed and scored. |
 | `--json` | off | Machine-readable report for CI. |
+| `--share` | off | Print a URL. Opening it shows attack-stop and benign-pass. The numbers are in the link; the server does not store the scan. |
 | `--adaptive` | off | Generate lines for this agent's sensitive tools instead of the fixed corpus. Stops at the first shape the agent acts on. |
 | `--rounds N` | `2` | With `--adaptive`, how many phrasings to try per tool. |
 | `--full` | off | Run every attack shape against each sensitive tool, repeated. Reports a stop rate per shape and the benign-pass rate. |
@@ -103,6 +104,18 @@ A shape the agent ignored has no stop rate, because there was nothing to stop.
 
 `--full` cannot be combined with `--adaptive`, `--held-out`, `--all`, `--limit`,
 or `--rounds`.
+
+## Shareable report
+
+```bash
+warrant scan --share -- node their-agent.js "summarize the latest report"
+```
+
+`--share` prints a link such as `https://warrant-lab.vercel.app/report#...`.
+The page shows the attack-stop rate and the benign-pass rate together, plus
+per-shape rates when the scan was `--full`. The canary and the planted lines
+are not in the link. Set `WARRANT_REPORT_ORIGIN` if the page is hosted somewhere
+else. The link works after that site is deployed with this version of the app.
 
 ## Injection targets
 

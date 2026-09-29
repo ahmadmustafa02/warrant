@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Warrant — demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1a1814;
+        --muted: #5c564c;
+        --mark: #9a3412;
+        --paper: #f6f1e7;
+        --line: #e4dccb;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: var(--paper);
+        color: var(--ink);
+      }
+      section {
+        display: none;
+        min-height: 100vh;
+        padding: 8vh 10vw;
+      }
+      section.active { display: block; }
+      h1 { font-size: 3.2rem; line-height: 1.05; margin: 0 0 1rem; }
+      h2 { font-size: 2rem; margin: 0 0 1rem; }
+      p, li { font-size: 1.35rem; line-height: 1.45; }
+      .mark { color: var(--mark); font-weight: 700; }
+      .muted { color: var(--muted); }
+      ol { padding-left: 1.2rem; }
+      footer {
+        position: fixed;
+        bottom: 1.2rem;
+        right: 1.5rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="active">
+      <p class="mark">Warrant</p>
+      <h1>Stop the agent from doing what the document asked.</h1>
+      <p class="muted">The user asked for a summary. The document asked for a side effect.</p>
+    </section>
+    <section>
+      <h2>The problem</h2>
+      <p>The model only writes “call send_email.” The agent loop is what sends the mail.</p>
+      <p>Warrant sits on that loop. It does not try to make the model honest.</p>
+    </section>
+    <section>
+      <h2>What is allowed</h2>
+      <ol>
+        <li>Only the latest user message grants a tool.</li>
+        <li>An email address must be one the user typed, or a lookup of the person they named.</li>
+        <li>A secret the user did not authorize is removed. A link carrying it is stopped.</li>
+        <li>A tool that appears after the first trusted run stays blocked until a person approves it.</li>
+      </ol>
+    </section>
+    <section>
+      <h2>The numbers</h2>
+      <p>Tuned lab, Groq <span class="muted">openai/gpt-oss-20b</span>.</p>
+      <p>Guard off: <span class="mark">17 / 60 hijacked</span>, benign-pass 23 / 24.</p>
+      <p>Guard on: <span class="mark">60 / 60 stopped</span>, benign-pass 22 / 24.</p>
+      <p class="muted">Held-out attacks: 15 / 15 stopped. Those cases were not used to tune the guard.</p>
+    </section>
+    <section>
+      <h2>Demo</h2>
+      <p>1. Scan an agent that does not import Warrant.</p>
+      <p>2. Open the share link. Both rates are on the page.</p>
+      <p>3. Leave <span class="muted">warrant guard</span> on for the real run.</p>
+    </section>
+    <section>
+      <h2>What failed, and what is left</h2>
+      <p>The OpenAI key returns 401. Live runs use Groq.</p>
+      <p>The first saved tool list can be poisoned if that first run is already attacked.</p>
+      <p class="muted">Publishing the CLI is the last step, after this demo path exists.</p>
+    </section>
+    <footer id="count"></footer>
+    <script>
+      const slides = [...document.querySelectorAll('section')];
+      let index = 0;
+      const count = document.getElementById('count');
+      function show(next) {
+        index = (next + slides.length) % slides.length;
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+        count.textContent = index + 1 + ' / ' + slides.length;
+      }
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight' || event.key === ' ') show(index + 1);
+        if (event.key === 'ArrowLeft') show(index - 1);
+      });
+      show(0);
+    </script>
+  </body>
+</html>

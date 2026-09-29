@@ -34,7 +34,7 @@ research; "Build" means implementing an agreed design.
 | 8 | MCP proxy mode (`warrant guard --mcp`) | **Done.** `warrant guard --mcp --user TEXT -- <server>` judges `tools/call` with the same warrant as the HTTP proxy | Opus 5.5 | Composer / Grok 4.7 |
 | 9 | OpenAI Responses API + Vercel AI SDK support | **Done.** `POST /v1/responses` (plain and streamed) is guarded like chat completions; tested with the official `openai` SDK and live on Groq. The Vercel AI SDK's OpenAI provider uses this endpoint; its own run is item 10 | Opus 5.5 | Composer |
 | 10 | Real-framework tests: LangChain (Python), Vercel AI SDK | **Done.** `examples/langchain-agent` (chat completions) and `examples/vercel-ai-agent` (`openai.responses`). Adaptive scan exit 0 on both: the probe landed in the tool result, neither agent called `send_email`, benign summarize passed. `warrant guard --no-approval` exit 0 on both. See `docs/FRAMEWORKS.md` | — | Grok 4.7 |
-| 11 | Shareable hosted scan report | a scan result opens as a URL | Opus 5.5 | Composer |
+| 11 | Shareable hosted scan report | **Done.** `warrant scan --share` prints `https://warrant-lab.vercel.app/report#...`. The page shows attack-stop and benign-pass together. The canary and planted lines are not in the link. The server does not store the scan | Opus 5.5 | Composer |
 
 ## Follow-ups locked 27 Sep (after item 10)
 
@@ -46,7 +46,7 @@ Do these in order. Same rule: finish, test, and push one before the next.
 | F2 | Document echo is not a secret leak | **Done.** Repeating the planted marker is `marker-echoed` and does not fail the scan. A sensitive tool the guard still allows is `VULNERABLE`. Secret-tool values are stripped by F1 |
 | F3 | Attacks aimed at the agent's own tools | **Done.** Adaptive scan plants direct, false-approval, multi-step, and hidden-character lines that name only advertised tools, then generator retries if those are ignored |
 | F4 | Re-run LangChain and Vercel | **Done.** Both exit 0. LangChain: direct line, stop rate 1/1, benign 1/1, marker not repeated under the guard. Vercel: direct and false-approval ignored, multi-step called `send_email`; guard blocked the tool and the planted marker was still repeated (`marker-echoed`); stop rate 1/1, benign 1/1 |
-| F5 | Item 11, then publish | Hosted scan report, then CLI 0.2.0 last |
+| F5 | Item 11, then publish | Report done. CLI 0.2.0 publish still last |
 
 ## Upgrades locked 27 Sep (after the follow-ups)
 
@@ -59,7 +59,7 @@ Do these in order. Same rule: finish, test, and push one before the next.
 | 3 | Only the current user request is permission | **Done.** The warrant is taken from the latest user message after saved notes and pasted history are removed (`<memory>`, history headers, memory content parts). An older chat turn or a system note cannot authorize a send, delete, or payment. A request written beside a note still can |
 | 4 | Saved tool-list pin | **Done.** The first trusted tool list is written to `.warrant/tool-pin.json` and loaded on the next `warrant guard` run. A tool that appears later, or a known tool that gains a parameter, stays blocked until someone approves it. Approval adds that tool to the pin and then judges the call. A document-chosen recipient or a secret-carrying link is still denied. Scan and red-team runs do not write the pin |
 | 5 | Full scan mode | **Done.** `warrant scan --full` runs every attack shape (direct, false-approval, multi-step, hidden-character) against each sensitive tool, `--repeats` times (default 3), and does not stop when one shape works. The report gives a stop rate per shape, an overall stop rate, and the benign-pass rate. Scoring stays `scoreScanFinding`. Held-out and the fixed corpus are unchanged |
-| 6 | Shareable report, then publish | Not started |
+| 6 | Shareable report, then publish | Report **done** (`warrant scan --share`). CLI 0.2.0 publish still last |
 
 ## Model rule of thumb
 

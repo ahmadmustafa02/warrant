@@ -24,14 +24,20 @@ import {
   summarizeScanFindings,
   type ScanFinding,
   type ScanSummary,
+  type ShapeRate,
 } from '@/cli/scan/scanFindings';
 import { selectScanPayloads } from '@/cli/scan/selectScanPayloads';
+import {
+  buildPublicScanReport,
+  DEFAULT_REPORT_ORIGIN,
+  reportPageUrl,
+} from '@/cli/scan/shareReport';
 import { statusFail, statusOk, statusWarn, warrantBanner } from '@/cli/ui/brand';
 
 const DEFAULT_LIMIT = 8;
 
 const USAGE =
-  'Usage: warrant scan [--limit N] [--all] [--held-out] [--adaptive] [--rounds N] [--full] [--repeats N] [--benign TASK]... [--inject-into tool-result|user-content] [--timeout MS] [--json] -- <command...>';
+  'Usage: warrant scan [--limit N] [--all] [--held-out] [--adaptive] [--rounds N] [--full] [--repeats N] [--benign TASK]... [--share] [--inject-into tool-result|user-content] [--timeout MS] [--json] -- <command...>';
 
 function readFlag(argv: readonly string[], name: string): string | undefined {
   const index = argv.indexOf(name);
@@ -95,6 +101,40 @@ function exitCodeFor(summary: ScanSummary, benign: BenignSummary): number {
     return 1;
   }
   return 0;
+}
+
+function shareLink(
+  argv: readonly string[],
+  input: {
+    readonly mode: 'corpus' | 'adaptive' | 'full';
+    readonly agent: string;
+    readonly canary: string;
+    readonly summary: ScanSummary;
+    readonly benign: BenignSummary;
+    readonly findings: readonly ScanFinding[];
+    readonly byShape?: readonly ShapeRate[];
+  },
+): string | undefined {
+  if (!argv.includes('--share')) {
+    return undefined;
+  }
+  const origin = process.env.WARRANT_REPORT_ORIGIN?.trim() || DEFAULT_REPORT_ORIGIN;
+  const url = reportPageUrl(
+    origin,
+    buildPublicScanReport({
+      mode: input.mode,
+      agent: input.agent,
+      canary: input.canary,
+      summary: input.summary,
+      benign: input.benign,
+      findings: input.findings,
+      byShape: input.byShape,
+    }),
+  );
+  if (!argv.includes('--json')) {
+    p.log.info(`Shareable report:\n${url}`);
+  }
+  return url;
 }
 
 function benignLine(benign: BenignSummary): string {
@@ -205,6 +245,14 @@ async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> 
   const benign = await collectBenign(targetCommand, benignTasks, timeoutMs);
   const findings = adaptive.reports.map((report) => report.finding);
   const summary = summarizeScanFindings(findings);
+  const reportUrl = shareLink(argv, {
+    mode: 'adaptive',
+    agent: targetCommand.join(' '),
+    canary,
+    summary,
+    benign,
+    findings,
+  });
 
   if (json) {
     process.stdout.write(
@@ -217,6 +265,7 @@ async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> 
           reports: adaptive.reports,
           summary,
           benign,
+          reportUrl,
         },
         null,
         2,
@@ -329,6 +378,15 @@ async function runFullScanCommand(argv: readonly string[]): Promise<number> {
   const findings = full.reports.map((report) => report.finding);
   const summary = summarizeScanFindings(findings);
   const byShape = summarizeByShape(full.reports);
+  const reportUrl = shareLink(argv, {
+    mode: 'full',
+    agent: targetCommand.join(' '),
+    canary,
+    summary,
+    benign,
+    findings,
+    byShape,
+  });
 
   if (json) {
     process.stdout.write(
@@ -343,6 +401,7 @@ async function runFullScanCommand(argv: readonly string[]): Promise<number> {
           byShape,
           summary,
           benign,
+          reportUrl,
         },
         null,
         2,
@@ -455,6 +514,14 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
   const benign = await collectBenign(targetCommand, benignTasks, timeoutMs);
 
   const summary = summarizeScanFindings(findings);
+  const reportUrl = shareLink(argv, {
+    mode: 'corpus',
+    agent: targetCommand.join(' '),
+    canary,
+    summary,
+    benign,
+    findings,
+  });
 
   if (json) {
     process.stdout.write(
@@ -465,6 +532,7 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
           findings,
           summary,
           benign,
+          reportUrl,
         },
         null,
         2,

@@ -146,6 +146,7 @@ Detection filters (e.g. PromptGuard) flag text; Warrant **authorizes actions**. 
 | `warrant scan -- <cmd>` | Hijack-test any agent, no changes to it required |
 | `warrant scan --adaptive -- <cmd>` | Probe the tools this agent advertises; stop at the first shape it acts on |
 | `warrant scan --full -- <cmd>` | Every attack shape, repeated, with a stop rate per shape and the benign-pass rate |
+| `warrant scan --share -- <cmd>` | Same scan, plus a link that opens the attack-stop and benign-pass rates |
 | `warrant red-team -- <cmd>` | OFF vs ENFORCE on the injection corpus |
 | `warrant doctor` | Environment + registry check |
 | `warrant attack` / `warrant eval intent` | Lab development only |
@@ -236,6 +237,8 @@ pnpm run build:guard && pnpm run build:cli
 | --- | -------- |
 | [`docs/INTEGRATION.md`](docs/INTEGRATION.md) | Tool-loop + HTTP proxy integration |
 | [`docs/SCAN.md`](docs/SCAN.md) | Scanning a third-party agent for hijacks |
+| [`docs/REFLECTION.md`](docs/REFLECTION.md) | What the build got right, and where it failed |
+| [`docs/demo/slides.html`](docs/demo/slides.html) | Demo slides. Arrow keys move. Script: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) |
 | [`docs/DECISION_LOG.md`](docs/DECISION_LOG.md) | Local allow/deny log and how to read it |
 | [`docs/MCP.md`](docs/MCP.md) | Guard an MCP stdio server |
 | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Scope, adversary, residual risk |
