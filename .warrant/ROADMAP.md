@@ -13,7 +13,7 @@ research; "Build" means implementing an agreed design.
 | --- | --- | --- | --- | --- |
 | 0.1 | Fix OpenAI key | `scripts/probe-model-keys.ts` shows OpenAI HTTP 200 | — | any |
 | 0.2 | `prompts.md` catch-up | Phase 3 entries through `warrant scan` logged | — | Composer |
-| 0.3 | Demo rehearsal | scan then guard on `scripts/realistic-test-agent.ts`, live Groq, twice | — | any |
+| 0.3 | Demo rehearsal | **Done.** Two passes on `scripts/realistic-test-agent.ts` via tsx, live Groq. First scan: payload landed, not exploitable, benign-pass 1/1, guard exited cleanly. Second scan: payload never landed, benign-pass 1/1, guard exited cleanly. See `docs/REHEARSAL.md` | — | any |
 
 ## Start now (27 Sep), aim to show item 1 at the 5 Oct demo
 
@@ -22,7 +22,7 @@ research; "Build" means implementing an agreed design.
 | 1 | Adaptive attacker agent | **Done, pushed `bd91a8b`.** `warrant scan --adaptive` reads the target's advertised tools, writes a line per sensitive tool, retries ignored lines (default 2 rounds); scoring stays `scoreScanFinding`; fixed corpus stays the default | Opus 5.5 | Composer / Grok 4.7 |
 | 2 | Guard decision log + dashboard | **Done.** Every allow/deny written to `.warrant/decisions.ndjson`; viewed with `warrant log` and a local `/decisions` page. Plan: `plans/02-decision-log.md` | Opus 5.5 (schema) | Composer |
 | 3 | Honest benign testing | **Done.** `warrant scan --benign TASK` (repeatable) runs each normal task with the guard on and reports a false block per task, with a benign-pass rate | — | Composer |
-| 4 | Publish CLI 0.2.0 | **Last.** After 5–11. `npm install -g @warrant-lab/cli` includes scan, adaptive, log, MCP | — | any |
+| 4 | Publish CLI 0.2.0 | **Done.** `@warrant-lab/cli@0.2.0` includes scan, adaptive, full, share, log, and MCP | — | any |
 
 ## Before 5 Oct (everything else)
 
@@ -46,7 +46,7 @@ Do these in order. Same rule: finish, test, and push one before the next.
 | F2 | Document echo is not a secret leak | **Done.** Repeating the planted marker is `marker-echoed` and does not fail the scan. A sensitive tool the guard still allows is `VULNERABLE`. Secret-tool values are stripped by F1 |
 | F3 | Attacks aimed at the agent's own tools | **Done.** Adaptive scan plants direct, false-approval, multi-step, and hidden-character lines that name only advertised tools, then generator retries if those are ignored |
 | F4 | Re-run LangChain and Vercel | **Done.** Both exit 0. LangChain: direct line, stop rate 1/1, benign 1/1, marker not repeated under the guard. Vercel: direct and false-approval ignored, multi-step called `send_email`; guard blocked the tool and the planted marker was still repeated (`marker-echoed`); stop rate 1/1, benign 1/1 |
-| F5 | Item 11, then publish | Report done. CLI 0.2.0 publish still last |
+| F5 | Item 11, then publish | **Done.** Report link, then `@warrant-lab/cli@0.2.0` |
 
 ## Upgrades locked 27 Sep (after the follow-ups)
 
@@ -59,7 +59,7 @@ Do these in order. Same rule: finish, test, and push one before the next.
 | 3 | Only the current user request is permission | **Done.** The warrant is taken from the latest user message after saved notes and pasted history are removed (`<memory>`, history headers, memory content parts). An older chat turn or a system note cannot authorize a send, delete, or payment. A request written beside a note still can |
 | 4 | Saved tool-list pin | **Done.** The first trusted tool list is written to `.warrant/tool-pin.json` and loaded on the next `warrant guard` run. A tool that appears later, or a known tool that gains a parameter, stays blocked until someone approves it. Approval adds that tool to the pin and then judges the call. A document-chosen recipient or a secret-carrying link is still denied. Scan and red-team runs do not write the pin |
 | 5 | Full scan mode | **Done.** `warrant scan --full` runs every attack shape (direct, false-approval, multi-step, hidden-character) against each sensitive tool, `--repeats` times (default 3), and does not stop when one shape works. The report gives a stop rate per shape, an overall stop rate, and the benign-pass rate. Scoring stays `scoreScanFinding`. Held-out and the fixed corpus are unchanged |
-| 6 | Shareable report, then publish | Report **done** (`warrant scan --share`). CLI 0.2.0 publish still last |
+| 6 | Shareable report, then publish | **Done.** `warrant scan --share` prints the report URL. `@warrant-lab/cli@0.2.0` is published |
 
 ## Model rule of thumb
 

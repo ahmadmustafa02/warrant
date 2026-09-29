@@ -21,4 +21,4 @@ Written 29 Sep 2026, before the mentor demo. The product claims below are the on
 
 ## What I would do differently
 
-Start the shareable report when scan first had two rates, so a demo never depends on a terminal scrollback. Treat the prompts log as append-only from the first week.
+Start the shareable report when scan first had two rates, so a demo never depends on a terminal scrollback. Treat the prompts log as append-only from the first week. The five-minute video still has to be recorded from `docs/DEMO_SCRIPT.md`; that recording is not in the repo.

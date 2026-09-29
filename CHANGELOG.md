@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## 0.2.0 — 2026-09-29
+
+### Added
+
+- `warrant scan --adaptive` probes the tools an agent actually advertises and stops at the first shape it acts on.
+- `warrant scan --full` runs every attack shape, repeated, and reports a stop rate per shape next to the benign-pass rate.
+- `warrant scan --share` prints a URL. The page shows attack-stop and benign-pass together. The canary is not in the link.
+- Guard: only the latest user message grants a tool. An email address must be typed by the user or returned by a lookup of the person they named. Unauthorized secrets are removed from replies and payloads. A new or changed tool stays blocked until someone approves it, and that list is saved in `.warrant/tool-pin.json`.
+- `warrant guard --mcp` judges MCP `tools/call`. OpenAI Responses and Gemini are guarded. Decision log: `warrant log`.
+
 ## Unreleased
 
 ### Added

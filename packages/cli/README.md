@@ -31,7 +31,7 @@ Optional: `warrant doctor` (sanity check), `warrant red-team -- node my-agent.js
 | ------- | ------- |
 | `init` | Write `.warrant/proxy-policy.json` |
 | `guard` | Proxy + your command (`OPENAI_BASE_URL` → Warrant) |
-| `scan` | Find hijacks in **any** agent, no cooperation needed ([SCAN.md](../docs/SCAN.md)) |
+| `scan` | Find hijacks in **any** agent. `--adaptive`, `--full`, and `--share` are in [SCAN.md](../docs/SCAN.md) |
 | `red-team` | Scripted OFF/ENFORCE runs against **your** agent |
 | `doctor` | Optional: keys visible, policy file, registry |
 | `attack` / `eval intent` | Warrant lab development only |
