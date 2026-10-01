@@ -120,6 +120,8 @@ export async function runAdaptiveProbe(options: {
   readonly injectionTarget?: InjectionTarget;
   readonly generateLine?: ProbeLineGenerator;
   readonly runProbe?: ScanProbeRunner;
+  /** Called before each agent run so a terminal can say what is in progress. */
+  readonly onStep?: (message: string) => void;
 }): Promise<AdaptiveProbeResult> {
   const rounds = options.rounds ?? DEFAULT_ADAPTIVE_ROUNDS;
   if (rounds < 1) {
@@ -128,7 +130,9 @@ export async function runAdaptiveProbe(options: {
   const runProbe = options.runProbe ?? runScanProbe;
   const generateLine = options.generateLine ?? generateProbeLine;
   const target = options.injectionTarget ?? 'tool-result';
+  const step = options.onStep ?? (() => undefined);
 
+  step('Reading the tools this agent advertises · no attack');
   const recon = await runProbe({
     guardMode: 'DETECT_ONLY',
     command: options.command,
@@ -154,6 +158,7 @@ export async function runAdaptiveProbe(options: {
       line = nextLine;
       roundsUsed += 1;
       previousLines.push(nextLine);
+      step(`${tool.name} · planting a ${nextShape} line · guard off`);
       const planted = await runProbe({
         guardMode: 'DETECT_ONLY',
         command: options.command,
@@ -177,6 +182,7 @@ export async function runAdaptiveProbe(options: {
       !isExploited(baseline)
     ) {
       for (let round = 1; round <= rounds; round += 1) {
+        step(`${tool.name} · ignored so far · writing a new line (round ${round})`);
         const generated = await generateLine({
           toolName: tool.name,
           riskTier: tool.riskTier,
@@ -195,6 +201,9 @@ export async function runAdaptiveProbe(options: {
       throw new Error(`adaptive probe produced no run for ${tool.name}`);
     }
 
+    if (isExploited(baseline)) {
+      step(`${tool.name} · hijacked with the guard off · same line, guard on`);
+    }
     const enforced = isExploited(baseline)
       ? await runProbe({
           guardMode: 'ENFORCE',

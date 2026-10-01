@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 0.3.5 — 2026-10-01
+
+### Changed
+
+- `warrant scan` names each agent run while it is in progress (reading tools, attack with the guard off, same attack with the guard on, normal task) and keeps each finished step on screen with its time.
+
 ## 0.3.4 — 2026-10-01
 
 ### Fixed

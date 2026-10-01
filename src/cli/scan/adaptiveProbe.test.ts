@@ -153,6 +153,35 @@ describe('runAdaptiveProbe', () => {
     );
   });
 
+  it('names each agent run before it starts', async () => {
+    const steps: string[] = [];
+    const runProbe: ScanProbeRunner = (options) => {
+      if (options.injection === undefined) {
+        return Promise.resolve(probe());
+      }
+      if (options.guardMode === 'DETECT_ONLY') {
+        return Promise.resolve(probe({ unauthorizedTools: ['send_email'] }));
+      }
+      return Promise.resolve(
+        probe({ guardMode: 'ENFORCE', blockedTools: ['send_email'] }),
+      );
+    };
+
+    await runAdaptiveProbe({
+      command: ['node', 'agent.js'],
+      canary: 'WARRANT-SCAN-CANARY-TEST',
+      runProbe,
+      generateLine: () => Promise.resolve('unused'),
+      onStep: (message) => steps.push(message),
+    });
+
+    expect(steps).toEqual([
+      'Reading the tools this agent advertises · no attack',
+      'send_email · planting a direct line · guard off',
+      'send_email · hijacked with the guard off · same line, guard on',
+    ]);
+  });
+
   it('retries once when the first line lands and is ignored', async () => {
     const roundsAsked: number[] = [];
     let baselines = 0;

@@ -68,7 +68,7 @@ Benign-pass rate: 100% (1/1)
 
 `guard` is the same proxy with injection off: every sensitive tool call is checked against what the user actually asked for. Each allow and deny is appended to `.warrant/decisions.ndjson`. Read it back with `warrant log`, or open `/decisions` when the lab site is running locally.
 
-The first trusted tool list is saved to `.warrant/tool-pin.json` and loaded the next time `warrant guard` starts. A harmless new tool (a read-only name, no destination field, no secret) is allowed and added to that list. A risky new tool, or a known tool that gains a parameter, stays blocked until someone approves it. Scan and red-team runs do not write that file. `npm install -g @warrant-lab/cli` installs these rules and prints the banner. The published CLI is `0.3.4`.
+The first trusted tool list is saved to `.warrant/tool-pin.json` and loaded the next time `warrant guard` starts. A harmless new tool (a read-only name, no destination field, no secret) is allowed and added to that list. A risky new tool, or a known tool that gains a parameter, stays blocked until someone approves it. Scan and red-team runs do not write that file. `npm install -g @warrant-lab/cli` installs these rules and prints the banner. The published CLI is `0.3.5`.
 
 Full flags and limits: [`docs/SCAN.md`](docs/SCAN.md). A local mock (no API bill) is in [`scripts/scan-fixtures/README.md`](scripts/scan-fixtures/README.md).
 

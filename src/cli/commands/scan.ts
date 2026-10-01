@@ -154,22 +154,65 @@ function failureReason(summary: ScanSummary, benign: BenignSummary): string {
   return parts.join('; ');
 }
 
+interface StepLog {
+  readonly step: (message: string) => void;
+  readonly done: () => void;
+}
+
+/**
+ * One spinner per agent run. A finished step stays on screen with its time,
+ * so a slow model call reads as progress instead of a frozen terminal.
+ */
+function createStepLog(json: boolean): StepLog {
+  let spin: ReturnType<typeof p.spinner> | undefined;
+  let current = '';
+  let startedAt = 0;
+
+  const finish = (): void => {
+    if (spin === undefined) {
+      return;
+    }
+    const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+    spin.stop(`${current} ${pc.dim(`· ${seconds}s`)}`);
+    spin = undefined;
+  };
+
+  return {
+    step: (message) => {
+      if (json) {
+        return;
+      }
+      finish();
+      current = message;
+      startedAt = Date.now();
+      spin = p.spinner();
+      spin.start(message);
+    },
+    done: finish,
+  };
+}
+
 async function collectBenign(
   command: readonly string[],
   tasks: readonly string[],
   timeoutMs: number,
+  steps: StepLog,
 ): Promise<BenignSummary> {
-  return runBenignSuite({
+  const summary = await runBenignSuite({
     command,
     tasks,
     timeoutMs,
-    runProbe: async (probe) =>
-      runScanProbe({
+    runProbe: async (probe) => {
+      steps.step('Normal task · no attack planted · guard on');
+      return runScanProbe({
         guardMode: 'ENFORCE',
         command: probe.command,
         timeoutMs: probe.timeoutMs,
-      }),
+      });
+    },
   });
+  steps.done();
+  return summary;
 }
 
 function findingRow(finding: ScanFinding): string {
@@ -217,13 +260,22 @@ async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> 
     );
   }
 
+  const steps = createStepLog(json);
   const adaptive = await runAdaptiveProbe({
     command: targetCommand,
     canary,
     rounds,
     timeoutMs,
     injectionTarget: target,
+    onStep: steps.step,
   });
+  steps.done();
+
+  if (!json) {
+    const names =
+      adaptive.observedTools.map((tool) => tool.name).join(', ') || '(none)';
+    p.log.info(`Tools this agent advertised: ${pc.dim(names)}`);
+  }
 
   if (adaptive.reports.length === 0) {
     const names =
@@ -239,7 +291,7 @@ async function runAdaptiveScanCommand(argv: readonly string[]): Promise<number> 
     return 2;
   }
 
-  const benign = await collectBenign(targetCommand, benignTasks, timeoutMs);
+  const benign = await collectBenign(targetCommand, benignTasks, timeoutMs, steps);
   const findings = adaptive.reports.map((report) => report.finding);
   const summary = summarizeScanFindings(findings);
   const reportUrl = shareLink(argv, {
@@ -371,7 +423,12 @@ async function runFullScanCommand(argv: readonly string[]): Promise<number> {
     return 2;
   }
 
-  const benign = await collectBenign(targetCommand, benignTasks, timeoutMs);
+  const benign = await collectBenign(
+    targetCommand,
+    benignTasks,
+    timeoutMs,
+    createStepLog(json),
+  );
   const findings = full.reports.map((report) => report.finding);
   const summary = summarizeScanFindings(findings);
   const byShape = summarizeByShape(full.reports);
@@ -483,32 +540,37 @@ export async function runScanCommand(argv: readonly string[]): Promise<number> {
   }
 
   const findings: ScanFinding[] = [];
+  const steps = createStepLog(json);
 
-  for (const payload of payloads) {
-    const spin = json ? undefined : p.spinner();
-    spin?.start(`${payload.externalRef} · probing`);
-
+  for (const [index, payload] of payloads.entries()) {
+    const label = `${index + 1}/${payloads.length} ${payload.externalRef}`;
     const injection = { line: payload.injectionLine, canary, target };
+
+    steps.step(`${label} · attack planted · guard off`);
     const baseline = await runScanProbe({
       guardMode: 'DETECT_ONLY',
       command: targetCommand,
       injection,
       timeoutMs,
     });
+    steps.step(`${label} · same attack · guard on`);
     const enforced = await runScanProbe({
       guardMode: 'ENFORCE',
       command: targetCommand,
       injection,
       timeoutMs,
     });
+    steps.done();
 
     const finding = scoreScanFinding(payload, baseline, enforced);
     findings.push(finding);
-    spin?.stop(`${payload.externalRef} · ${finding.verdict}`);
+    if (!json) {
+      p.log.step(`${label} · ${verdictLabel(finding)}`);
+    }
   }
 
   // No injection, guard live: each normal task must still complete.
-  const benign = await collectBenign(targetCommand, benignTasks, timeoutMs);
+  const benign = await collectBenign(targetCommand, benignTasks, timeoutMs, steps);
 
   const summary = summarizeScanFindings(findings);
   const reportUrl = shareLink(argv, {
