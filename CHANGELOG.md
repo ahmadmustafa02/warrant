@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 0.3.3 — 2026-10-01
+
+### Fixed
+
+- The install banner switches the Windows console to UTF-8 before printing, so the diamond and the check mark are not shown as the wrong letters.
+
 ## 0.3.2 — 2026-10-01
 
 ### Fixed

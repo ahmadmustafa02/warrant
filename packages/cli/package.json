@@ -1,6 +1,6 @@
 {
   "name": "@warrant-lab/cli",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Warrant command-line interface — guard agents, scan them, and share the result.",
   "license": "MIT",
   "type": "module",

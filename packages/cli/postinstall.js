@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 
 const cyan = (text) => `\u001b[36m${text}\u001b[0m`;
@@ -17,6 +18,10 @@ const banner =
     `    ${cyan('warrant guard --')} <your agent>`,
     '',
   ].join('\n') + '\n';
+
+if (process.platform === 'win32') {
+  spawnSync('chcp.com', ['65001'], { stdio: 'ignore' });
+}
 
 const consoles = process.platform === 'win32' ? ['\\\\.\\CON'] : ['/dev/tty'];
 
