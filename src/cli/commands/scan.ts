@@ -32,6 +32,7 @@ import {
   DEFAULT_REPORT_ORIGIN,
   reportPageUrl,
 } from '@/cli/scan/shareReport';
+import { commandAfterFlags } from '@/cli/commandAfterFlags';
 import { statusFail, statusOk, statusWarn, warrantBanner } from '@/cli/ui/brand';
 
 const DEFAULT_LIMIT = 8;
@@ -71,11 +72,7 @@ function parseTarget(argv: readonly string[]): InjectionTarget {
 }
 
 function parseCommandAfterDash(argv: readonly string[]): string[] {
-  const dash = argv.indexOf('--');
-  if (dash < 0 || dash === argv.length - 1) {
-    throw new Error(USAGE);
-  }
-  return argv.slice(dash + 1);
+  return commandAfterFlags(argv, USAGE);
 }
 
 function verdictLabel(finding: ScanFinding): string {

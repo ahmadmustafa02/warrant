@@ -5,6 +5,7 @@ import { DOCUMENT_INJECTION_ATTACKS } from '@/eval/payloads/documentInjectionAut
 import { HELD_OUT_DOCUMENT_ATTACKS } from '@/eval/payloads/heldOutDocumentInjection';
 import type { AuthoredPayload } from '@/eval/payloads/types';
 import { runAgentProbe } from '@/cli/redTeam/runAgentProbe';
+import { commandAfterFlags } from '@/cli/commandAfterFlags';
 import { modeBadge, statusOk, statusWarn, warrantBanner } from '@/cli/ui/brand';
 
 function readFlag(argv: readonly string[], name: string): string | undefined {
@@ -16,11 +17,10 @@ function readFlag(argv: readonly string[], name: string): string | undefined {
 }
 
 function parseCommandAfterDash(argv: readonly string[]): string[] {
-  const dash = argv.indexOf('--');
-  if (dash < 0 || dash === argv.length - 1) {
-    throw new Error('Usage: warrant red-team [--limit N] [--held-out] -- <command...>');
-  }
-  return argv.slice(dash + 1);
+  return commandAfterFlags(
+    argv,
+    'Usage: warrant red-team [--limit N] [--held-out] -- <command...>',
+  );
 }
 
 function parseLimit(argv: readonly string[]): number | undefined {

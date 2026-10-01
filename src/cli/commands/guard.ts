@@ -17,6 +17,7 @@ import {
 } from '@/cli/ui/approvalPrompt';
 import { createDecisionLogSink } from '@/cli/decisionLog/fileSink';
 import { proxyEnvForChild, upstreamAuthHeader, upstreamBaseUrl } from '@/cli/upstream';
+import { commandAfterFlags } from '@/cli/commandAfterFlags';
 import {
   modeBadge,
   statusOk,
@@ -50,14 +51,12 @@ function parseGuardArgs(argv: readonly string[]): {
   const userTurn =
     readFlag(argv, '--user') ?? process.env.WARRANT_USER_TURN?.trim() ?? '';
 
-  const dash = argv.indexOf('--');
-  if (dash < 0 || dash === argv.length - 1) {
-    throw new Error(
-      'Usage: warrant guard [--detect-only | --off] [--no-approval] [--mcp] [--user TEXT] -- <command...>',
-    );
-  }
+  const command = commandAfterFlags(
+    argv,
+    'Usage: warrant guard [--detect-only | --off] [--no-approval] [--mcp] [--user TEXT] -- <command...>',
+  );
 
-  return { mode, command: argv.slice(dash + 1), noApproval, mcp, userTurn };
+  return { mode, command, noApproval, mcp, userTurn };
 }
 
 async function runMcpGuardCommand(options: {

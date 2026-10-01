@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 0.3.4 — 2026-10-01
+
+### Fixed
+
+- `warrant scan` and `warrant guard` still find the agent command in PowerShell. The `warrant` shim there drops `--` before Node starts.
+
 ## 0.3.3 — 2026-10-01
 
 ### Fixed
