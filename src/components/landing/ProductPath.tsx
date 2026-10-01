@@ -4,7 +4,7 @@ import { ArrowUpRight, FlaskConical, Layers, Play, Scale } from 'lucide-react';
 const featured = {
   step: '01',
   title: 'Playground',
-  body: 'Replay a recorded hijack, then the same attack with the guard on. The live path is warrant scan, then warrant guard, in front of your agent.',
+  body: 'Replay a recorded hijack, then the same attack with the guard on. On your own agent the commands are warrant scan, then warrant guard.',
   href: '/playground',
   cta: 'Open playground',
 } as const;
@@ -13,14 +13,14 @@ const rest = [
   {
     step: '02',
     title: 'Lab',
-    body: 'Completed runs with attack-stop and benign-pass on every scorecard.',
+    body: '60 of 60 tuned attacks stopped, with 22 of 24 normal tasks still passing. 15 of 15 held-out attacks stopped.',
     href: '/dashboard',
     icon: FlaskConical,
   },
   {
     step: '03',
     title: 'Suites',
-    body: 'Hijack payloads next to the ordinary tasks that must still work.',
+    body: '60 attacks, 24 normal tasks, and 15 held-out attacks that were never used to tune the guard.',
     href: '/suites',
     icon: Layers,
   },
@@ -43,12 +43,14 @@ export function ProductPath() {
             Where to go next
           </p>
           <h2 className="mt-6 text-[clamp(2.4rem,4.6vw,3.6rem)] leading-[1.05] font-medium tracking-[-0.035em]">
-            Red-team it. Measure it.
-            <span className="text-[#a1a1aa]"> Ship the guard.</span>
+            Scan your agent. Share the result.
+            <span className="text-[#a1a1aa]"> Leave the guard on.</span>
           </h2>
           <p className="mt-6 max-w-xl text-[15px] leading-7 font-normal text-white/55">
-            Watch a hijack land with the guard off, then prove Warrant stops it without
-            breaking legitimate work.
+            Warrant tests an agent it never touched. LangChain and Vercel AI SDK agents
+            ran unmodified: the hijack landed with the guard off, the guard stopped it,
+            and the normal task still finished. Every result carries attack-stop next to
+            benign-pass.
           </p>
         </div>
 

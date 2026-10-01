@@ -1,11 +1,11 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { BrowserFrame } from '@/components/visual/BrowserFrame';
 import { DocumentMock } from '@/components/visual/DocumentMock';
-import { ScorecardMock } from '@/components/visual/ScorecardMock';
 import { TraceMock } from '@/components/visual/TraceMock';
 import type { MeasuredComparison } from '@/server/eval/baselineComparison';
 import { EvidencePanel } from './EvidencePanel';
+import { HeroLoopVideo } from './HeroLoopVideo';
+import { MeasuredProof } from './MeasuredProof';
 import { InstallPanel } from './InstallPanel';
 import { LandingMotion } from './LandingMotion';
 import { ProductPath } from './ProductPath';
@@ -14,77 +14,46 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
   return (
     <LandingMotion>
       <section className="relative bg-black font-[family-name:var(--font-inter)] text-white">
-        <div className="relative z-10 -mb-6 w-full bg-black">
-          <div className="mx-auto flex w-full max-w-4xl translate-y-16 flex-col items-center px-5 pt-16 pb-8 text-center sm:pt-20">
-            <p className="hero-line text-xs font-medium tracking-[0.28em] text-white/45 uppercase">
-              Proxy guard · in front of the model
-            </p>
-            <h1 className="hero-line mx-auto mt-5 max-w-4xl text-[clamp(2.75rem,6.2vw,5.05rem)] leading-[1.02] font-medium tracking-[-0.035em]">
-              Your agent can be hijacked. <span className="text-[#a1a1aa]">Guard</span>{' '}
-              what it is allowed to do.
-            </h1>
-            <p className="hero-line mx-auto mt-5 max-w-2xl text-base leading-7 font-normal text-white/60">
-              Warrant sits between the agent and the model. The permission is the
-              person&apos;s latest message. A document, a page, or a tool result pasted
-              into the next turn cannot add a send, a payment, or a new destination.
-            </p>
-            <div className="hero-line mt-7 flex flex-wrap justify-center gap-3">
-              <Link
-                href="/method"
-                className="pressable inline-flex min-h-12 items-center rounded-full border border-white/25 bg-black px-5 text-base font-medium"
-              >
-                How it works
-              </Link>
-              <Link
-                href="/#install"
-                className="pressable inline-flex min-h-12 items-center rounded-full border border-white/25 bg-black px-5 text-base font-medium"
-              >
-                Install
-              </Link>
-            </div>
+        <div
+          className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-5 text-center"
+          style={{ paddingTop: 'clamp(8rem, 18vh, 12rem)' }}
+        >
+          <p className="hero-line text-xs font-medium tracking-[0.28em] text-white/45 uppercase">
+            Proxy guard · in front of the model
+          </p>
+          <h1 className="hero-line mx-auto mt-5 max-w-4xl text-[clamp(2.75rem,6.2vw,5.05rem)] leading-[1.02] font-medium tracking-[-0.035em]">
+            Your agent can be hijacked. <span className="text-[#a1a1aa]">Guard</span>{' '}
+            what it is allowed to do.
+          </h1>
+          <p className="hero-line mx-auto mt-5 max-w-2xl text-base leading-7 font-normal text-white/60">
+            Warrant sits between the agent and the model. The permission is the
+            person&apos;s latest message. A document, a page, or a tool result pasted
+            into the next turn cannot add a send, a payment, or a new destination.
+          </p>
+          <div className="hero-line mt-7 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/method"
+              className="pressable inline-flex min-h-12 items-center rounded-full border border-white/25 bg-black px-5 text-base font-medium"
+            >
+              How it works
+            </Link>
+            <Link
+              href="/#install"
+              className="pressable inline-flex min-h-12 items-center rounded-full border border-white/25 bg-black px-5 text-base font-medium"
+            >
+              Install
+            </Link>
           </div>
         </div>
-        <div className="relative z-0 h-[40vw] w-full overflow-hidden">
-          <Image
-            src="/warrant-hero-background-hd.png"
-            alt=""
-            width={3072}
-            height={2048}
-            priority
-            className="pointer-events-none absolute inset-x-0 top-0 h-auto w-full max-w-none select-none"
-            style={{ transform: 'translateY(-42.5%)' }}
-          />
+        <div
+          className="relative z-0 w-full"
+          style={{ aspectRatio: '16 / 9', marginTop: '-28rem' }}
+        >
+          <HeroLoopVideo />
         </div>
-        <dl className="mx-auto grid w-full max-w-4xl grid-cols-2 gap-y-8 px-5 py-10 sm:grid-cols-4">
-          {[
-            ['60', 'Attacks tested'],
-            ['60', 'Stopped'],
-            ['22/24', 'Benign'],
-            ['15', 'Held-out'],
-          ].map(([value, label]) => (
-            <div key={label} className="text-center">
-              <dd className="text-3xl font-medium tracking-[-0.035em] text-white sm:text-4xl">
-                {value}
-              </dd>
-              <dt className="mt-2 text-[11px] font-medium tracking-[0.18em] text-white/40 uppercase">
-                {label}
-              </dt>
-            </div>
-          ))}
-        </dl>
       </section>
 
-      <section className="bg-black px-5 pt-2 pb-16">
-        <div className="hero-visual mx-auto w-full max-w-6xl">
-          <div className="hero-visual-inner">
-            <div className="hero-float">
-              <BrowserFrame title="warrant.dev/dashboard">
-                <ScorecardMock />
-              </BrowserFrame>
-            </div>
-          </div>
-        </div>
-      </section>
+      <MeasuredProof />
 
       <EvidencePanel comparison={comparison} />
 
