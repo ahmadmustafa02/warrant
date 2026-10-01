@@ -54,23 +54,54 @@ export class GeminiWireParseError extends Error {
   }
 }
 
-function userTextFromContents(
-  contents: z.infer<typeof geminiGenerateRequestSchema>['contents'],
-): string {
-  const userTurns = contents.filter(
-    (entry) => entry.role === 'user' || entry.role === undefined,
-  );
-  const latest = userTurns[userTurns.length - 1];
-  if (latest === undefined) {
-    return '';
-  }
-  return latest.parts
+function turnText(parts: z.infer<typeof contentSchema>['parts']): string {
+  return parts
     .filter(
       (part): part is { text: string } =>
         'text' in part && typeof part.text === 'string',
     )
     .map((part) => part.text)
     .join('\n');
+}
+
+function turnCalledTool(parts: z.infer<typeof contentSchema>['parts']): boolean {
+  return parts.some(
+    (part) => 'functionCall' in part && part.functionCall !== undefined,
+  );
+}
+
+function turnCarriesToolOutput(parts: z.infer<typeof contentSchema>['parts']): boolean {
+  return parts.some(
+    (part) => 'functionResponse' in part && part.functionResponse !== undefined,
+  );
+}
+
+function userTextFromContents(
+  contents: z.infer<typeof geminiGenerateRequestSchema>['contents'],
+): string {
+  let text = '';
+  for (let index = 0; index < contents.length; index += 1) {
+    const entry = contents[index];
+    if (entry === undefined) {
+      continue;
+    }
+    const role = entry.role ?? 'user';
+    if (role !== 'user') {
+      continue;
+    }
+    if (turnCarriesToolOutput(entry.parts)) {
+      continue;
+    }
+    const previous = contents[index - 1];
+    if (previous !== undefined && turnCalledTool(previous.parts)) {
+      continue;
+    }
+    const turn = turnText(entry.parts);
+    if (turn !== '') {
+      text = turn;
+    }
+  }
+  return text;
 }
 
 export function parseGeminiRequest(body: unknown): CanonicalRequest {

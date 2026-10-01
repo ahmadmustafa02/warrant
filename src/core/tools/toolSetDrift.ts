@@ -10,6 +10,9 @@
  * because the user's request was made before the tool existed. That makes drift
  * decidable from facts, with no judgment about wording, which is why it belongs
  * beside the rest of the authorization logic rather than in a detector.
+ *
+ * The guard may still accept a new tool whose name and parameters show no send,
+ * delete, payment, secret, or destination. Gaining a parameter is never that case.
  */
 
 export type ToolDriftKind = 'NEW_TOOL' | 'MUTATED_TOOL';

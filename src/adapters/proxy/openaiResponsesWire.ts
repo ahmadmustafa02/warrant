@@ -3,6 +3,7 @@ import { isStoredContextPart } from '@/core/authorization/currentRequest';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
 import { redactArgumentJson } from './redactToolArguments';
 import { readSchemaParameters } from './schemaParameters';
+import { messageCarriesToolOutput } from './toolCarriedUserTurn';
 
 /**
  * OpenAI Responses API (`POST /v1/responses`), the default transport of the
@@ -78,11 +79,28 @@ export function parseResponsesRequest(body: unknown): CanonicalRequest {
   if (typeof parsed.data.input === 'string') {
     userRequest = parsed.data.input;
   } else {
-    const userTurns = parsed.data.input.filter(
-      (item) =>
-        item.role === 'user' && (item.type === undefined || item.type === 'message'),
-    );
-    const latest = userTurns[userTurns.length - 1];
+    let latest: (typeof parsed.data.input)[number] | undefined;
+    for (let index = 0; index < parsed.data.input.length; index += 1) {
+      const item = parsed.data.input[index];
+      if (
+        item === undefined ||
+        item.role !== 'user' ||
+        (item.type !== undefined && item.type !== 'message')
+      ) {
+        continue;
+      }
+      const previous = parsed.data.input[index - 1];
+      const previousTurn =
+        previous?.type === 'function_call'
+          ? { role: 'assistant' as const, tool_calls: [{}] }
+          : undefined;
+      if (
+        messageCarriesToolOutput({ role: 'user', content: item.content }, previousTurn)
+      ) {
+        continue;
+      }
+      latest = item;
+    }
     userRequest = latest === undefined ? '' : partsText(latest.content);
   }
 

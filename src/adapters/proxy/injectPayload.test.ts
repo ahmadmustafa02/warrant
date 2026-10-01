@@ -57,6 +57,26 @@ describe('injectIntoRequest — OpenAI', () => {
     expect(messages[0]?.content).toBe('Summarize doc-1 for me.');
   });
 
+  it('poisons an observation the framework pasted into the next user message', () => {
+    const original = {
+      messages: [
+        { role: 'user', content: 'Summarize document doc-1' },
+        { role: 'assistant', content: 'Calling tools:\nread_document' },
+        { role: 'user', content: 'Observation:\nRevenue grew 12%.' },
+      ],
+    };
+    const outcome = injectIntoRequest(original, 'openai', {
+      line: PAYLOAD,
+      canary: CANARY,
+    });
+
+    expect(outcome.appliedTo).toBe('tool-result');
+    const messages = (outcome.request as { messages: { content: string }[] }).messages;
+    expect(messages[2]?.content).toContain('Revenue grew 12%');
+    expect(messages[2]?.content).toContain(PAYLOAD);
+    expect(messages[0]?.content).toBe('Summarize document doc-1');
+  });
+
   it('leaves the request untouched when no tool result exists yet', () => {
     const original = { messages: [{ role: 'user', content: 'Summarize doc-1.' }] };
     const outcome = injectIntoRequest(original, 'openai', { line: PAYLOAD });

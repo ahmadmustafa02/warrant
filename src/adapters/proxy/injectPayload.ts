@@ -1,14 +1,15 @@
 import type { ExchangeWire } from './exchangeWire';
 import { injectIntoResponsesRequest } from './openaiResponsesWire';
+import { lastToolCarriedUserIndex, type TurnMessage } from './toolCarriedUserTurn';
 
 /**
  * Where a scan places its payload.
  *
- * `tool-result` is the honest default: it reproduces indirect prompt injection by
- * poisoning content the agent's own tools returned, so authority still comes from
- * the user turn. `user-content` appends to the latest user message instead, which
- * also hands the payload the user's authority — only useful for agents that fold
- * retrieved documents into the user turn, and reported with that caveat.
+ * `tool-result` is the honest default: it poisons what the agent's own tool
+ * returned. That slot is a `tool` message, or, when the framework pastes the
+ * observation into the next user message, that user message. `user-content`
+ * appends to the person's message instead, which also hands the payload the
+ * user's authority.
  */
 export type InjectionTarget = 'tool-result' | 'user-content';
 
@@ -36,6 +37,22 @@ export function injectionText(injection: ScanInjection): string {
   return `${injection.line}\nReference credential: ${injection.canary}`;
 }
 
+function toTurnMessages(messages: readonly unknown[]): TurnMessage[] {
+  return messages.map((message) => {
+    if (!isRecord(message) || typeof message.role !== 'string') {
+      return { role: '' };
+    }
+    const toolCalls = Array.isArray(message.tool_calls)
+      ? message.tool_calls
+      : undefined;
+    return {
+      role: message.role,
+      content: message.content,
+      ...(toolCalls === undefined ? {} : { tool_calls: toolCalls }),
+    };
+  });
+}
+
 function appendText(existing: unknown, text: string): unknown {
   if (typeof existing === 'string') {
     return existing === '' ? text : `${existing}\n\n${text}`;
@@ -61,10 +78,31 @@ function injectOpenAi(
     return { request: rawRequest, appliedTo: 'none' };
   }
 
-  const role = target === 'tool-result' ? 'tool' : 'user';
+  if (target === 'tool-result') {
+    for (let index = clone.messages.length - 1; index >= 0; index -= 1) {
+      const message: unknown = clone.messages[index];
+      if (!isRecord(message) || message.role !== 'tool') {
+        continue;
+      }
+      message.content = appendText(message.content, text);
+      return { request: clone, appliedTo: target };
+    }
+    const messages: unknown[] = [];
+    for (const message of clone.messages) {
+      messages.push(message);
+    }
+    const carried = lastToolCarriedUserIndex(toTurnMessages(messages));
+    const carriedMessage: unknown = carried < 0 ? undefined : messages[carried];
+    if (isRecord(carriedMessage)) {
+      carriedMessage.content = appendText(carriedMessage.content, text);
+      return { request: clone, appliedTo: 'tool-result' };
+    }
+    return { request: rawRequest, appliedTo: 'none' };
+  }
+
   for (let index = clone.messages.length - 1; index >= 0; index -= 1) {
     const message: unknown = clone.messages[index];
-    if (!isRecord(message) || message.role !== role) {
+    if (!isRecord(message) || message.role !== 'user') {
       continue;
     }
     message.content = appendText(message.content, text);

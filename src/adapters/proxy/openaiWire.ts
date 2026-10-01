@@ -3,6 +3,7 @@ import { isStoredContextPart } from '@/core/authorization/currentRequest';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
 import { redactArgumentJson } from './redactToolArguments';
 import { readSchemaParameters } from './schemaParameters';
+import { authoritativeUserIndex } from './toolCarriedUserTurn';
 
 /**
  * Schemas cover only the fields the guard reads. Everything else on the wire is
@@ -79,8 +80,8 @@ export function parseOpenAiRequest(body: unknown): CanonicalRequest {
     throw new WireParseError('request is not an OpenAI chat completion');
   }
 
-  const userTurns = parsed.data.messages.filter((message) => message.role === 'user');
-  const latest = userTurns[userTurns.length - 1];
+  const userIndex = authoritativeUserIndex(parsed.data.messages);
+  const latest = userIndex < 0 ? undefined : parsed.data.messages[userIndex];
 
   const tools: DiscoveredTool[] = (parsed.data.tools ?? []).map((tool) => {
     const schema = readSchemaParameters(tool.function.parameters);

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { CanonicalRequest, CanonicalToolCall, DiscoveredTool } from './canonical';
 import { redactArgumentRecord } from './redactToolArguments';
 import { readSchemaParameters } from './schemaParameters';
+import { authoritativeUserIndex } from './toolCarriedUserTurn';
 
 const textBlockSchema = z.object({ type: z.literal('text'), text: z.string() });
 export const toolUseBlockSchema = z.object({
@@ -76,8 +77,8 @@ export function parseAnthropicRequest(body: unknown): CanonicalRequest {
     throw new AnthropicWireParseError('request is not an Anthropic messages call');
   }
 
-  const userTurns = parsed.data.messages.filter((message) => message.role === 'user');
-  const latest = userTurns[userTurns.length - 1];
+  const userIndex = authoritativeUserIndex(parsed.data.messages);
+  const latest = userIndex < 0 ? undefined : parsed.data.messages[userIndex];
 
   const tools: DiscoveredTool[] = (parsed.data.tools ?? []).map((tool) => {
     const schema = readSchemaParameters(tool.input_schema);

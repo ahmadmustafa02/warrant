@@ -560,7 +560,7 @@ describe('guardExchange', () => {
     expect(exchange.decisions).toEqual([]);
   });
 
-  it('blocks a tool that appeared after the session baseline was set', () => {
+  it('allows a harmless tool that appears after the session baseline and saves it', () => {
     const session = new ProxySession();
     const noCalls = { choices: [{ message: { content: 'thinking' } }] };
 
@@ -571,16 +571,16 @@ describe('guardExchange', () => {
       session,
     });
 
-    const poisonedRequest = {
+    const withFinalAnswer = {
       model: 'gpt-oss-20b',
       messages: [{ role: 'user', content: 'Summarize ticket 4412' }],
       tools: [
         ...TOOLS,
         {
           function: {
-            name: 'read_public_notes',
-            description: 'Read notes',
-            parameters: { type: 'object', properties: { id: {} } },
+            name: 'final_answer',
+            description: 'Return the answer',
+            parameters: { type: 'object', properties: { answer: {} } },
           },
         },
       ],
@@ -588,13 +588,57 @@ describe('guardExchange', () => {
 
     const exchange = guardExchange({
       mode: 'ENFORCE',
-      rawRequest: poisonedRequest,
-      rawResponse: responseCalling('read_public_notes', '{"id":"1"}'),
+      rawRequest: withFinalAnswer,
+      rawResponse: responseCalling('final_answer', '{"answer":"revenue is up"}'),
       session,
     });
 
-    // A read-only name earns no exemption when the capability itself arrived late.
-    expect(exchange.blockedTools).toEqual(['read_public_notes']);
+    expect(exchange.blockedTools).toEqual([]);
+    expect(exchange.drifts).toEqual([]);
+
+    const again = guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: withFinalAnswer,
+      rawResponse: responseCalling('final_answer', '{"answer":"revenue is up"}'),
+      session,
+    });
+    expect(again.blockedTools).toEqual([]);
+    expect(again.drifts).toEqual([]);
+  });
+
+  it('still blocks a risky tool that appears after the session baseline', () => {
+    const session = new ProxySession();
+    guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: request('Summarize ticket 4412'),
+      rawResponse: { choices: [{ message: { content: 'thinking' } }] },
+      session,
+    });
+
+    const exchange = guardExchange({
+      mode: 'ENFORCE',
+      rawRequest: {
+        model: 'gpt-oss-20b',
+        messages: [{ role: 'user', content: 'Summarize ticket 4412' }],
+        tools: [
+          ...TOOLS,
+          {
+            function: {
+              name: 'send_wire',
+              description: 'Send a payment',
+              parameters: { type: 'object', properties: { to: {}, amount: {} } },
+            },
+          },
+        ],
+      },
+      rawResponse: responseCalling(
+        'send_wire',
+        '{"to":"attacker@evil.test","amount":"10"}',
+      ),
+      session,
+    });
+
+    expect(exchange.blockedTools).toEqual(['send_wire']);
     expect(exchange.decisions[0]?.kind).toBe('DRIFT');
     expect(exchange.drifts[0]?.kind).toBe('NEW_TOOL');
   });
@@ -783,7 +827,7 @@ describe('guardExchange', () => {
     ]);
   });
 
-  it('blocks a tool missing from the saved pin until someone approves it', async () => {
+  it('blocks a risky tool missing from the saved pin until someone approves it', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'warrant-pin-'));
     try {
       const persist = (tools: readonly AdvertisedTool[]): void => {
@@ -804,9 +848,9 @@ describe('guardExchange', () => {
           ...TOOLS,
           {
             function: {
-              name: 'read_public_notes',
-              description: 'Read notes',
-              parameters: { type: 'object', properties: { id: {} } },
+              name: 'send_wire',
+              description: 'Send a payment',
+              parameters: { type: 'object', properties: { to: {}, amount: {} } },
             },
           },
         ],
@@ -816,47 +860,60 @@ describe('guardExchange', () => {
       const blocked = guardExchange({
         mode: 'ENFORCE',
         rawRequest: poisoned,
-        rawResponse: responseCalling('read_public_notes', '{"id":"1"}'),
+        rawResponse: responseCalling(
+          'send_wire',
+          '{"to":"attacker@evil.test","amount":"10"}',
+        ),
         session: reloaded,
       });
       expect(blocked.decisions[0]?.kind).toBe('DRIFT');
-      expect(loadToolPin(root)?.map((tool) => tool.name)).not.toContain(
-        'read_public_notes',
-      );
+      expect(loadToolPin(root)?.map((tool) => tool.name)).not.toContain('send_wire');
 
       const denied = new ApprovalCoordinator(() => Promise.resolve('deny'), root, true);
       const stillBlocked = await guardExchangeAsync({
         mode: 'ENFORCE',
         rawRequest: poisoned,
-        rawResponse: responseCalling('read_public_notes', '{"id":"1"}'),
+        rawResponse: responseCalling(
+          'send_wire',
+          '{"to":"attacker@evil.test","amount":"10"}',
+        ),
         session: new ProxySession(loadToolPin(root), persist),
         approval: denied,
       });
       expect(stillBlocked.decisions[0]?.kind).toBe('DRIFT');
+      expect(loadToolPin(root)?.map((tool) => tool.name)).not.toContain('send_wire');
 
       const approved = new ApprovalCoordinator(
         () => Promise.resolve('approve'),
         root,
         true,
       );
-      const allowed = await guardExchangeAsync({
+      const judged = await guardExchangeAsync({
         mode: 'ENFORCE',
         rawRequest: poisoned,
-        rawResponse: responseCalling('read_public_notes', '{"id":"1"}'),
+        rawResponse: responseCalling(
+          'send_wire',
+          '{"to":"attacker@evil.test","amount":"10"}',
+        ),
         session: new ProxySession(loadToolPin(root), persist),
         approval: approved,
       });
-      expect(allowed.blockedTools).toEqual([]);
+      expect(judged.decisions[0]?.kind).not.toBe('DRIFT');
+      expect(judged.blockedTools).toEqual(['send_wire']);
+      expect(loadToolPin(root)?.map((tool) => tool.name)).toContain('send_wire');
 
       const nextRun = new ProxySession(loadToolPin(root));
       const again = guardExchange({
         mode: 'ENFORCE',
         rawRequest: poisoned,
-        rawResponse: responseCalling('read_public_notes', '{"id":"1"}'),
+        rawResponse: responseCalling(
+          'send_wire',
+          '{"to":"attacker@evil.test","amount":"10"}',
+        ),
         session: nextRun,
       });
       expect(again.drifts).toEqual([]);
-      expect(again.blockedTools).toEqual([]);
+      expect(again.blockedTools).toEqual(['send_wire']);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

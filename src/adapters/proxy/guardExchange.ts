@@ -16,6 +16,7 @@ import { describeValue, taint } from '@/core/provenance/tainted';
 import { TurnSecretTracker } from '@/core/output/turnSecrets';
 import type { ToolDefinition, ToolRegistry } from '@/core/tools/registry';
 import { driftedToolNames, type ToolDrift } from '@/core/tools/toolSetDrift';
+import { blockingDrifts } from './harmlessDrift';
 import { buildProxyRegistry, type ToolOverride } from './classifyDiscoveredTool';
 import { deriveProxyIntent } from './deriveProxyIntent';
 import {
@@ -291,7 +292,11 @@ export function guardExchange(options: {
   const registry = buildProxyRegistry(request.tools, options.overrides ?? {});
   const classifiedTools = registry.list();
 
-  const drifts = options.session?.observeTools(request.tools) ?? [];
+  const drifts = blockingDrifts(
+    options.session,
+    options.session?.observeTools(request.tools) ?? [],
+    request.tools,
+  );
   const drifted = driftedToolNames(drifts);
 
   const intent = options.intent ?? deriveProxyIntent(request.userRequest, registry);
@@ -499,7 +504,11 @@ export async function guardExchangeAsync(options: {
 
   const registry = buildProxyRegistry(request.tools, options.overrides ?? {});
   const classifiedTools = registry.list();
-  const drifts = options.session?.observeTools(request.tools) ?? [];
+  const drifts = blockingDrifts(
+    options.session,
+    options.session?.observeTools(request.tools) ?? [],
+    request.tools,
+  );
   const drifted = driftedToolNames(drifts);
 
   let intent = options.intent ?? deriveProxyIntent(request.userRequest, registry);

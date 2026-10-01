@@ -251,6 +251,25 @@ export function classifyDiscoveredTool(
   };
 }
 
+/**
+ * A new tool the guard may add to the saved list without asking.
+ *
+ * Harmless means the name does not send, delete, pay, or read a secret, and no
+ * parameter names where the result goes. `final_answer(answer)` qualifies.
+ * `send_email(to)` and a tool that gains `url` do not. The name is still only a
+ * guess: a lying tool with a harmless shape is the residual risk.
+ */
+export function isHarmlessDiscoveredTool(tool: DiscoveredTool): boolean {
+  const definition = classifyDiscoveredTool(tool);
+  const destinations = definition.authorityParameters?.length ?? 0;
+  return (
+    definition.riskTier === 'READ_ONLY' &&
+    definition.egress !== true &&
+    definition.returnsSecrets !== true &&
+    destinations === 0
+  );
+}
+
 /** Duplicate advertised names collapse to the first definition rather than throwing. */
 export function buildProxyRegistry(
   tools: readonly DiscoveredTool[],

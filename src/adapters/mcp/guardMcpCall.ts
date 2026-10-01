@@ -4,6 +4,7 @@ import { issueWarrant } from '@/core/authorization/warrant';
 import { taint } from '@/core/provenance/tainted';
 import type { DiscoveredTool } from '@/adapters/proxy/canonical';
 import { buildProxyRegistry } from '@/adapters/proxy/classifyDiscoveredTool';
+import { blockingDrifts } from '@/adapters/proxy/harmlessDrift';
 import { readSchemaParameters } from '@/adapters/proxy/schemaParameters';
 import { deriveProxyIntent } from '@/adapters/proxy/deriveProxyIntent';
 import type { ProxyDecision } from '@/adapters/proxy/guardExchange';
@@ -143,7 +144,11 @@ export function judgeMcpToolCall(options: {
     ? options.advertised
     : [...options.advertised, advertised];
   const registry = buildProxyRegistry(tools);
-  const drifts = options.session?.observeTools(tools) ?? [];
+  const drifts = blockingDrifts(
+    options.session,
+    options.session?.observeTools(tools) ?? [],
+    tools,
+  );
   const drifted = drifts.some((drift) => drift.toolName === parsed.data.name);
   if (drifted) {
     const drift = drifts.find((entry) => entry.toolName === parsed.data.name);

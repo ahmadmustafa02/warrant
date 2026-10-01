@@ -21,10 +21,9 @@ export interface CanonicalRequest {
   /**
    * The turn the guard treats as authoritative.
    *
-   * This is the latest `user` message, because tool output arrives under `tool` or
-   * `assistant` roles. A framework that folds tool output into a `user` message
-   * would hand authority to untrusted content — that limitation is why the explicit
-   * `issueWarrantFromExplicit` API remains the precise integration path.
+   * The latest user message that is not tool output. A message pasted in right
+   * after a tool call, or a user message made of `tool_result` blocks, is the
+   * document, not the person.
    */
   readonly userRequest: string;
   readonly tools: readonly DiscoveredTool[];

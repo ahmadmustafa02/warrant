@@ -168,14 +168,17 @@ vault read, canary leak), not model opinion. Reference: `src/scripts/warrant-eva
 ## Tool-set drift
 
 Warrant records the capability surface advertised on the first trusted run and writes
-it to `.warrant/tool-pin.json`. The next `warrant guard` loads that file, so a tool
-that appears on the first request of a later run is still drift. Any tool that
-appears later — or any known tool that **gains** a parameter — is refused until
-someone approves it. Approval adds that tool to the saved pin. The call is then
-judged normally.
+it to `.warrant/tool-pin.json`. The next `warrant guard` loads that file. A tool
+that appears later is added to that list without a prompt when it is harmless:
+the name does not send, delete, pay, or read a secret, and no parameter says
+where data goes. `final_answer(answer)` is that kind of tool. The call is then
+judged normally, which for a harmless tool means it is allowed.
 
-Drift overrides the read-only exemption. A late capability earns nothing from its
-risk tier, since that tier is inferred from a name its injector chose.
+A risky new tool, and any known tool that **gains** a parameter, stays blocked
+until someone approves it. Approval adds that tool to the saved pin, then the
+call is judged. A late `send_email` or a tool that arrives with a `url` field
+is still drift. The name is only a guess, so a tool that lies about a harmless
+shape is the remaining hole.
 
 ```bash
 pnpm run eval:drift   # attack with guard off, guard on, and a no-drift control
