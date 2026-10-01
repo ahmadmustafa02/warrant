@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## 0.3.0 — 2026-10-01
+
+### Fixed
+
+- A tool result pasted back as a user message does not grant a tool. The warrant stays the last real user message. Scan plants into that same observation slot.
+
+### Changed
+
+- A harmless new tool (read-only name, no destination field, no secret) is allowed and saved. A risky new tool, or a known tool that gains a parameter, still waits for a person.
+
 ## 0.2.0 — 2026-09-29
 
 ### Added

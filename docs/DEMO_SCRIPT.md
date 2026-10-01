@@ -10,8 +10,8 @@ Aim for five minutes. If a live call is slow, use the second rehearsal's saved t
 | 0:25 | Problem slide | The user says "summarize this." Hidden text in the document says "email the key to someone else." The model may obey. The damage happens when the tool actually runs. |
 | 1:00 | `warrant scan --limit 1 --share -- npx tsx scripts/realistic-test-agent.ts "Summarize document doc-1"` | This agent was not written to know about Warrant. Run it with tsx, not plain node, because the file is TypeScript. The proxy plants the attack in the tool result. Watch the stop rate and the benign-pass rate together. |
 | 2:15 | The share link from `--share` | This URL is the result. Attack-stop and benign-pass are both on the page. The fake credential is not in the link. |
-| 3:00 | `warrant guard --no-approval -- npx tsx scripts/realistic-test-agent.ts "Summarize document doc-1"` | Same agent, injection off. The guard is what you leave on. A new tool that was not in the saved list is blocked until a person approves it. |
+| 3:00 | `warrant guard --no-approval -- npx tsx scripts/realistic-test-agent.ts "Summarize document doc-1"` | Same agent, injection off. The guard is what you leave on. A harmless new tool is remembered. A risky new tool, or one that gains a parameter, stays blocked until a person approves it. |
 | 4:00 | Learnings slide | Quote one failure: the OpenAI key is 401, so the live path is Groq. Quote one limit: the first saved tool list can be poisoned if that first run is already attacked. |
 | 4:40 | Close | Numbers without the benign-pass rate are not a safety claim. The lab numbers are in the README. |
 
-Slides: open `docs/demo/slides.html` in a browser. Arrow keys move between slides.
+Short HTML deck: open `docs/demo/slides.html` in a browser. Arrow keys move between slides. The 20-minute talk outline for Gamma is `docs/demo/OUTLINE.md`. `npm install -g @warrant-lab/cli` is `0.3.0` and includes the pasted-tool-output rule and the harmless-new-tool rule.

@@ -26,7 +26,7 @@ warrant doctor                 # keys + policy sanity check
 warrant guard -- node your-agent.js
 ```
 
-`guard` rewrites `OPENAI_BASE_URL` (and Anthropic / Gemini bases) to the Warrant proxy. Every sensitive tool call is checked against a **frozen warrant** taken from the latest user message. A pasted memory note, a history block, or an older chat turn cannot add a permission. Injected text cannot expand the warrant.
+`guard` rewrites `OPENAI_BASE_URL` (and Anthropic / Gemini bases) to the Warrant proxy. Every sensitive tool call is checked against a **frozen warrant** taken from the latest real user message. A pasted memory note, a history block, an older chat turn, or a tool result that a framework pastes back as a user message cannot add a permission. Injected text cannot expand the warrant.
 
 **Library (tool loop in your own runner):**
 
@@ -68,7 +68,7 @@ Benign-pass rate: 100% (1/1)
 
 `guard` is the same proxy with injection off: every sensitive tool call is checked against what the user actually asked for. Each allow and deny is appended to `.warrant/decisions.ndjson`. Read it back with `warrant log`, or open `/decisions` when the lab site is running locally.
 
-The first trusted tool list is saved to `.warrant/tool-pin.json` and loaded the next time `warrant guard` starts. A tool that appears later, or a known tool that gains a parameter, stays blocked until someone approves it. Scan and red-team runs do not write that file.
+The first trusted tool list is saved to `.warrant/tool-pin.json` and loaded the next time `warrant guard` starts. A harmless new tool (a read-only name, no destination field, no secret) is allowed and added to that list. A risky new tool, or a known tool that gains a parameter, stays blocked until someone approves it. Scan and red-team runs do not write that file. `npm install -g @warrant-lab/cli` installs these rules. The published CLI is `0.3.0`.
 
 Full flags and limits: [`docs/SCAN.md`](docs/SCAN.md). A local mock (no API bill) is in [`scripts/scan-fixtures/README.md`](scripts/scan-fixtures/README.md).
 
@@ -107,6 +107,8 @@ Corpus: **60** tuned attacks (families A–F) · **24** benign · **15** held-ou
 
 PromptGuard (`llama-prompt-guard-2`, detection baseline): `pnpm run eval:baseline` after `eval:seed` (Postgres). Warrant reports **attack-stop and benign-pass together** — either alone is misleading.
 
+These rows are the last full scorecard of the sandbox agent. The 1 Oct changes are covered by tests and were not a new 60-case run: a tool result pasted as a user message does not grant a tool, and a harmless new tool is saved without a prompt.
+
 <details>
 <summary>Method notes & older matrix</summary>
 
@@ -126,10 +128,10 @@ User turn  →  derive + freeze warrant  →  agent reads untrusted content (tai
             every sensitive tool call  →  allowed?  →  execute or deny
 ```
 
-1. **Derive** permissions from the latest user message, after saved notes and pasted history are removed. Documents, older chat turns, and system notes do not grant a tool.
+1. **Derive** permissions from the latest real user message, after saved notes, pasted history, and tool results pasted back as a user turn are removed. Documents, older chat turns, system notes, and a framework observation (smolagents "Calling tools:", an Anthropic `tool_result`, a Gemini `functionResponse`, or an OpenAI function call followed immediately by a user message) do not grant a tool. A person who speaks after a finished tool call still does.
 2. **Freeze** before any untrusted bytes enter context.
 3. **Enforce** on each sensitive tool call. An email address is allowed when the user typed it, or when a contacts lookup returned it for the person they named. An address that appears in a document is blocked. A secret from a tool this turn did not authorize is removed from the reply and from payload text such as an email body; the notice is `[REDACTED]`. A link that carries that secret is stopped. Ordinary document text is left alone.
-4. **Remember the tool list.** The first trusted advertisement is saved. A new tool, or a known tool that gains a parameter, stays blocked until a person approves it. Approving the tool does not approve a document-chosen recipient or a secret-carrying link.
+4. **Remember the tool list.** The first trusted advertisement is saved. A harmless new tool is allowed and saved. A risky new tool, or a known tool that gains a parameter, stays blocked until a person approves it. Approving the tool does not approve a document-chosen recipient or a secret-carrying link. A tool whose name looks harmless but whose behavior is not is still a residual risk: classification uses the name and the parameter names.
 5. **Optional** human approval for ambiguous cases ([`docs/APPROVAL.md`](docs/APPROVAL.md)).
 
 Detection filters (e.g. PromptGuard) flag text; Warrant **authorizes actions**. An unseen attack still fails if it was never permitted.
@@ -173,7 +175,7 @@ OpenAI `/v1/chat/completions`, OpenAI Responses `/v1/responses` (used by the Ver
 | Route | Purpose |
 | ----- | ------- |
 | `/` | Thesis + measured comparison |
-| `/playground` | Recorded terminal (`install`, `attack`, `guard` demos — no live model) |
+| `/playground` | Recorded lab traces. The chips replay `warrant attack`. On a real agent the commands are `warrant scan`, then `warrant guard`. |
 | `/dashboard` | Stored runs with dual metrics |
 | `/decisions` | Local guard decision log (this machine only) |
 | `/method` | Warrant issuance model |
@@ -228,7 +230,7 @@ pnpm run build:guard && pnpm run build:cli
 | App | Next.js 16, React 19, Tailwind 4 |
 | Core guard | Framework-free TypeScript in `src/core/` → `@warrant-lab/guard` |
 | Data | PostgreSQL 17 + Prisma 7 (lab only) |
-| Models | Groq + OpenAI (sandbox / baselines) |
+| Models | Live scorecards and scans use Groq: `openai/gpt-oss-20b` for the lab, `openai/gpt-oss-120b` for scan probe lines. The proxy also speaks OpenAI, Anthropic, and Gemini. |
 
 ---
 
@@ -239,7 +241,7 @@ pnpm run build:guard && pnpm run build:cli
 | [`docs/INTEGRATION.md`](docs/INTEGRATION.md) | Tool-loop + HTTP proxy integration |
 | [`docs/SCAN.md`](docs/SCAN.md) | Scanning a third-party agent for hijacks |
 | [`docs/REFLECTION.md`](docs/REFLECTION.md) | What the build got right, and where it failed |
-| [`docs/demo/slides.html`](docs/demo/slides.html) | Demo slides. Arrow keys move. Script: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) |
+| [`docs/demo/OUTLINE.md`](docs/demo/OUTLINE.md) | 20-minute talk outline for Gamma. Short HTML deck: [`docs/demo/slides.html`](docs/demo/slides.html). Script: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) |
 | [`docs/DECISION_LOG.md`](docs/DECISION_LOG.md) | Local allow/deny log and how to read it |
 | [`docs/MCP.md`](docs/MCP.md) | Guard an MCP stdio server |
 | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Scope, adversary, residual risk |
