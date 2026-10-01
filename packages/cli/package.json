@@ -1,6 +1,6 @@
 {
   "name": "@warrant-lab/cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Warrant command-line interface — guard agents, scan them, and share the result.",
   "license": "MIT",
   "type": "module",
@@ -9,11 +9,13 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "postinstall.js"
   ],
   "scripts": {
     "build": "tsup",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "postinstall": "node postinstall.js"
   },
   "dependencies": {
     "@clack/prompts": "^0.10.1",

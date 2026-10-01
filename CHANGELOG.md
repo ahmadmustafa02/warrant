@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 0.3.1 — 2026-10-01
+
+### Added
+
+- `npm install -g @warrant-lab/cli --foreground-scripts` prints the Warrant banner and the next two commands. A plain install hides that script, because npm's default is to run install scripts in the background.
+
 ## 0.3.0 — 2026-10-01
 
 ### Fixed
