@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 0.3.2 — 2026-10-01
+
+### Fixed
+
+- A normal `npm install -g @warrant-lab/cli` prints the Warrant banner. npm hides install-script output, so the banner is written to the terminal directly.
+
 ## 0.3.1 — 2026-10-01
 
 ### Added

@@ -1,9 +1,11 @@
+import fs from 'node:fs';
+
 const cyan = (text) => `\u001b[36m${text}\u001b[0m`;
 const dim = (text) => `\u001b[2m${text}\u001b[0m`;
 const bold = (text) => `\u001b[1m${text}\u001b[0m`;
 const green = (text) => `\u001b[32m${text}\u001b[0m`;
 
-process.stderr.write(
+const banner =
   [
     '',
     `  ${bold(cyan('◆ Warrant'))}  ${dim('provenance guard for agent tool calls')}`,
@@ -14,5 +16,19 @@ process.stderr.write(
     `    ${cyan('warrant scan --')} <your agent>`,
     `    ${cyan('warrant guard --')} <your agent>`,
     '',
-  ].join('\n') + '\n',
-);
+  ].join('\n') + '\n';
+
+const consoles = process.platform === 'win32' ? ['\\\\.\\CON'] : ['/dev/tty'];
+
+for (const target of consoles) {
+  try {
+    const fd = fs.openSync(target, 'w');
+    fs.writeSync(fd, banner);
+    fs.closeSync(fd);
+    process.exit(0);
+  } catch {
+    // npm may have no console. Fall through to stderr.
+  }
+}
+
+process.stderr.write(banner);
