@@ -144,5 +144,9 @@ export function LandingMotion({ children }: { children: ReactNode }) {
     { scope: root },
   );
 
-  return <div ref={root}>{children}</div>;
+  return (
+    <div ref={root} className="landing-sheet bg-black text-white">
+      {children}
+    </div>
+  );
 }

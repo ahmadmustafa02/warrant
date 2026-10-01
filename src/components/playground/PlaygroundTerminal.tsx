@@ -38,7 +38,7 @@ const WELCOME: readonly TermLine[] = [
   {
     id: 'w3',
     tone: 'out',
-    text: 'Type help, or tap a chip. Try attack off, then the same payload with enforce.',
+    text: 'These chips replay a stored lab trace. On a real agent the commands are warrant scan, then warrant guard.',
   },
 ];
 
@@ -52,19 +52,19 @@ function nextTermId(prefix: string): string {
 function toneClass(tone: LineTone): string {
   switch (tone) {
     case 'out':
-      return 'text-[#c9d1d9]';
+      return 'text-white/80';
     case 'system':
-      return 'text-[#79c0ff]';
+      return 'text-[#ff4d6d]';
     case 'cmd':
-      return 'text-[#e6edf3]';
+      return 'text-white';
     case 'ok':
-      return 'text-[#3fb950]';
+      return 'text-[#e8b56a]';
     case 'warn':
-      return 'text-[#d29922]';
+      return 'text-[#e8b56a]';
     case 'err':
-      return 'text-[#ff7b72]';
+      return 'text-[#ff4d6d]';
     case 'dim':
-      return 'text-[#8b949e]';
+      return 'text-[#a1a1aa]';
   }
 }
 
@@ -225,29 +225,29 @@ export function PlaygroundTerminal() {
   }
 
   return (
-    <div className="warrant-term overflow-hidden rounded-[28px] border border-[#21262d] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
-      <div className="flex items-center gap-3 border-b border-[#21262d] bg-[#161b22] px-4 py-3">
+    <div className="warrant-term overflow-hidden border border-white/15 bg-black">
+      <div className="flex items-center gap-3 border-b border-white/10 bg-black px-4 py-3 font-[family-name:var(--font-inter)]">
         <div className="flex gap-1.5" aria-hidden="true">
-          <span className="size-2.5 rounded-full bg-[#ff5f57]" />
-          <span className="size-2.5 rounded-full bg-[#febc2e]" />
-          <span className="size-2.5 rounded-full bg-[#28c840]" />
+          <span className="size-2.5 rounded-full bg-white/25" />
+          <span className="size-2.5 rounded-full bg-white/25" />
+          <span className="size-2.5 rounded-full bg-white/25" />
         </div>
-        <p className="min-w-0 flex-1 truncate font-mono text-xs text-[#8b949e]">
+        <p className="min-w-0 flex-1 truncate text-xs font-medium tracking-[0.04em] text-white/70">
           playground@warrant — recorded session
         </p>
-        <p className="hidden font-mono text-[10px] uppercase tracking-[0.18em] text-[#3fb950] sm:block">
+        <p className="hidden text-[10px] font-medium tracking-[0.18em] text-white/40 uppercase sm:block">
           replay
         </p>
       </div>
 
-      <div className="border-b border-[#21262d] bg-[#0d1117] px-4 py-3">
-        <p className="text-xs font-medium text-[#8b949e]">Scenarios</p>
+      <div className="border-b border-white/10 bg-black px-4 py-3 font-[family-name:var(--font-inter)]">
+        <p className="text-xs font-medium text-white/45">Scenarios</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {PLAYGROUND_PRESETS.map((preset) => (
             <button
               key={preset.id}
               type="button"
-              className="pressable min-h-11 rounded-full border border-[#30363d] bg-[#161b22] px-3 text-xs font-medium text-[#c9d1d9] hover:border-[#58a6ff]"
+              className="pressable min-h-11 rounded-full border border-white/15 bg-black px-3 text-xs font-medium text-white/80 hover:border-[#e8b56a]"
               onClick={() => {
                 setDraft(`warrant attack --payload ${preset.id} --guard OFF`);
                 inputRef.current?.focus();
@@ -265,7 +265,7 @@ export function PlaygroundTerminal() {
 
       <div
         ref={logRef}
-        className="warrant-term-scan max-h-[min(62vh,560px)] min-h-[320px] overflow-y-auto bg-[#0d1117] px-4 py-4 font-mono text-[13px] leading-6 sm:text-sm"
+        className="warrant-term-scan max-h-[min(62vh,560px)] min-h-[320px] overflow-y-auto bg-black px-4 py-4 font-mono text-[13px] leading-6 sm:text-sm"
         role="log"
         aria-live="polite"
         aria-relevant="additions"
@@ -276,13 +276,13 @@ export function PlaygroundTerminal() {
           </p>
         ))}
         {busy ? (
-          <p className="text-[#d29922]" aria-live="polite">
+          <p className="text-white/45" aria-live="polite">
             replaying lab trace…
           </p>
         ) : null}
       </div>
 
-      <div className="border-t border-[#21262d] bg-[#161b22] px-3 py-3 sm:px-4">
+      <div className="border-t border-white/10 bg-black px-3 py-3 font-[family-name:var(--font-inter)] sm:px-4">
         <div className="mb-3 flex flex-wrap gap-2" aria-label="Demo commands">
           {COMMAND_CHIPS.map((chip) => (
             <button
@@ -290,7 +290,7 @@ export function PlaygroundTerminal() {
               type="button"
               disabled={busy}
               title={chip.hint}
-              className="pressable min-h-11 rounded-full border border-[#30363d] bg-[#0d1117] px-3 font-mono text-xs text-[#79c0ff] hover:border-[#58a6ff] disabled:opacity-50"
+              className="pressable min-h-11 rounded-full border border-white/15 bg-black px-3 font-mono text-xs text-[#e8b56a] hover:border-[#ff4d6d] disabled:opacity-50"
               onClick={() => {
                 void runRaw(chip.command);
               }}
@@ -303,8 +303,8 @@ export function PlaygroundTerminal() {
         <label htmlFor={inputId} className="sr-only">
           Allowlisted playground command
         </label>
-        <div className="flex min-h-12 items-center gap-2 rounded-2xl border border-[#30363d] bg-[#0d1117] px-3 focus-within:border-[#58a6ff]">
-          <span className="font-mono text-sm text-[#3fb950]" aria-hidden="true">
+        <div className="flex min-h-12 items-center gap-2 border border-white/15 bg-black px-3 focus-within:border-[#e8b56a]">
+          <span className="font-mono text-sm text-[#e8b56a]" aria-hidden="true">
             $
           </span>
           <input
@@ -317,7 +317,7 @@ export function PlaygroundTerminal() {
             spellCheck={false}
             disabled={busy}
             placeholder="warrant attack --payload task_disguise --guard OFF"
-            className="min-h-11 w-full bg-transparent font-mono text-sm text-[#e6edf3] outline-none placeholder:text-[#484f58] disabled:opacity-50"
+            className="min-h-11 w-full bg-transparent font-mono text-sm text-white outline-none placeholder:text-white/30 disabled:opacity-50"
             onChange={(event) => {
               setDraft(event.target.value);
               setError(null);
@@ -339,7 +339,7 @@ export function PlaygroundTerminal() {
           <button
             type="button"
             disabled={busy}
-            className="pressable min-h-11 shrink-0 rounded-xl bg-[#238636] px-3 text-sm font-semibold text-white disabled:opacity-50"
+            className="pressable min-h-11 shrink-0 rounded-full border border-[#ff4d6d] px-4 text-sm font-medium text-[#ff4d6d] disabled:opacity-50"
             onClick={() => {
               submitDraft();
             }}
@@ -348,11 +348,11 @@ export function PlaygroundTerminal() {
           </button>
         </div>
         {error ? (
-          <p role="alert" className="mt-2 text-sm text-[#ff7b72]">
+          <p role="alert" className="mt-2 text-sm text-white/70">
             {error}
           </p>
         ) : (
-          <p className="mt-2 text-xs text-[#8b949e]">
+          <p className="mt-2 text-xs text-white/40">
             Tab completes a matching chip. Unknown text is rejected.
           </p>
         )}

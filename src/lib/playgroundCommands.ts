@@ -45,13 +45,13 @@ export const COMMAND_CHIPS: readonly CommandChip[] = [
   },
   {
     id: 'attack-off',
-    label: 'attack · off',
+    label: 'lab replay · off',
     command: 'warrant attack --payload task_disguise --guard OFF',
     hint: 'Recorded hijack',
   },
   {
     id: 'attack-on',
-    label: 'attack · enforce',
+    label: 'lab replay · enforce',
     command: 'warrant attack --payload task_disguise --guard ENFORCE',
     hint: 'Recorded block',
   },
@@ -171,6 +171,8 @@ export function suggestPlaygroundCommand(partial: string): string | undefined {
 
 export const HELP_LINES: readonly string[] = [
   'Warrant playground — recorded demos only. No live install, no live model.',
+  'On a real agent: warrant scan -- <their command>, then warrant guard -- <their command>.',
+  'This page cannot run scan. The attack lines below are stored lab traces.',
   '',
   '  npm install -g @warrant-lab/cli',
   '  warrant init --from-sandbox',

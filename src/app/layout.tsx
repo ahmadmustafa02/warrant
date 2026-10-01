@@ -1,11 +1,16 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { IBM_Plex_Mono, Plus_Jakarta_Sans } from 'next/font/google';
-import Script from 'next/script';
+import { IBM_Plex_Mono, Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { SiteMotion } from '@/components/motion/SiteMotion';
 import { SiteFooter } from '@/components/site/SiteFooter';
 import { SiteHeader } from '@/components/site/SiteHeader';
 import './globals.css';
+
+const inter = Inter({
+  variable: '--font-inter',
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+});
 
 const jakarta = Plus_Jakarta_Sans({
   variable: '--font-plus-jakarta',
@@ -25,7 +30,7 @@ export const metadata: Metadata = {
     template: '%s · Warrant',
   },
   description:
-    'Guard your AI agent against hijacking by the content it reads — block unauthorized actions, with attack-stop and benign-pass measured together.',
+    'A proxy in front of your agent. The permission is the person’s latest message. Risky tool calls that content tries to add are blocked, and attack-stop is reported with benign-pass.',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -33,12 +38,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${jakarta.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jakarta.variable} ${plexMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <Script id="warrant-theme" strategy="beforeInteractive">
-          {`(function(){try{if(localStorage.getItem('warrant-theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`}
-        </Script>
         <a className="skip-link" href="#main">
           Skip to content
         </a>
