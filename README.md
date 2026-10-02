@@ -10,11 +10,7 @@ Warrant is provenance-based **tool authorization** for AI agents: freeze what th
 [![npm @warrant-lab/guard](https://img.shields.io/npm/v/@warrant-lab/guard?label=guard)](https://www.npmjs.com/package/@warrant-lab/guard)
 [![Live lab](https://img.shields.io/badge/demo-warrant--lab.vercel.app-111)](https://warrant-lab.vercel.app/)
 
----
-<img width="1635" height="955" alt="image" src="https://github.com/user-attachments/assets/17d0eac2-ac92-4230-8510-ebb16251fcc7" />
-
----
-## Demo
+## Demo (click on image to open the yt video)
 
 [![Warrant Demo](https://img.youtube.com/vi/OS3QPNc5T-A/maxresdefault.jpg)](https://www.youtube.com/watch?v=OS3QPNc5T-A)
 
