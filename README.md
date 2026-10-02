@@ -16,7 +16,7 @@ Warrant is provenance-based **tool authorization** for AI agents: freeze what th
 ---
 ## Demo
 
-[![Warrant Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=OS3QPNc5T-A)
+[![Warrant Demo](https://img.youtube.com/vi/OS3QPNc5T-A/maxresdefault.jpg)](https://www.youtube.com/watch?v=OS3QPNc5T-A)
 
 ---
 
