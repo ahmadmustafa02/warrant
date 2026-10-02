@@ -14,6 +14,12 @@ Warrant is provenance-based **tool authorization** for AI agents: freeze what th
 <img width="1635" height="955" alt="image" src="https://github.com/user-attachments/assets/17d0eac2-ac92-4230-8510-ebb16251fcc7" />
 
 ---
+## Demo
+
+[![Warrant Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=OS3QPNc5T-A)
+
+---
+
 ## Quick start — guard an agent
 
 No Warrant API key. Use your existing model keys; Warrant wraps your process and filters tool calls through a local HTTP proxy.
