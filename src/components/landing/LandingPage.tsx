@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { BrowserFrame } from '@/components/visual/BrowserFrame';
 import { DocumentMock } from '@/components/visual/DocumentMock';
@@ -57,61 +58,71 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
 
       <EvidencePanel comparison={comparison} />
 
-      <section
-        id="product"
-        className="reveal-section scroll-mt-24 border-t border-white/10 px-5 py-24"
-      >
-        <div className="mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-2">
-          <div className="reveal-copy">
-            <p className="flex items-center gap-3 text-[11px] font-medium tracking-[0.22em] text-white/45 uppercase">
-              <span className="h-px w-8 bg-white/35" aria-hidden="true" />
-              01 — The hijack
-            </p>
-            <h2 className="mt-6 max-w-xl text-[clamp(2.4rem,4.6vw,3.6rem)] leading-[1.05] font-medium tracking-[-0.035em]">
-              The attack looks like
-              <span className="text-[#a1a1aa]"> part of the job.</span>
-            </h2>
-            <p className="mt-6 max-w-md text-[15px] leading-7 font-normal text-white/55">
-              The user asked for one thing. Somewhere in the content the agent reads,
-              another instruction asks for something else — and the model treats both as
-              work. No exploit chain, just text the agent was trained to follow.
-            </p>
-          </div>
-          <div className="reveal-visual">
-            <BrowserFrame title="doc-1 · Quarterly notes">
-              <DocumentMock />
-            </BrowserFrame>
-          </div>
-        </div>
-      </section>
+      <div className="relative overflow-hidden border-t border-white/10">
+        <Image
+          src="/Warrant_ Secure Agent Interface.png"
+          alt=""
+          fill
+          sizes="100vw"
+          className="pointer-events-none object-contain object-center"
+        />
 
-      <section className="reveal-section border-t border-white/10 px-5 py-24">
-        <div className="mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-2">
-          <div className="reveal-visual lg:order-1">
-            <BrowserFrame title="warrant.dev/runs/…/cases">
-              <TraceMock />
-            </BrowserFrame>
+        <section
+          id="product"
+          className="reveal-section relative z-10 scroll-mt-24 px-5 py-24"
+        >
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-2">
+            <div className="reveal-copy">
+              <p className="flex items-center gap-3 text-[11px] font-medium tracking-[0.22em] text-white/45 uppercase">
+                <span className="h-px w-8 bg-white/35" aria-hidden="true" />
+                01 — The hijack
+              </p>
+              <h2 className="mt-6 max-w-xl text-[clamp(2.4rem,4.6vw,3.6rem)] leading-[1.05] font-medium tracking-[-0.035em]">
+                The attack looks like
+                <span className="text-[#a1a1aa]"> part of the job.</span>
+              </h2>
+              <p className="mt-6 max-w-md text-[15px] leading-7 font-normal text-white/55">
+                The user asked for one thing. Somewhere in the content the agent reads,
+                another instruction asks for something else — and the model treats both
+                as work. No exploit chain, just text the agent was trained to follow.
+              </p>
+            </div>
+            <div className="reveal-visual">
+              <BrowserFrame title="doc-1 · Quarterly notes">
+                <DocumentMock />
+              </BrowserFrame>
+            </div>
           </div>
-          <div className="reveal-copy lg:order-2">
-            <p className="flex items-center gap-3 text-[11px] font-medium tracking-[0.22em] text-white/45 uppercase">
-              <span className="h-px w-8 bg-white/35" aria-hidden="true" />
-              02 — The guard
-            </p>
-            <h2 className="mt-6 max-w-xl text-[clamp(2.4rem,4.6vw,3.6rem)] leading-[1.05] font-medium tracking-[-0.035em]">
-              Stop the hijack
-              <span className="text-[#a1a1aa]"> at the tool call.</span>
-            </h2>
-            <p className="mt-6 max-w-md text-[15px] leading-7 font-normal text-white/55">
-              The guard does not look for keywords. It checks the call against the last
-              message the person wrote. An address from a document is refused. A secret
-              inside a link is refused. A harmless new tool, such as one that only
-              returns the answer, is allowed and saved. A risky new tool, or a tool that
-              gains a field, waits until a person approves it. The original task still
-              finishes.
-            </p>
+        </section>
+
+        <section className="reveal-section relative z-10 px-5 py-24">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-2">
+            <div className="reveal-visual lg:order-1">
+              <BrowserFrame title="warrant.dev/runs/…/cases">
+                <TraceMock />
+              </BrowserFrame>
+            </div>
+            <div className="reveal-copy lg:order-2">
+              <p className="flex items-center gap-3 text-[11px] font-medium tracking-[0.22em] text-white/45 uppercase">
+                <span className="h-px w-8 bg-white/35" aria-hidden="true" />
+                02 — The guard
+              </p>
+              <h2 className="mt-6 max-w-xl text-[clamp(2.4rem,4.6vw,3.6rem)] leading-[1.05] font-medium tracking-[-0.035em]">
+                Stop the hijack
+                <span className="text-[#a1a1aa]"> at the tool call.</span>
+              </h2>
+              <p className="mt-6 max-w-md text-[15px] leading-7 font-normal text-white/55">
+                The guard does not look for keywords. It checks the call against the
+                last message the person wrote. An address from a document is refused. A
+                secret inside a link is refused. A harmless new tool, such as one that
+                only returns the answer, is allowed and saved. A risky new tool, or a
+                tool that gains a field, waits until a person approves it. The original
+                task still finishes.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       <section className="reveal-section border-t border-white/10 px-5 py-24">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-2">
