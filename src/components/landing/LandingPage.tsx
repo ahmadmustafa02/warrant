@@ -172,13 +172,25 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
 
       <ProductPath />
 
-      <section className="reveal-section border-t border-white/10 px-5 py-28 text-center">
-        <div className="reveal-copy mx-auto max-w-3xl">
-          <h2 className="text-[clamp(2.4rem,5vw,4rem)] leading-[1.05] font-medium tracking-[-0.035em]">
+      <section className="reveal-section relative overflow-hidden border-t border-white/10 text-center">
+        <Image
+          src="/Cybernetic Hands, Holographic Shield.png"
+          alt=""
+          width={1770}
+          height={889}
+          sizes="100vw"
+          className="pointer-events-none h-auto w-full"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-black/40"
+          aria-hidden="true"
+        />
+        <div className="reveal-copy absolute inset-0 z-10 flex flex-col items-center justify-center px-5">
+          <h2 className="max-w-3xl text-[clamp(2.4rem,5vw,4rem)] leading-[1.05] font-medium tracking-[-0.035em]">
             Try the hijack.
             <span className="text-[#a1a1aa]"> Then turn the guard on.</span>
           </h2>
-          <p className="mx-auto mt-6 max-w-lg text-[15px] leading-7 font-normal text-white/55">
+          <p className="mx-auto mt-6 max-w-lg text-[15px] leading-7 font-normal text-white/85">
             Two runs in the playground say more than any claim about agent security.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
