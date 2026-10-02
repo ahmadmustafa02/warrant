@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { MeasuredRates } from './MeasuredRates';
 
@@ -117,12 +116,15 @@ function Chip({ name, mark }: { name: string; mark: ReactNode }) {
 export function MeasuredProof() {
   return (
     <section className="hero-visual relative overflow-hidden bg-black px-5 py-28">
-      <Image
-        src="/Futuristic Amber Energy Waves.png"
-        alt=""
-        width={1983}
-        height={793}
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] w-full object-cover object-bottom select-none"
+      <video
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] w-full object-cover object-bottom"
+        src={'/Animate_image_with_glowing_parti\u2026_20261002222324.mp4'}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden="true"
       />
       <div className="relative z-10 mx-auto w-full max-w-5xl text-center">
         <p className="text-[11px] font-medium tracking-[0.28em] text-white/45 uppercase">
