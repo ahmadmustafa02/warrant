@@ -13,25 +13,66 @@ export function HeroLoopVideo() {
       return;
     }
 
-    video.muted = false;
-    video.volume = 1;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
 
-    const start = () => {
-      video.muted = false;
-      void video.play();
+    // iOS only autoplays inline video when the muted attribute is set.
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+
+    const playMuted = () => {
+      video.muted = true;
+      return video.play();
     };
 
-    // Browsers block autoplay when audio is on. Play immediately, and if
-    // that is refused, start with sound on the first click or keypress.
-    void video.play().catch(() => {
-      const resume = () => {
+    const start = () => {
+      void playMuted()
+        .then(() => {
+          const desktop = window.matchMedia('(min-width: 768px)').matches;
+          if (!desktop) {
+            return;
+          }
+          video.muted = false;
+          video.volume = 1;
+          return video.play().catch(() => {
+            video.muted = true;
+            return video.play();
+          });
+        })
+        .catch(() => {
+          // A phone still refuses until the clip is on screen or tapped.
+        });
+    };
+
+    start();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting) && video.paused) {
+          start();
+        }
+      },
+      { threshold: 0.15 },
+    );
+    observer.observe(video);
+
+    const resume = () => {
+      if (video.paused) {
         start();
-        window.removeEventListener('pointerdown', resume);
-        window.removeEventListener('keydown', resume);
-      };
-      window.addEventListener('pointerdown', resume);
-      window.addEventListener('keydown', resume);
-    });
+      }
+    };
+    window.addEventListener('pointerdown', resume);
+    window.addEventListener('touchstart', resume);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('pointerdown', resume);
+      window.removeEventListener('touchstart', resume);
+    };
   }, []);
 
   return (
@@ -41,6 +82,7 @@ export function HeroLoopVideo() {
       src={SRC}
       autoPlay
       loop
+      muted
       playsInline
       preload="auto"
       aria-label="Glowing particles flowing toward a crystal"
