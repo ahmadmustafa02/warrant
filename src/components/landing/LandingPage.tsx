@@ -15,14 +15,11 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
   return (
     <LandingMotion>
       <section className="relative bg-black font-[family-name:var(--font-inter)] text-white">
-        <div
-          className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-5 text-center"
-          style={{ paddingTop: 'clamp(8rem, 18vh, 12rem)' }}
-        >
-          <p className="hero-line text-xs font-medium tracking-[0.28em] text-white/45 uppercase">
+        <div className="hero-copy relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-5 text-center">
+          <p className="hero-line max-w-full text-xs font-medium tracking-[0.18em] text-white/45 uppercase sm:tracking-[0.28em]">
             Proxy guard · in front of the model
           </p>
-          <h1 className="hero-line mx-auto mt-5 max-w-4xl text-[clamp(2.75rem,6.2vw,5.05rem)] leading-[1.02] font-medium tracking-[-0.035em]">
+          <h1 className="hero-title hero-line mx-auto mt-5 max-w-4xl leading-[1.02] font-medium tracking-[-0.035em]">
             Your agent can be hijacked. <span className="text-[#a1a1aa]">Guard</span>{' '}
             what it is allowed to do.
           </h1>
@@ -46,10 +43,7 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
             </Link>
           </div>
         </div>
-        <div
-          className="relative z-0 w-full"
-          style={{ aspectRatio: '16 / 9', marginTop: '-28rem' }}
-        >
+        <div className="hero-stage relative z-0 w-full">
           <HeroLoopVideo />
         </div>
       </section>
@@ -59,13 +53,16 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
       <EvidencePanel comparison={comparison} />
 
       <div className="relative overflow-hidden border-t border-white/10">
-        <Image
-          src="/Warrant_ Secure Agent Interface.png"
-          alt=""
-          fill
-          sizes="100vw"
-          className="pointer-events-none object-contain object-center"
-        />
+        <div className="pointer-events-none absolute inset-x-0 top-0 md:inset-0">
+          <Image
+            src="/Warrant_ Secure Agent Interface.png"
+            alt=""
+            width={1774}
+            height={887}
+            sizes="100vw"
+            className="h-auto w-full md:h-full md:object-contain"
+          />
+        </div>
 
         <section
           id="product"
@@ -172,20 +169,8 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
 
       <ProductPath />
 
-      <section className="reveal-section relative overflow-hidden border-t border-white/10 text-center">
-        <Image
-          src="/Cybernetic Hands, Holographic Shield.png"
-          alt=""
-          width={1770}
-          height={889}
-          sizes="100vw"
-          className="pointer-events-none h-auto w-full"
-        />
-        <div
-          className="pointer-events-none absolute inset-0 bg-black/40"
-          aria-hidden="true"
-        />
-        <div className="reveal-copy absolute inset-0 z-10 flex flex-col items-center justify-center px-5">
+      <section className="reveal-section relative border-t border-white/10 text-center md:overflow-hidden">
+        <div className="reveal-copy relative z-10 flex flex-col items-center justify-center px-5 md:absolute md:inset-0">
           <h2 className="max-w-3xl text-[clamp(2.4rem,5vw,4rem)] leading-[1.05] font-medium tracking-[-0.035em]">
             Try the hijack.
             <span className="text-[#a1a1aa]"> Then turn the guard on.</span>
@@ -208,6 +193,18 @@ export function LandingPage({ comparison }: { comparison: MeasuredComparison | n
             </Link>
           </div>
         </div>
+        <Image
+          src="/Cybernetic Hands, Holographic Shield.png"
+          alt=""
+          width={1770}
+          height={889}
+          sizes="100vw"
+          className="pointer-events-none h-auto w-full"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 hidden bg-black/40 md:block"
+          aria-hidden="true"
+        />
       </section>
     </LandingMotion>
   );

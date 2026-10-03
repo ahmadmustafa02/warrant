@@ -317,7 +317,7 @@ export function PlaygroundTerminal() {
             spellCheck={false}
             disabled={busy}
             placeholder="warrant attack --payload task_disguise --guard OFF"
-            className="min-h-11 w-full bg-transparent font-mono text-sm text-white outline-none placeholder:text-white/30 disabled:opacity-50"
+            className="min-h-11 min-w-0 flex-1 bg-transparent font-mono text-sm text-white outline-none placeholder:text-white/30 disabled:opacity-50"
             onChange={(event) => {
               setDraft(event.target.value);
               setError(null);

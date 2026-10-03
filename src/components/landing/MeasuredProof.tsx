@@ -115,7 +115,7 @@ function Chip({ name, mark }: { name: string; mark: ReactNode }) {
 
 export function MeasuredProof() {
   return (
-    <section className="hero-visual relative overflow-hidden bg-black px-5 py-28">
+    <section className="hero-visual relative overflow-hidden bg-black px-5 py-16 md:py-28">
       <video
         className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] w-full object-cover object-bottom"
         src={'/Animate_image_with_glowing_parti\u2026_20261002222324.mp4'}
@@ -130,14 +130,7 @@ export function MeasuredProof() {
         <p className="text-[11px] font-medium tracking-[0.28em] text-white/45 uppercase">
           Measured, not claimed
         </p>
-        <h2
-          className="mx-auto mt-6 max-w-4xl font-medium"
-          style={{
-            fontSize: 'clamp(3.25rem, 5.4vw, 4.75rem)',
-            lineHeight: 0.98,
-            letterSpacing: '-0.045em',
-          }}
-        >
+        <h2 className="measured-title mx-auto mt-6 max-w-4xl font-medium">
           Protection you can
           <br />
           actually test.

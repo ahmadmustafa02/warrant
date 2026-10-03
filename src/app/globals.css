@@ -118,6 +118,50 @@ body {
   line-height: 1.05;
 }
 
+.hero-copy {
+  padding-top: clamp(3.5rem, 10vh, 5rem);
+}
+
+.hero-title {
+  font-size: clamp(2rem, 8.6vw, 2.65rem);
+}
+
+.hero-stage {
+  aspect-ratio: 16 / 9;
+  margin-top: 2rem;
+}
+
+.measured-title {
+  font-size: clamp(1.85rem, 8.4vw, 2.45rem);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+@media (min-width: 768px) {
+  .hero-copy {
+    padding-top: clamp(8rem, 18vh, 12rem);
+  }
+
+  .hero-title {
+    font-size: clamp(2.75rem, 6.2vw, 5.05rem);
+  }
+
+  .hero-stage {
+    margin-top: -28rem;
+  }
+
+  .measured-title {
+    font-size: clamp(3.25rem, 5.4vw, 4.75rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .landing-sheet section.reveal-section {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+}
+
 .tabular {
   font-variant-numeric: tabular-nums;
 }
